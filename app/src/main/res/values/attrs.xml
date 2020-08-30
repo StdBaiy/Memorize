@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="level" format="integer"/>
+    <attr name="indecatorColor" format="color"/>
+
+
+    <attr name="innerColor" format="color"/>
+
+    <declare-styleable name="TribleSwitchButton">
+        <attr name="innerColor"/>
+    </declare-styleable>
+
+    <declare-styleable name="FanBtn">
+        <attr name="level"/>
+        <attr name="indicatorColor"/>
+        <attr name="radius"/>
+    </declare-styleable>
+</resources>
