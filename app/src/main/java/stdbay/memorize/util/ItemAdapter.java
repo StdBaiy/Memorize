@@ -1,4 +1,4 @@
-package stdbay.memorize;
+package stdbay.memorize.util;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+
+import stdbay.memorize.R;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
     private LayoutInflater mInflater;

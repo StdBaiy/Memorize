@@ -22,7 +22,7 @@ import com.chad.library.adapter.base.listener.OnItemSwipeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import stdbay.memorize.QuickAdapter;
+import stdbay.memorize.util.QuickAdapter;
 import stdbay.memorize.R;
 import stdbay.memorize.model.Subject;
 import stdbay.memorize.db.MyDatabase;

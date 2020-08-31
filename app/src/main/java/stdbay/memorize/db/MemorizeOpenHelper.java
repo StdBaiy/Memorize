@@ -4,14 +4,14 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class MyDatabase extends SQLiteOpenHelper {
+public class MemorizeOpenHelper extends SQLiteOpenHelper {
     private static  final String CREATE_SUBJECT_TABLE="create table subject(" +//科目表
-            "name varchar not null,"+
+            "name text not null UNIQUE ,"+
             "id int primary key autoincrement," +
             "fatherId int," +
             "foreign key(fatherId)references subject(id))";
-    private static final String CREATE_PROBLEMSET_TABLE="create table problemSet(" +//习题集表
-            "name varchar not null," +
+    private static final String CREATE_PROBLEMSET_TABLE="create table problem_set(" +//习题集表
+            "name text not null UNIQUE ," +
             "id int primary key autoincrement," +
             "subId int not null," +
             "fatherId int," +
@@ -23,11 +23,11 @@ public class MyDatabase extends SQLiteOpenHelper {
             "foreign key(fatherId)references problemSet(id))";
 
     private static final String CREATE_PROBLEM_TABLE="create table problem(" +//习题表
-            "name varchar not null," +
+            "name text not null UNIQUE ," +
             "id int primary key autoincrement," +
             "probSetId int not null," +
             "subId int not null," +
-            "number int," +
+            "number int," +//习题编号
             "createTime text," +
             "summary text," +
             "viewTimes int," +
@@ -43,18 +43,27 @@ public class MyDatabase extends SQLiteOpenHelper {
 
     private static final String CREATE_KNOWLEDGE_TABLE="create table knowledge(" +//知识点表
             "id int primary key autoincrement," +
-            "name varchar," +
+            "fatherId int,"+
+            "name text not null UNIQUE," +
             "subId int," +
             "annotation text," +//注解
-            "foreign key(subId) references subject(id))";
+            "foreign key(subId) references subject(id)," +
+            "foreign key(fatherId)references knowledge(id))";
 
-    private static final String CREATE_KNOW_LEVEL_TABLE="create table knowLevel(" +//知识点层次表
-            "fatherId int," +
-            "sonId int," +
-            "foreign key (fatherId) references knowledge(id)," +
-            "foreign key (sonId) references knowledge(id))";
+//    private static final String CREATE_KNOW_LEVEL_TABLE="create table know_level(" +//知识点层次表
+//            "fatherId int," +
+//            "sonId int," +
+//            "foreign key (fatherId) references knowledge(id)," +
+//            "foreign key (sonId) references knowledge(id))";
 
-    MyDatabase(Context context, String name, SQLiteDatabase.CursorFactory factory, int version){
+    private  static final String CREATE_PROB_KNOW_TABLE="create table prob_know(" +//习题_知识表
+            "probId int," +
+            "knowId int," +
+            "foreign key (probId) references problem(id)," +
+            "foreign key (knowId) references knowledge(id))";
+
+
+    public MemorizeOpenHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version){
         super(context,name,factory,version);
     }
 
@@ -74,11 +83,9 @@ public class MyDatabase extends SQLiteOpenHelper {
         db.execSQL(CREATE_PROBLEM_TABLE);
         db.execSQL(CREATE_PROB_PIC_TABLE);
         db.execSQL(CREATE_KNOWLEDGE_TABLE);
-        db.execSQL(CREATE_KNOW_LEVEL_TABLE);
-//        db.execSQL("insert into subject (name)values(`数学`)");
-//        db.execSQL("insert into subject (name)values(`英语`)");
-//        db.execSQL("insert into subject (name)values(`政治`)");
-//        db.execSQL("insert into subject (name)values(`专业课`)");
+//        db.execSQL(CREATE_KNOW_LEVEL_TABLE);
+        db.execSQL(CREATE_PROB_KNOW_TABLE);
+
     }
 
 

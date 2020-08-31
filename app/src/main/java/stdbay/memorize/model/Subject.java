@@ -1,31 +1,40 @@
 package stdbay.memorize.model;
 
 public class Subject {
-    private int subjectId;
-    private String subjectName;
-    private String subjectDescription;
+    private int id;
+    private String name;
+    private String description;
+    private int fatherId;
 
-    public String getSubjectName() {
-        return subjectName;
+    public String getName() {
+        return name;
     }
 
-    public String getSubjectDescription() {
-        return subjectDescription;
+    public String getDescription() {
+        return description;
     }
 
-    public int getSubjectId() {
-        return subjectId;
+    public int getId() {
+        return id;
     }
 
-    public void setSubjectName(String subjectName) {
-        this.subjectName = subjectName;
+    public int getFatherId(){
+        return fatherId;
     }
 
-    public void setSubjectDescription(String subjectDescription) {
-        this.subjectDescription = subjectDescription;
+    public void setName(String subjectName) {
+        this.name = subjectName;
     }
 
-    public void setSubjectId(int subjectId) {
-        this.subjectId = subjectId;
+    public void setDescription(String subjectDescription) {
+        this.description = subjectDescription;
+    }
+
+    public void setId(int subjectId) {
+        this.id = subjectId;
+    }
+
+    public void setFatherId(int fatherId) {
+        this.fatherId = fatherId;
     }
 }
