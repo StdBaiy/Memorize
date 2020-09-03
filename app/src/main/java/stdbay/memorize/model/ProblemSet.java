@@ -1,22 +1,12 @@
 package stdbay.memorize.model;
 
-public class ProblemSet {
-    private int id;
+public class ProblemSet extends BaseItem {
     private int subId;
     private int fatherId;
-    private String name;
     private String createTime;
     private int viewTimes;
     private  float grade;
     private  float totalGrade;
-
-    public String getName() {
-        return name;
-    }
-
-    public int getId() {
-        return id;
-    }
 
     public int getSubId() {
         return subId;
@@ -42,20 +32,12 @@ public class ProblemSet {
         return totalGrade;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public void setSubId(int subId) {
         this.subId = subId;
     }
 
     public void setFatherId(int fatherId) {
         this.fatherId = fatherId;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setCreateTime(String createTime) {

@@ -4,112 +4,119 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.graphics.Canvas;
 import android.os.Bundle;
+import android.os.Looper;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.animation.BaseAnimation;
-import com.chad.library.adapter.base.callback.ItemDragAndSwipeCallback;
-import com.chad.library.adapter.base.listener.OnItemDragListener;
-import com.chad.library.adapter.base.listener.OnItemSwipeListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import stdbay.memorize.util.QuickAdapter;
 import stdbay.memorize.R;
+import stdbay.memorize.adapter.BaseItemAdapter;
+import stdbay.memorize.db.MemorizeOpenHelper;
+import stdbay.memorize.model.BaseItem;
+import stdbay.memorize.model.MemorizeDB;
 import stdbay.memorize.model.Subject;
-import stdbay.memorize.db.MyDatabase;
 
 public class MainActivity extends Activity{
-    private RecyclerView rv;
-    private List<Subject> data;
-    private QuickAdapter mAdapter;
+
+    private BaseItem nowItem=null;
+    private List<BaseItem>data=new ArrayList<BaseItem>();
+
+    private Button addItem;
+
+    private TextView title;
+
+    private Spinner chooseType;
+    private EditText newName;
+
+    private RecyclerView rv;//主体view窗口
+
+    private BaseItemAdapter mAdapter;
+
     private LinearLayoutManager mLayoutManager;
-    private MyDatabase dbHelper;
+    private MemorizeOpenHelper dbHelper;
+    private MemorizeDB memorizeDB;
+
+
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final String[] type = new String[1];
+
+        data.clear();
+        for(int i=0;i!=10;++i){
+            BaseItem tmp=new BaseItem();
+            tmp.setName("item"+(i+1));
+            data.add(tmp);
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        rv=(RecyclerView)findViewById(R.id.recycler_view);
-//        rv.setHasFixedSize(true);
-//        mLayoutManager=new LinearLayoutManager(this);
-//        rv.setLayoutManager(mLayoutManager);
-//        mLayoutManager.setOrientation(OrientationHelper.VERTICAL);
-////        StaggeredGridLayoutManager staggeredGridLayoutManager=new StaggeredGridLayoutManager(2, OrientationHelper.VERTICAL);
-////        rv.setLayoutManager(staggeredGridLayoutManager);
-//        mAdapter=new ItemAdapter(this, new ItemAdapter.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(View view, int pos) {
-//                Toast.makeText(MainActivity.this,"这是第"+pos+"个元素",Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//        ((ItemAdapter) mAdapter).addItem("addItem",5);
-//        rv.setAdapter(mAdapter);
-//        rv.setItemAnimator(new DefaultItemAnimator());
-//        Button add=(Button)findViewById(R.id.add);
-//        add.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                ((ItemAdapter) mAdapter).addItem("addItem",5);
-//            }
-//        });
-//        Button remove =(Button)findViewById(R.id.remove);
-//        remove.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                ((ItemAdapter) mAdapter).removeItem(4);
-//            }
-//        });
 
-        rv=(RecyclerView)findViewById(R.id.recycler_view);
-        data=new ArrayList<>();
-        Subject subject;
-        for(int i=1;i<=20;++i){
-            subject=new Subject();
-            subject.setSubjectName("Item"+i);
-            subject.setSubjectDescription("这是描述内容");
-            data.add(subject);
-        }
-
+        memorizeDB=MemorizeDB.getInstance(this);
         LinearLayoutManager layoutManager=new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        rv=(RecyclerView)findViewById(R.id.recycler_view);
         rv.setLayoutManager(layoutManager);
-        mAdapter=new QuickAdapter(R.layout.list_item,data);
-        ItemDragAndSwipeCallback itemDragAndSwipeCallback = new ItemDragAndSwipeCallback(mAdapter);
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(itemDragAndSwipeCallback);
-        itemTouchHelper.attachToRecyclerView(rv);
-
-// 开启拖拽
-        mAdapter.enableDragItem(itemTouchHelper, R.layout.list_item, true);
-        mAdapter.setOnItemDragListener(onItemDragListener);
-
-// 开启滑动删除
-        mAdapter.enableSwipeItem();
-        mAdapter.setOnItemSwipeListener(onItemSwipeListener);
-        mAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+        chooseType=(Spinner)findViewById(R.id.choose_type);
+        addItem=(Button)findViewById(R.id.add_item);
+        newName=(EditText)findViewById(R.id.new_name);
+        title=(TextView) findViewById(R.id.title);
+        chooseType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                Toast.makeText(MainActivity.this, "点击了第" + (position + 1) + "条条目", Toast.LENGTH_SHORT).show();
+            public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
+                type[0] =(String)chooseType.getSelectedItem();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
             }
         });
 
-//        mAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
-//
-//                Toast.makeText(MainActivity.this, "长按了第" + (position + 1) + "条条目", Toast.LENGTH_SHORT).show();
-//                return false;
-//            }
-//        });
+        addItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String name=newName.getText().toString();
+                memorizeDB.addItem(nowItem, name, type[0], new MemorizeDB.callBackListener() {
+                    @Override
+                    public void onFinished() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                newName.setText("");
+                                newName.setFocusable(false);
+                                query();
+                            }
+                        });
+                        Looper.prepare();
+                        Toast.makeText(MainActivity.this,"bingo!",Toast.LENGTH_SHORT).show();
+                        Looper.loop();
+                    }
 
+                    @Override
+                    public void onError(Exception e) {
+                        Looper.prepare();
+                        Toast.makeText(MainActivity.this,"failed!",Toast.LENGTH_SHORT).show();
+                        Looper.loop();
+                    }
+                });
+            }
+        });
+
+        mAdapter=new BaseItemAdapter(R.layout.list_item,data);
         mAdapter.openLoadAnimation(new BaseAnimation(){
 
             @Override
@@ -124,27 +131,34 @@ public class MainActivity extends Activity{
         mAdapter.isFirstOnly(false);
         rv.setAdapter(mAdapter);
 
+        mAdapter.setOnItemClickListener(new BaseItemAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                Toast.makeText(MainActivity.this,"点击了"+position,Toast.LENGTH_SHORT).show();
+                nowItem=data.get(position);
+                query();
+            }
+        });
+
+        query();
     }
-    OnItemDragListener onItemDragListener = new OnItemDragListener() {
-        @Override
-        public void onItemDragStart(RecyclerView.ViewHolder viewHolder, int pos){}
-        @Override
-        public void onItemDragMoving(RecyclerView.ViewHolder source, int from, RecyclerView.ViewHolder target, int to) {}
-        @Override
-        public void onItemDragEnd(RecyclerView.ViewHolder viewHolder, int pos) {}
-    };
 
-    OnItemSwipeListener onItemSwipeListener = new OnItemSwipeListener() {
-        @Override
-        public void onItemSwipeStart(RecyclerView.ViewHolder viewHolder, int pos) {}
-        @Override
-        public void clearView(RecyclerView.ViewHolder viewHolder, int pos) {}
-        @Override
-        public void onItemSwiped(RecyclerView.ViewHolder viewHolder, int pos) {}
-
-        @Override
-        public void onItemSwipeMoving(Canvas canvas, RecyclerView.ViewHolder viewHolder, float v, float v1, boolean b) {
-
+    private void query(){
+        if(nowItem==null){
+            data.clear();
+            List<Subject>tmp=memorizeDB.loadSubject(MemorizeDB.NO_FATHER);
+            if(!tmp.isEmpty())
+            data.addAll(tmp);
+            title.setText("主页");
+//            data=memorizeDB.loadSubject(MemorizeDB.NO_FATHER);
+        }else{
+            switch(nowItem.getType()){
+                case BaseItem.SUBJECT_TYPE:
+                    break;
+                default:
+                    break;
+            }
         }
-    };
+        mAdapter.notifyDataSetChanged();
+    }
 }

@@ -1,6 +1,27 @@
 package stdbay.memorize.adapter;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
-public class ProblemSetApdater extends BaseQuickAdapter {
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.BaseViewHolder;
+
+import java.util.List;
+
+public class ProblemSetAdapter extends BaseQuickAdapter {
+
+    public ProblemSetAdapter(int layoutResId, @Nullable List data) {
+        super(layoutResId, data);
+    }
+
+    @Override
+    protected void convert(BaseViewHolder helper, Object item) {
+
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
+    }
 }

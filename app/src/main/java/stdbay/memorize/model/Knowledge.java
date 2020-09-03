@@ -1,21 +1,9 @@
 package stdbay.memorize.model;
 
-public class Knowledge {
-
-    private int id;
+public class Knowledge extends BaseItem{
     private int subId;
     private int fatherId;
     private String annotation;
-    private String name;
-
-
-    public String getName() {
-        return name;
-    }
-
-    public int getId() {
-        return id;
-    }
 
     public int getSubId() {
         return subId;
@@ -29,17 +17,8 @@ public class Knowledge {
         return fatherId;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public void setSubId(int subId) {
         this.subId = subId;
-    }
-
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setAnnotation(String annotation) {

@@ -5,17 +5,19 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import stdbay.memorize.db.MemorizeOpenHelper;
 
 public class MemorizeDB {
+
     public static final String DB_NAME="memorize";
     public static final int VERSION=1;
-    private static final int NO_FATHER =-1;
+    public static final int NO_FATHER =-1;
 
     private static MemorizeDB memorizeDB;
     private SQLiteDatabase db;
@@ -34,15 +36,15 @@ public class MemorizeDB {
     }
 
 
-    public void saveSubject(String name,String fatherId){
-        if(TextUtils.isEmpty(fatherId))
-            fatherId="null";
-        try{
-            db.execSQL("insert into subject (name,fatherId) values(?,?)",new String[]{name,fatherId});
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void saveSubject(String name,String fatherId){
+//        if(TextUtils.isEmpty(fatherId))
+//            fatherId="null";
+//        try{
+//            db.execSQL("insert into subject (name,fatherId) values(?,?)",new String[]{name,fatherId});
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     //获取subject列表
     @SuppressLint("Recycle")
@@ -51,7 +53,7 @@ public class MemorizeDB {
         //fatherId=-1,说明是首页,那么需要选出没有父节点的科目,反之需要选择父节点
         Cursor cursor;
         if(fatherId==NO_FATHER){
-            cursor=db.query("subject",null,"fatherId=null",
+            cursor=db.query("subject",null,"fatherId is null",
                 null,null,null,null);
         }else{
             cursor=db.query("subject",null,"fatherId=?",
@@ -61,6 +63,7 @@ public class MemorizeDB {
         if(cursor.moveToFirst()){
             do{
                 Subject subject=new Subject();
+                subject.setType(BaseItem.SUBJECT_TYPE);
                 subject.setId(cursor.getInt(cursor.getColumnIndex("id")));
                 subject.setName(cursor.getString(cursor.getColumnIndex("name")));
                 subject.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
@@ -87,6 +90,7 @@ public class MemorizeDB {
         if(cursor.moveToFirst()){
             do{
                 ProblemSet problemSet=new ProblemSet();
+                problemSet.setType(BaseItem.PROBLEM_SET_TYPE);
                 problemSet.setId(cursor.getInt(cursor.getColumnIndex("id")));
                 problemSet.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
                 problemSet.setName(cursor.getString(cursor.getColumnIndex("name")));
@@ -113,6 +117,7 @@ public class MemorizeDB {
         if(cursor.moveToFirst()){
             do{
                 Problem problem=new Problem();
+                problem.setType(BaseItem.PROBLEM_TYPE);
                 problem.setId(cursor.getInt(cursor.getColumnIndex("id")));
                 problem.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
                 problem.setName(cursor.getString(cursor.getColumnIndex("name")));
@@ -146,6 +151,7 @@ public class MemorizeDB {
         if(cursor.moveToFirst()){
             do{
                 Knowledge knowledge=new Knowledge();
+                knowledge.setType(BaseItem.KNOWLEDGE_TYPE);
                 knowledge.setId(cursor.getInt(cursor.getColumnIndex("id")));
                 knowledge.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
                 knowledge.setName(cursor.getString(cursor.getColumnIndex("name")));
@@ -155,5 +161,35 @@ public class MemorizeDB {
             }while(cursor.moveToNext());
         }
         return list;
+    }
+    public void addItem(final BaseItem father, final String name, String type, final callBackListener listener){
+        switch(type){
+            case "subject":
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        Log.d("这是在子线程里","");
+                        try {
+                            if(father==null)
+                                db.execSQL("insert into subject (name)values(?)",
+                                new String[]{name});
+                            else
+                                db.execSQL("insert into subject (name,fatherId)values(?)",
+                                        new String[]{name, String.valueOf(father.getId())});
+                            if(listener!=null)
+                                listener.onFinished();
+                        }catch (SQLException e) {
+                            Log.d("error", Objects.requireNonNull(e.getMessage()));
+                            listener.onError(e);
+                        }
+                    }
+                }).start();
+                break;
+//            case "probSet":
+        }
+    }
+    public interface callBackListener{
+        void onFinished();
+        void onError(Exception e);
     }
 }

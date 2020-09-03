@@ -6,26 +6,72 @@
     android:layout_height="match_parent"
     android:background="#ddd"
     android:orientation="vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#aa0">
+        <TextView
+            android:id="@+id/title"
+            android:layout_margin="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:layout_centerInParent="true"
+            android:textSize="20sp"/>
 
+    </RelativeLayout>
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="8"
         android:id="@+id/recycler_view"
         android:scrollbars="vertical"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp">
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/new_name"
+            android:background="@null"
+            android:hint="名字"
+            android:layout_weight="1"/>
+        <Spinner
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:entries="@array/choos_type"
+            android:id="@+id/choose_type"/>
+        <Button
+            android:id="@+id/add_item"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="新建"/>
+<!--        <Button-->
+<!--            android:id="@+id/del_item"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="1"-->
+<!--            android:text="删除"/>        -->
+    </LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#55a">
+        <TextView
+            android:id="@+id/banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="底栏"
+            android:textSize="20sp"
+            android:layout_margin="10dp"
+            android:layout_centerInParent="true"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:id="@+id/add"
-        android:text="add"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:id="@+id/remove"
-        android:text="remove"/>
+
+    </RelativeLayout>
 
 
 </LinearLayout>
