@@ -11,9 +11,9 @@ import java.util.List;
 import stdbay.memorize.R;
 import stdbay.memorize.model.Subject;
 
-public class QuickAdapter extends BaseItemDraggableAdapter<Subject, BaseViewHolder> {
+public class SubjectAdapter extends BaseItemDraggableAdapter<Subject, BaseViewHolder> {
     private ArrayList<String> mTitles;
-    public QuickAdapter(int layoutResId, @Nullable List<Subject> data) {
+    public SubjectAdapter(int layoutResId, @Nullable List<Subject> data) {
         super(layoutResId, data);
         this.mTitles=new ArrayList<String>();
         for (int i=0;i<20;i++){
@@ -22,6 +22,7 @@ public class QuickAdapter extends BaseItemDraggableAdapter<Subject, BaseViewHold
         }
     }
 
+    //
     @Override
     protected void convert(BaseViewHolder helper, Subject item) {
         helper.setText(R.id.name,item.getName())

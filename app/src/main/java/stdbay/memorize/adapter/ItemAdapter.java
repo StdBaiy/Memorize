@@ -1,4 +1,4 @@
-package stdbay.memorize.util;
+package stdbay.memorize.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
