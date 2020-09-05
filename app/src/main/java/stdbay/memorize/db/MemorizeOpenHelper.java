@@ -10,17 +10,18 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "id integer primary key autoincrement," +
             "fatherId integer," +
             "foreign key(fatherId)references subject(id))";
-    private static final String CREATE_PROBLEMSET_TABLE="create table problem_set(" +//习题集表
+
+    private static final String CREATE_PROBLEM_SET_TABLE="create table problem_set(" +//习题集表
             "name text not null UNIQUE ," +
             "id integer primary key autoincrement," +
             "subId integer not null," +
             "fatherId integer," +
-            "createTime text," +//创建时间
+            "createTime date," +//创建时间
             "viewTimes integer," +//查看次数
-            "grade real," +//得分
-            "totalGrade real," +//总分
+            "grade decimal(10,1)," +//得分
+            "totalGrade decimal(10,1)," +//总分
             "FOREIGN KEY(subId)REFERENCES subject(id)," +
-            "foreign key(fatherId)references problemSet(id))";
+            "foreign key(fatherId)references problem_set(id))";
 
     private static final String CREATE_PROBLEM_TABLE="create table problem(" +//习题表
             "name text not null UNIQUE ," +
@@ -28,13 +29,13 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "probSetId integer not null," +
             "subId integer not null," +
             "number integer," +//习题编号
-            "createTime text," +
+            "createTime date," +
             "summary text," +
             "viewTimes integer," +
-            "grade real," +
-            "totalGrade real," +
+            "grade decimal(10,1)," +
+            "totalGrade decimal(10,1)," +
             "foreign key(subId)references subject(id)," +
-            "foreign key(probSetId)references problemSet(id))";
+            "foreign key(probSetId)references problem_set(id))";
 
     private static final String CREATE_PROB_PIC_TABLE="create table prob_pic(" +//习题_图片表
             "probId integer," +
@@ -49,12 +50,6 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "annotation text," +//注解
             "foreign key(subId) references subject(id)," +
             "foreign key(fatherId)references knowledge(id))";
-
-//    private static final String CREATE_KNOW_LEVEL_TABLE="create table know_level(" +//知识点层次表
-//            "fatherId integer," +
-//            "sonId integer," +
-//            "foreign key (fatherId) references knowledge(id)," +
-//            "foreign key (sonId) references knowledge(id))";
 
     private  static final String CREATE_PROB_KNOW_TABLE="create table prob_know(" +//习题_知识表
             "probId integer," +
@@ -81,7 +76,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
 //        try {
 
             db.execSQL(CREATE_SUBJECT_TABLE);
-            db.execSQL(CREATE_PROBLEMSET_TABLE);
+            db.execSQL(CREATE_PROBLEM_SET_TABLE);
             db.execSQL(CREATE_PROBLEM_TABLE);
             db.execSQL(CREATE_PROB_PIC_TABLE);
             db.execSQL(CREATE_KNOWLEDGE_TABLE);

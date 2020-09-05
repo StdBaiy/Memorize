@@ -9,6 +9,7 @@ public class BaseItem {
     private int id;
     private String name;
     private int type;
+    private  int fatherId;
 
     public void setId(int id) {
         this.id = id;
@@ -32,5 +33,13 @@ public class BaseItem {
 
     public int getType() {
         return type;
+    }
+
+    public int getFatherId() {
+        return fatherId;
+    }
+
+    public void setFatherId(int fatherId) {
+        this.fatherId = fatherId;
     }
 }

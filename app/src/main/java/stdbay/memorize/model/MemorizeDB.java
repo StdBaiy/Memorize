@@ -15,9 +15,9 @@ import stdbay.memorize.db.MemorizeOpenHelper;
 
 public class MemorizeDB {
 
-    public static final String DB_NAME="memorize";
-    public static final int VERSION=1;
-    public static final int NO_FATHER =-1;
+    private static final String DB_NAME="memorize";
+    private static final int VERSION=1;
+    private static final int NO_FATHER =0;
 
     private static MemorizeDB memorizeDB;
     private SQLiteDatabase db;
@@ -27,6 +27,10 @@ public class MemorizeDB {
         db=helper.getWritableDatabase();
     }
 
+    private List<BaseItem>list= new ArrayList<>();
+
+    private Cursor cursor;
+
     //获取MemorizeDB实例
     public synchronized static MemorizeDB getInstance(Context context){
         if(memorizeDB==null){
@@ -35,146 +39,39 @@ public class MemorizeDB {
         return memorizeDB;
     }
 
-
-//    public void saveSubject(String name,String fatherId){
-//        if(TextUtils.isEmpty(fatherId))
-//            fatherId="null";
-//        try{
-//            db.execSQL("insert into subject (name,fatherId) values(?,?)",new String[]{name,fatherId});
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-    //获取subject列表
     @SuppressLint("Recycle")
-    public List<Subject>loadSubject(int fatherId){
-        List<Subject>list=new ArrayList<Subject>();
-        //fatherId=-1,说明是首页,那么需要选出没有父节点的科目,反之需要选择父节点
-        Cursor cursor;
-        if(fatherId==NO_FATHER){
-            cursor=db.query("subject",null,"fatherId is null",
-                null,null,null,null);
-        }else{
-            cursor=db.query("subject",null,"fatherId=?",
-                    new String[]{String.valueOf(fatherId)},null,null,null);
-        }
-
-        if(cursor.moveToFirst()){
-            do{
-                Subject subject=new Subject();
-                subject.setType(BaseItem.SUBJECT_TYPE);
-                subject.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                subject.setName(cursor.getString(cursor.getColumnIndex("name")));
-                subject.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
-                list.add(subject);
-            }while(cursor.moveToNext());
+    public List<BaseItem>loadData(BaseItem nowItem){
+        list.clear();
+        if(nowItem==null){
+            cursor=db.rawQuery("select*from subject where fatherId is null",null);
+            queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+        }else
+        switch(nowItem.getType()){
+            case BaseItem.SUBJECT_TYPE:
+                cursor=db.rawQuery("select*from subject where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
+                queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+                cursor=db.rawQuery("select*from problem_set where fatherId is null and subId=?"
+                        ,new String[]{String.valueOf(nowItem.getId())});
+                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
+                break;
+            case BaseItem.PROBLEM_SET_TYPE:
+                break;
         }
         return list;
     }
 
-    //获取problemSet列表
-    @SuppressLint("Recycle")
-    public List<ProblemSet>loadProblemSet(int fatherId){
-        List<ProblemSet>list=new ArrayList<ProblemSet>();
-        //fatherId=-1,说明是首页,那么需要选出没有父节点的科目,反之需要选择父节点
-        Cursor cursor;
-        if(fatherId==NO_FATHER){
-            cursor=db.query("problem_set",null,"fatherId=null",
-                    null,null,null,null);
-        }else{
-            cursor=db.query("subject",null,"fatherId=?",
-                    new String[]{String.valueOf(fatherId)},null,null,null);
-        }
-
-        if(cursor.moveToFirst()){
-            do{
-                ProblemSet problemSet=new ProblemSet();
-                problemSet.setType(BaseItem.PROBLEM_SET_TYPE);
-                problemSet.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                problemSet.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
-                problemSet.setName(cursor.getString(cursor.getColumnIndex("name")));
-                problemSet.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
-                problemSet.setCreateTime(cursor.getString(cursor.getColumnIndex("createTime")));
-                problemSet.setViewTimes(cursor.getInt(cursor.getColumnIndex("viewTimes")));
-                problemSet.setGrade(cursor.getFloat(cursor.getColumnIndex("grade")));
-                problemSet.setTotalGrade(cursor.getFloat(cursor.getColumnIndex("totalGrade")));
-                list.add(problemSet);
-            }while(cursor.moveToNext());
-        }
-        return list;
-    }
-
-    //获取problem列表
-    @SuppressLint("Recycle")
-    public List<Problem>loadProblem(int probSetId){
-        List<Problem>list=new ArrayList<Problem>();
-        //fatherId=-1,说明是首页,那么需要选出没有父节点的科目,反之需要选择父节点
-        Cursor cursor;
-        cursor=db.query("subject",null,"fatherId=?",
-            new String[]{String.valueOf(probSetId)},null,null,null);
-
-        if(cursor.moveToFirst()){
-            do{
-                Problem problem=new Problem();
-                problem.setType(BaseItem.PROBLEM_TYPE);
-                problem.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                problem.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
-                problem.setName(cursor.getString(cursor.getColumnIndex("name")));
-                problem.setProbSetId(cursor.getInt(cursor.getColumnIndex("probSetId")));
-                problem.setCreateTime(cursor.getString(cursor.getColumnIndex("createTime")));
-                problem.setSummary(cursor.getString(cursor.getColumnIndex("summary")));
-                problem.setNumber(cursor.getInt(cursor.getColumnIndex("number")));
-                problem.setViewTimes(cursor.getInt(cursor.getColumnIndex("viewTimes")));
-                problem.setGrade(cursor.getFloat(cursor.getColumnIndex("grade")));
-                problem.setTotalGrade(cursor.getFloat(cursor.getColumnIndex("totalGrade")));
-                list.add(problem);
-            }while(cursor.moveToNext());
-        }
-        return list;
-    }
-
-    //获取knowledge列表
-    @SuppressLint("Recycle")
-    public List<Knowledge>loadKnowledge(int fatherId){
-        List<Knowledge>list=new ArrayList<Knowledge>();
-        //fatherId=-1,说明是首页,那么需要选出没有父节点的科目,反之需要选择父节点
-        Cursor cursor;
-        if(fatherId==NO_FATHER){
-            cursor=db.query("knowledge",null,"fatherId=null",
-                    null,null,null,null);
-        }else{
-            cursor=db.query("knowledge",null,"fatherId=?",
-                    new String[]{String.valueOf(fatherId)},null,null,null);
-        }
-
-        if(cursor.moveToFirst()){
-            do{
-                Knowledge knowledge=new Knowledge();
-                knowledge.setType(BaseItem.KNOWLEDGE_TYPE);
-                knowledge.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                knowledge.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
-                knowledge.setName(cursor.getString(cursor.getColumnIndex("name")));
-                knowledge.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
-                knowledge.setAnnotation(cursor.getString(cursor.getColumnIndex("annotation")));
-                list.add(knowledge);
-            }while(cursor.moveToNext());
-        }
-        return list;
-    }
     public void addItem(final BaseItem father, final String name, String type, final callBackListener listener){
         switch(type){
             case "subject":
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-//                        Log.d("这是在子线程里","");
                         try {
                             if(father==null)
                                 db.execSQL("insert into subject (name)values(?)",
                                 new String[]{name});
                             else
-                                db.execSQL("insert into subject (name,fatherId)values(?)",
+                                db.execSQL("insert into subject (name,fatherId)values(?,?)",
                                         new String[]{name, String.valueOf(father.getId())});
                             if(listener!=null)
                                 listener.onFinished();
@@ -185,9 +82,85 @@ public class MemorizeDB {
                     }
                 }).start();
                 break;
-//            case "probSet":
+            case "probSet":
+                new Thread(new Runnable() {
+                    @SuppressLint("Recycle")
+                    @Override
+                    public void run() {
+                        try{
+                            if(father.getType()==BaseItem.SUBJECT_TYPE){
+                                db.execSQL("insert into problem_set (name,subId,createTime,viewTimes,grade,totalGrade)" +
+                                        "values (?,?,(select date('now')),0,0,0)",new String[]{name, String.valueOf(father.getId())});
+                            }else if(father.getType()==BaseItem.PROBLEM_SET_TYPE){
+                                Cursor cursor;
+                                int subId=0;
+                                cursor =db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(father.getId())}); //子节点的subId和父节点相同
+                                if (cursor.moveToFirst()) {
+                                    subId=cursor.getInt(cursor.getColumnIndex("fatherId"));
+                                }
+                                db.execSQL("insert into problem_set (name,subId,fatherId,createTime,viewTimes,grade,totalGrade)" +
+                                        "values(?,?,?,(select date('now')),0,0,0)",
+                                        new String[]{name, String.valueOf(father.getId()), String.valueOf(subId)});
+                            }
+                            if(listener!=null)
+                                listener.onFinished();
+                        } catch (Exception e) {
+                            if(listener!=null)
+                                listener.onError(e);
+                        }
+                    }
+                }).start();
         }
     }
+
+    @SuppressLint("Recycle")
+    public BaseItem findBackItem(BaseItem nowItem){
+        if(nowItem==null)return null;
+        switch (nowItem.getType()){
+            case BaseItem.SUBJECT_TYPE:
+                if(nowItem.getFatherId()==NO_FATHER)return null;
+                cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(nowItem.getFatherId())});
+                break;
+            case BaseItem.PROBLEM_SET_TYPE:
+                if(nowItem.getFatherId()==NO_FATHER){//习题集没有父亲的话,它的上一级就是科目
+                    cursor=db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(nowItem.getId())});
+                    //因为nowitem不含subId字段,因此要先从数据库中查出来
+                    if(cursor.moveToFirst()){
+                        int subId=cursor.getInt(cursor.getColumnIndex("subId"));
+                        cursor= db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(subId)});
+                    }
+
+                }else{
+                    cursor=db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(nowItem.getFatherId())});
+                }
+                break;
+        }
+        BaseItem rtn=new BaseItem();
+        if(cursor.moveToFirst()){
+            rtn.setType(BaseItem.SUBJECT_TYPE);
+            rtn.setName(cursor.getString(cursor.getColumnIndex("name")));
+            rtn.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
+            rtn.setId(cursor.getInt(cursor.getColumnIndex("id")));
+        }
+        return rtn;
+
+    }
+
+
+    private void queryFromCursorToList(int type){
+        if(cursor.moveToFirst()) do {
+            BaseItem baseItem = new BaseItem();
+            baseItem.setType(type);
+            baseItem.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            baseItem.setName(cursor.getString(cursor.getColumnIndex("name")));
+            list.add(baseItem);
+        } while (cursor.moveToNext());
+    };
+
+    public String getFatherName(){
+return null;
+    }
+
     public interface callBackListener{
         void onFinished();
         void onError(Exception e);

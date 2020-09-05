@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Memorize</string>
     <string name="todo">TODO</string>
+    <string name="delete">删除</string>
+    <string name="add">新建</string>
+    <string name="rename">改名</string>
 </resources>

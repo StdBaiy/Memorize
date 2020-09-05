@@ -10,22 +10,48 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#aa0">
+        <LinearLayout
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/ic_chevron_left_black_24dp"
+                android:contentDescription="@string/todo"/>
+            <TextView
+                android:layout_width="60dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textSize="12sp"
+                android:textColor="#ccc"
+                android:layout_gravity="center_vertical"
+                android:layout_height="wrap_content"
+                android:id="@+id/prev_name"/>
+
+        </LinearLayout>
         <TextView
             android:id="@+id/title"
             android:layout_margin="10dp"
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:text="@string/app_name"
             android:layout_centerInParent="true"
-            android:textSize="20sp"/>
-
+            android:gravity="center"
+            android:textSize="25sp"/>
     </RelativeLayout>
+
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="8"
-        android:id="@+id/recycler_view"
-        android:scrollbars="vertical"/>
+        android:scrollbars="vertical" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
