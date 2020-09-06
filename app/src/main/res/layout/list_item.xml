@@ -5,19 +5,28 @@
     android:layout_margin="20dp"
     android:id="@+id/list_item">
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="250dp"
+        android:gravity="center_horizontal"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:layout_marginTop="10dp"
         android:layout_height="wrap_content"
         android:id="@+id/name"
-        android:textSize="40sp"
-        android:layout_centerInParent="true"/>
+        android:textSize="35sp"
+        android:textColor="#eee"
+        android:layout_centerHorizontal="true"/>
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:singleLine="true"
         android:id="@+id/description"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="10dp"
-        android:textSize="10sp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="15dp"
+        android:textSize="12sp"
+        android:textColor="#ddd"
         tools:ignore="SmallSp" />
 </RelativeLayout>

@@ -2,6 +2,12 @@
     <string name="app_name">Memorize</string>
     <string name="todo">TODO</string>
     <string name="delete">删除</string>
-    <string name="add">新建</string>
+    <string name="add_subject">新建科目</string>
+    <string name="add_problem_set">新建习题集</string>
+    <string name="add_problem">新建习题</string>
     <string name="rename">改名</string>
+    <string name="new_name">新名字</string>
+    <string name="cancel">取消</string>
+    <string name="ok">确定</string>
+    <string name="home">主页</string>
 </resources>

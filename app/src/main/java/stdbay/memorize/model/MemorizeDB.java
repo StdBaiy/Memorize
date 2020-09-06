@@ -8,7 +8,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import stdbay.memorize.db.MemorizeOpenHelper;
@@ -57,12 +59,13 @@ public class MemorizeDB {
             case BaseItem.PROBLEM_SET_TYPE:
                 break;
         }
+        cursor.close();
         return list;
     }
 
-    public void addItem(final BaseItem father, final String name, String type, final callBackListener listener){
+    public void addItem(final BaseItem father, final String name, int type, final callBackListener listener){
         switch(type){
-            case "subject":
+            case BaseItem.SUBJECT_TYPE:
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -82,7 +85,7 @@ public class MemorizeDB {
                     }
                 }).start();
                 break;
-            case "probSet":
+            case BaseItem.PROBLEM_SET_TYPE:
                 new Thread(new Runnable() {
                     @SuppressLint("Recycle")
                     @Override
@@ -92,12 +95,12 @@ public class MemorizeDB {
                                 db.execSQL("insert into problem_set (name,subId,createTime,viewTimes,grade,totalGrade)" +
                                         "values (?,?,(select date('now')),0,0,0)",new String[]{name, String.valueOf(father.getId())});
                             }else if(father.getType()==BaseItem.PROBLEM_SET_TYPE){
-                                Cursor cursor;
                                 int subId=0;
                                 cursor =db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(father.getId())}); //子节点的subId和父节点相同
                                 if (cursor.moveToFirst()) {
                                     subId=cursor.getInt(cursor.getColumnIndex("fatherId"));
                                 }
+                                cursor.close();
                                 db.execSQL("insert into problem_set (name,subId,fatherId,createTime,viewTimes,grade,totalGrade)" +
                                         "values(?,?,?,(select date('now')),0,0,0)",
                                         new String[]{name, String.valueOf(father.getId()), String.valueOf(subId)});
@@ -142,23 +145,88 @@ public class MemorizeDB {
             rtn.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
             rtn.setId(cursor.getInt(cursor.getColumnIndex("id")));
         }
+        cursor.close();
         return rtn;
 
     }
 
 
+    @SuppressLint("Recycle")
     private void queryFromCursorToList(int type){
         if(cursor.moveToFirst()) do {
-            BaseItem baseItem = new BaseItem();
-            baseItem.setType(type);
-            baseItem.setId(cursor.getInt(cursor.getColumnIndex("id")));
-            baseItem.setName(cursor.getString(cursor.getColumnIndex("name")));
-            list.add(baseItem);
+            BaseItem item = new BaseItem();
+            item.setType(type);
+            item.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            item.setName(cursor.getString(cursor.getColumnIndex("name")));
+
+            //查询子项
+            Cursor csr=null;
+            Map<String, Integer>map=new HashMap<>();
+            switch(type){
+                case BaseItem.SUBJECT_TYPE:
+                    csr=db.rawQuery("select id from subject where fatherId=?",new String[]{String.valueOf(item.getId())});
+                    csr.moveToFirst();
+                    map.put("子科目",csr.getCount());
+                    csr=db.rawQuery("select id from problem_set where subId=?",new String[]{String.valueOf(item.getId())});
+                    csr.moveToFirst();
+                    map.put("子习题集",csr.getCount());
+                    break;
+                case BaseItem.PROBLEM_SET_TYPE:
+                    csr=db.rawQuery("select id from problem_set where fatherId=?",new String[]{String.valueOf(item.getId())});
+                    csr.moveToFirst();
+                    map.put("子习题集",csr.getCount());
+                    csr=db.rawQuery("select id from problem where probSetId=?",new String[]{String.valueOf(item.getId())});
+                    csr.moveToFirst();
+                    map.put("子习题",csr.getCount());
+                    break;
+            }
+            item.setChildrenData(map);
+            list.add(item);
         } while (cursor.moveToNext());
+        cursor.close();
     };
 
-    public String getFatherName(){
-return null;
+    public void deleteItem(BaseItem item,callBackListener listener){
+        String sql="delete from ";
+        switch(item.getType()){
+            case BaseItem.SUBJECT_TYPE:
+                sql+="subject";
+                break;
+            case BaseItem.PROBLEM_SET_TYPE:
+                sql+="problem_set";
+                break;
+        }
+        sql+=" where id=?";
+        try {
+            db.execSQL(sql, new String[]{String.valueOf(item.getId())});
+            if(listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if(listener!=null)
+                listener.onError(e);
+        }
+    }
+
+    public void reName(BaseItem item,String newName,callBackListener listener){
+        try{
+            String sql="update ";
+            switch(item.getType()){
+                case BaseItem.SUBJECT_TYPE:
+                    sql+="subject";
+                    break;
+                case BaseItem.PROBLEM_SET_TYPE:
+                    sql+="problem_set";
+                    break;
+            }
+            sql+=" set name=? where id=?";
+            db.execSQL(sql,new String[]{newName, String.valueOf(item.getId())});
+            if(listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if(listener!=null)
+                listener.onError(e);
+        }
+
     }
 
     public interface callBackListener{

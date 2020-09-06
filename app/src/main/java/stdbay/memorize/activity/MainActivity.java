@@ -4,15 +4,16 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ import com.chad.library.adapter.base.animation.BaseAnimation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import stdbay.memorize.R;
 import stdbay.memorize.adapter.BaseItemAdapter;
@@ -36,49 +38,168 @@ public class MainActivity extends Activity{
 
     private TextView prevName;
 
-    private Button addItem;
-
-    private LinearLayout back;
-
-
     private TextView title;
 
-    private Spinner chooseType;
+    private  boolean isFromItem;
 
-    private EditText newName;
 
     private BaseItemAdapter mAdapter;
 
     private MemorizeDB memorizeDB;
 
-    private final String[] type = new String[1];
-
     private BaseItem nowItem=null;
     private BaseItem prevItem=null;
     private int nowPosition=0;
     private int modifiedPosiotion=0;
+    private static final int RENAME=-1;
 
     private List<BaseItem>data= new ArrayList<>();
 
+    private void inputTitleDialog(final int type) {
+        final EditText inputServer = new EditText(this);
+        inputServer.setFocusable(true);
+        String hint="请输入新";
+        switch (type){
+            case BaseItem.SUBJECT_TYPE:
+                hint+="科目";
+                break;
+            case BaseItem.PROBLEM_SET_TYPE:
+                hint+="习题集";
+                break;
+            case RENAME:
+                break;
+            default:
+        }
+        hint+="名称";
+        inputServer.setHint(hint);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(" ").setView(inputServer).setNegativeButton(
+                getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.ok),
+                new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name=inputServer.getText().toString();
+                        switch (type){
+                            case BaseItem.SUBJECT_TYPE:
+                            case BaseItem.PROBLEM_SET_TYPE:
+                                memorizeDB.addItem(nowItem, name, type, new MemorizeDB.callBackListener() {
+                                    @Override
+                                    public void onFinished() {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this,"添加成功",Toast.LENGTH_SHORT).show();
+                                                query();
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onError(final Exception e) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this,"添加失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
+                                break;
+                            case RENAME:
+                                memorizeDB.reName(data.get(modifiedPosiotion), name, new MemorizeDB.callBackListener() {
+                                    @Override
+                                    public void onFinished() {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this,"改名成功",Toast.LENGTH_SHORT).show();
+                                                query();
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this,"改名失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
+                                break;
+                        }
+                    }
+                });
+        builder.show();
+    }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        getMenuInflater().inflate(R.menu.modify_item, menu);
+        if(isFromItem) {
+            menu.add(0, R.id.delete_item, 0, R.string.delete);
+            menu.add(0, R.id.rename_item, 0, R.string.rename);
+        }else{
+            if(nowItem==null){
+                menu.add(0, R.id.add_subject, 0, R.string.add_subject);
+            }
+            else
+                switch (nowItem.getType()) {
+                    case BaseItem.SUBJECT_TYPE:
+                        menu.add(0, R.id.add_subject, 0, R.string.add_subject);
+                        menu.add(0, R.id.add_problem_set, 0, R.string.add_problem_set);
+                        break;
+                    case BaseItem.PROBLEM_SET_TYPE:
+                        menu.add(0, R.id.add_problem_set, 0, R.string.add_problem_set);
+                        menu.add(0, R.id.add_problem, 0, R.string.add_problem);
+                        break;
+                }
+        }
     }
 
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
-        String s;
+        String s = null;
         switch(item.getItemId()){
-            case R.id.add_item:
+            case R.id.add_subject:
                 s="add";
+                inputTitleDialog(BaseItem.SUBJECT_TYPE);
+                break;
+            case R.id.add_problem_set:
+                inputTitleDialog(BaseItem.PROBLEM_SET_TYPE);
                 break;
             case R.id.delete_item:
+                memorizeDB.deleteItem(data.get(modifiedPosiotion), new MemorizeDB.callBackListener() {
+                    @Override
+                    public void onFinished() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
+                                query();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"删除失败",Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        Log.d("sql", Objects.requireNonNull(e.getMessage()));
+                    }
+                });
                 s="delete";
                 break;
             case R.id.rename_item:
                 s="rename";
+                inputTitleDialog(RENAME);
                 break;
             default:
                 s="null";
@@ -96,11 +217,10 @@ public class MainActivity extends Activity{
         setContentView(R.layout.activity_main);
 
         prevName = findViewById(R.id.prev_name);
-        addItem = findViewById(R.id.add_item);
-        back = findViewById(R.id.back);
+        LinearLayout back = findViewById(R.id.back);
         title = findViewById(R.id.title);
-        chooseType = findViewById(R.id.choose_type);
-        newName = findViewById(R.id.new_name);
+        final ImageView menu = findViewById(R.id.menu);
+        registerForContextMenu(menu);
         rv = findViewById(R.id.recycler_view);
         registerForContextMenu(rv);
         memorizeDB=MemorizeDB.getInstance(this);
@@ -129,13 +249,15 @@ public class MainActivity extends Activity{
         });
 
         mAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
+            @SuppressLint("ResourceType")
             @Override
             public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
                 modifiedPosiotion=position;
-                return rv.showContextMenu();
+                isFromItem=true;
+                menu.showContextMenu();
+                return true;
             }
         });
-
 
         rv.setAdapter(mAdapter);
 
@@ -153,48 +275,13 @@ public class MainActivity extends Activity{
             }
         });
 
-        chooseType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
-                type[0] =(String)chooseType.getSelectedItem();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
-
-        addItem.setOnClickListener(new View.OnClickListener() {
+        menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String name=newName.getText().toString();
-                memorizeDB.addItem(nowItem, name, type[0], new MemorizeDB.callBackListener() {
-                    @Override
-                    public void onFinished() {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                newName.setText("");
-                                Toast.makeText(MainActivity.this,"bingo!",Toast.LENGTH_SHORT).show();
-                                query();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onError(final Exception e) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(MainActivity.this,"failed!",Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                });
+                isFromItem=false;
+                rv.showContextMenu();
             }
         });
-
 
         query();
     }
@@ -203,20 +290,19 @@ public class MainActivity extends Activity{
         data.clear();
         data.addAll(memorizeDB.loadData(nowItem));
         if(nowItem==null){
-            title.setText("主页");
+            title.setText(R.string.home);
             prevName.setText("");
         }else{
             title.setText(nowItem.getName());
             if(prevItem!=null)
                 prevName.setText(prevItem.getName());
             else
-                prevName.setText("主页");
+                prevName.setText(R.string.home);
         }
         mAdapter.notifyDataSetChanged();
         rv.scrollToPosition(nowPosition);
 //        MoveToPosition(mLayoutManager,nowPosition);
     }
-
     @Override
     public void onBackPressed() {
         if(nowItem==null)finish();

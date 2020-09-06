@@ -9,7 +9,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "name text not null UNIQUE ,"+
             "id integer primary key autoincrement," +
             "fatherId integer," +
-            "foreign key(fatherId)references subject(id))";
+            "foreign key(fatherId)references subject(id) on delete cascade)";
 
     private static final String CREATE_PROBLEM_SET_TABLE="create table problem_set(" +//习题集表
             "name text not null UNIQUE ," +
@@ -20,8 +20,8 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "viewTimes integer," +//查看次数
             "grade decimal(10,1)," +//得分
             "totalGrade decimal(10,1)," +//总分
-            "FOREIGN KEY(subId)REFERENCES subject(id)," +
-            "foreign key(fatherId)references problem_set(id))";
+            "FOREIGN KEY(subId)REFERENCES subject(id) on delete cascade," +
+            "foreign key(fatherId)references problem_set(id) on delete cascade)";
 
     private static final String CREATE_PROBLEM_TABLE="create table problem(" +//习题表
             "name text not null UNIQUE ," +
@@ -34,13 +34,13 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "viewTimes integer," +
             "grade decimal(10,1)," +
             "totalGrade decimal(10,1)," +
-            "foreign key(subId)references subject(id)," +
-            "foreign key(probSetId)references problem_set(id))";
+            "foreign key(subId)references subject(id) on delete cascade," +
+            "foreign key(probSetId)references problem_set(id) on delete cascade) ";
 
     private static final String CREATE_PROB_PIC_TABLE="create table prob_pic(" +//习题_图片表
             "probId integer," +
             "picPosition text," +//图片保存地址
-            "foreign key(probId)references problem(id))";
+            "foreign key(probId)references problem(id)on delete cascade)";
 
     private static final String CREATE_KNOWLEDGE_TABLE="create table knowledge(" +//知识点表
             "id integer primary key autoincrement," +
@@ -48,14 +48,14 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "name text not null UNIQUE," +
             "subId integer," +
             "annotation text," +//注解
-            "foreign key(subId) references subject(id)," +
-            "foreign key(fatherId)references knowledge(id))";
+            "foreign key(subId) references subject(id) on delete cascade," +
+            "foreign key(fatherId)references knowledge(id) on delete cascade)";
 
     private  static final String CREATE_PROB_KNOW_TABLE="create table prob_know(" +//习题_知识表
             "probId integer," +
             "knowId integer," +
-            "foreign key (probId) references problem(id)," +
-            "foreign key (knowId) references knowledge(id))";
+            "foreign key (probId) references problem(id) on delete cascade," +
+            "foreign key (knowId) references knowledge(id) on delete cascade)";
 
 
     public MemorizeOpenHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version){
