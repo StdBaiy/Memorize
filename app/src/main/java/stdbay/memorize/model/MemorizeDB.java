@@ -9,13 +9,17 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 
 import stdbay.memorize.db.MemorizeOpenHelper;
 
 public class MemorizeDB {
+    private static TreeInfo[] info;
+
 
     private static final String DB_NAME="memorize";
     private static final int VERSION=1;
@@ -32,6 +36,11 @@ public class MemorizeDB {
     private List<BaseItem>list= new ArrayList<>();
 
     private Cursor cursor;
+
+    public static TreeInfo getTreeInfo(){
+        if(info.length!=0)return info[0];
+        else  return null;
+    }
 
     //获取MemorizeDB实例
     public synchronized static MemorizeDB getInstance(Context context){
@@ -229,8 +238,125 @@ public class MemorizeDB {
 
     }
 
+
     public interface callBackListener{
         void onFinished();
         void onError(Exception e);
     }
+
+
+    public void GoThroughKnowledge(final int subId,  final callBackListener listener){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    TreeInfo rtn=new TreeInfo();
+                    TreeNode root = new TreeNode();
+                    root.setName("根");
+                    List<Integer>treeLevel=new ArrayList<>();
+                    Queue<TreeNode> queue = new LinkedList<TreeNode>();
+                    queue.offer(root);
+                    treeLevel.add(1);
+                    int length;
+                    int tmpLength = 1;
+                    while (!queue.isEmpty()) {
+                        length = tmpLength;
+                        tmpLength = 0;
+                        for (int i = 0; i < length; ++i) {
+                            if (queue.peek() == root)//根节点没有父亲
+                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId=?", new String[]{String.valueOf(subId)});
+                            else
+                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId=?",
+                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
+
+                            List<TreeNode> children = new ArrayList<>();
+                            if (cursor.moveToFirst()) {
+                                do {
+                                    TreeNode treeNode = new TreeNode();
+                                    treeNode.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                                    treeNode.setName(cursor.getString(cursor.getColumnIndex("name")));
+                                    treeNode.setFather(queue.peek());
+                                    children.add(treeNode);
+                                    queue.offer(treeNode);
+                                } while (cursor.moveToNext());
+                            }
+                            tmpLength += cursor.getCount();
+                            Objects.requireNonNull(queue.poll()).setChildren(children);
+                        }
+                        treeLevel.add(tmpLength);
+                    }
+                    rtn.setRoot(root);
+                    rtn.setTreeLevel(treeLevel);
+                    info=new TreeInfo[1];
+                    info[0]=rtn;
+                    if (listener!=null)
+                        listener.onFinished();
+                } catch (Exception e) {
+                    if (listener!=null)
+                        listener.onError(e);
+                }
+            }
+        }).start();
+    }
+
+
+//
+//    public static class GoThroughKnowledge implements Callable<TreeInfo> {
+//        private int subId;
+//        private Context mContex;
+//        public GoThroughKnowledge(Context context,int subId) {
+//            this.subId = subId;
+//            this.mContex=context;
+//        }
+//
+//        @SuppressLint("Recycle")
+//        @Override
+//        public TreeInfo call() throws Exception {
+//            try {
+//                Cursor cursor;
+//                SQLiteDatabase db=new MemorizeOpenHelper(mContex,DB_NAME,null,VERSION).getWritableDatabase();
+//
+//
+//                TreeInfo rtn=new TreeInfo();
+//                TreeNode root = new TreeNode();
+//                root.setName("根");
+//                List<Integer>treeLevel=new ArrayList<>();
+//                Queue<TreeNode> queue = new LinkedList<TreeNode>();
+//                queue.offer(root);
+//                treeLevel.add(1);
+//                int length;
+//                int tmpLength = 1;
+//                while (!queue.isEmpty()) {
+//                    length = tmpLength;
+//                    tmpLength = 0;
+//                    for (int i = 0; i < length; ++i) {
+//                        if (queue.peek() == root)//根节点没有父亲
+//                            cursor = db.rawQuery("select*from knowledge where fatherId is null and subId=?", new String[]{String.valueOf(subId)});
+//                        else
+//                            cursor = db.rawQuery("select * from knowledge where fatherId =? and subId=?",
+//                                    new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
+//
+//                        List<TreeNode> children = new ArrayList<>();
+//                        if (cursor.moveToFirst()) {
+//                            do {
+//                                TreeNode treeNode = new TreeNode();
+//                                treeNode.setId(cursor.getInt(cursor.getColumnIndex("id")));
+//                                treeNode.setName(cursor.getString(cursor.getColumnIndex("name")));
+//                                children.add(treeNode);
+//                                queue.offer(treeNode);
+//                            } while (cursor.moveToNext());
+//                        }
+//                        tmpLength += cursor.getCount();
+//                        Objects.requireNonNull(queue.poll()).setChildren(children);
+//                    }
+//                    treeLevel.add(tmpLength);
+//                }
+//                rtn.setRoot(root);
+//                rtn.setTreeLevel(treeLevel);
+//                return rtn;
+//            } catch (Exception e) {
+//                throw new ExecutionException(e);
+//            }
+//        }
+//    }
 }
