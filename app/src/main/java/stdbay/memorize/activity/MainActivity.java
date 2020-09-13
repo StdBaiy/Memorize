@@ -47,7 +47,9 @@ public class MainActivity extends Activity{
 
     private MemorizeDB memorizeDB;
 
+    //当前选定的科目,习题集,知识点或习题,由于主要属性是相似的,用它们的基类来表示
     private BaseItem nowItem=null;
+    //前一个选定的,用于简化返回操作
     private BaseItem prevItem=null;
     private int nowPosition=0;
     private int modifiedPosiotion=0;
@@ -209,7 +211,6 @@ public class MainActivity extends Activity{
     }
 
     //主体view窗口
-    @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 

@@ -122,7 +122,29 @@ public class MemorizeDB {
                         }
                     }
                 }).start();
+                break;
         }
+    }
+
+    public void addKnowledge(final int fatherId,  final int subId,final String name, final callBackListener listener){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (fatherId == NO_FATHER)
+                        db.execSQL("insert into knowledge (name,subId) values (?,?)", new String[]{name, String.valueOf(subId)});
+                    else
+                        db.execSQL("insert into knowledge (name,subId,fatherId) values(?,?,?)",
+                                new String[]{name, String.valueOf(subId), String.valueOf(fatherId)});
+                    if (listener != null)
+                        listener.onFinished();
+                } catch (SQLException e) {
+                    if (listener != null)
+                        listener.onError(e);
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     @SuppressLint("Recycle")
@@ -204,6 +226,9 @@ public class MemorizeDB {
             case BaseItem.PROBLEM_SET_TYPE:
                 sql+="problem_set";
                 break;
+            case BaseItem.KNOWLEDGE_TYPE:
+                sql+="knowledge";
+                break;
         }
         sql+=" where id=?";
         try {
@@ -225,6 +250,9 @@ public class MemorizeDB {
                     break;
                 case BaseItem.PROBLEM_SET_TYPE:
                     sql+="problem_set";
+                    break;
+                case BaseItem.KNOWLEDGE_TYPE:
+                    sql+="knowledge";
                     break;
             }
             sql+=" set name=? where id=?";
@@ -253,22 +281,24 @@ public class MemorizeDB {
                     TreeInfo rtn=new TreeInfo();
                     TreeNode root = new TreeNode();
                     root.setName("根");
-                    List<Integer>treeLevel=new ArrayList<>();
+                    List<List<TreeNode>>treeLevel=new ArrayList<>();
                     Queue<TreeNode> queue = new LinkedList<TreeNode>();
                     queue.offer(root);
-                    treeLevel.add(1);
+                    List<TreeNode>start=new ArrayList<>();
+                    start.add(root);
+                    treeLevel.add(start);
                     int length;
                     int tmpLength = 1;
                     while (!queue.isEmpty()) {
                         length = tmpLength;
                         tmpLength = 0;
+                        List<TreeNode>tmp=new ArrayList<>();
                         for (int i = 0; i < length; ++i) {
                             if (queue.peek() == root)//根节点没有父亲
                                 cursor = db.rawQuery("select*from knowledge where fatherId is null and subId=?", new String[]{String.valueOf(subId)});
                             else
                                 cursor = db.rawQuery("select * from knowledge where fatherId =? and subId=?",
                                         new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
-
                             List<TreeNode> children = new ArrayList<>();
                             if (cursor.moveToFirst()) {
                                 do {
@@ -278,12 +308,13 @@ public class MemorizeDB {
                                     treeNode.setFather(queue.peek());
                                     children.add(treeNode);
                                     queue.offer(treeNode);
+                                    tmp.add(treeNode);
                                 } while (cursor.moveToNext());
                             }
                             tmpLength += cursor.getCount();
                             Objects.requireNonNull(queue.poll()).setChildren(children);
                         }
-                        treeLevel.add(tmpLength);
+                        treeLevel.add(tmp);
                     }
                     rtn.setRoot(root);
                     rtn.setTreeLevel(treeLevel);
@@ -299,64 +330,16 @@ public class MemorizeDB {
         }).start();
     }
 
-
-//
-//    public static class GoThroughKnowledge implements Callable<TreeInfo> {
-//        private int subId;
-//        private Context mContex;
-//        public GoThroughKnowledge(Context context,int subId) {
-//            this.subId = subId;
-//            this.mContex=context;
-//        }
-//
-//        @SuppressLint("Recycle")
-//        @Override
-//        public TreeInfo call() throws Exception {
-//            try {
-//                Cursor cursor;
-//                SQLiteDatabase db=new MemorizeOpenHelper(mContex,DB_NAME,null,VERSION).getWritableDatabase();
-//
-//
-//                TreeInfo rtn=new TreeInfo();
-//                TreeNode root = new TreeNode();
-//                root.setName("根");
-//                List<Integer>treeLevel=new ArrayList<>();
-//                Queue<TreeNode> queue = new LinkedList<TreeNode>();
-//                queue.offer(root);
-//                treeLevel.add(1);
-//                int length;
-//                int tmpLength = 1;
-//                while (!queue.isEmpty()) {
-//                    length = tmpLength;
-//                    tmpLength = 0;
-//                    for (int i = 0; i < length; ++i) {
-//                        if (queue.peek() == root)//根节点没有父亲
-//                            cursor = db.rawQuery("select*from knowledge where fatherId is null and subId=?", new String[]{String.valueOf(subId)});
-//                        else
-//                            cursor = db.rawQuery("select * from knowledge where fatherId =? and subId=?",
-//                                    new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
-//
-//                        List<TreeNode> children = new ArrayList<>();
-//                        if (cursor.moveToFirst()) {
-//                            do {
-//                                TreeNode treeNode = new TreeNode();
-//                                treeNode.setId(cursor.getInt(cursor.getColumnIndex("id")));
-//                                treeNode.setName(cursor.getString(cursor.getColumnIndex("name")));
-//                                children.add(treeNode);
-//                                queue.offer(treeNode);
-//                            } while (cursor.moveToNext());
-//                        }
-//                        tmpLength += cursor.getCount();
-//                        Objects.requireNonNull(queue.poll()).setChildren(children);
-//                    }
-//                    treeLevel.add(tmpLength);
-//                }
-//                rtn.setRoot(root);
-//                rtn.setTreeLevel(treeLevel);
-//                return rtn;
-//            } catch (Exception e) {
-//                throw new ExecutionException(e);
-//            }
-//        }
-//    }
+    //计算给定节点的叶子节点数,用于规划布局位置
+    public static int getLeavesNum(TreeNode node){
+        if(node.getChildren().isEmpty())return 1;
+        else{
+            int num=0;
+            for(int i=0;i<node.getChildren().size();++i){
+                if(node.getChildren().get(i).getChildren().isEmpty())num++;
+                else num+=getLeavesNum(node.getChildren().get(i));
+            }
+            return num;
+        }
+    }
 }

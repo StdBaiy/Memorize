@@ -4,6 +4,7 @@
     <item android:id="@+id/add_subject" android:title="@string/add_subject"/>
     <item android:id="@+id/add_problem_set" android:title="@string/add_problem_set"/>
     <item android:id="@+id/add_problem" android:title="@string/add_problem"/>
+    <item   android:id="@+id/add_knowledge" android:title="@string/add_knowledge"/>
     <item android:id="@+id/delete_item" android:title="@string/delete"/>
     <item android:id="@+id/rename_item" android:title="@string/rename"/>
 </menu>

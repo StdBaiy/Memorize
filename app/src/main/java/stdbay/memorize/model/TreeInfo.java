@@ -4,7 +4,7 @@ import java.util.List;
 
 public class TreeInfo{
     private TreeNode root;
-    private List<Integer>treeLevel;
+    private List<List<TreeNode>>treeLevel;
 
     public TreeNode getRoot() {
         return root;
@@ -14,11 +14,11 @@ public class TreeInfo{
         this.root = root;
     }
 
-    public List<Integer> getTreeLevel() {
+    public List<List<TreeNode>> getTreeLevel() {
         return treeLevel;
     }
 
-    public void setTreeLevel(List<Integer> treeLevel) {
+    public void setTreeLevel(List<List<TreeNode>> treeLevel) {
         this.treeLevel = treeLevel;
     }
 }

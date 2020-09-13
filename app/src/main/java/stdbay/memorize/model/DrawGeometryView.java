@@ -45,7 +45,7 @@ public class DrawGeometryView extends View {
         Paint redPaint = new Paint(); // 红色画笔
         redPaint.setAntiAlias(true); // 抗锯齿效果,显得绘图平滑
         redPaint.setColor(Color.WHITE); // 设置画笔颜色
-        redPaint.setStrokeWidth(5.0f);// 设置笔触宽度
+        redPaint.setStrokeWidth(3.0f);// 设置笔触宽度
         redPaint.setStyle(Style.STROKE);// 设置画笔的填充类型
 //        redPaint.setTextSize(50);//字体
 
@@ -54,7 +54,8 @@ public class DrawGeometryView extends View {
         //起点
         mPath.moveTo(beginx, beginy);
         //贝塞尔曲线
-        mPath.cubicTo((stopx-beginx)/3, beginy, (stopx-beginx)/3, stopy, stopx, stopy);
+        mPath.cubicTo((stopx+2*beginx)/3, beginy, (stopx+2*beginx)/3, stopy, stopx, stopy);
+//        mPath.quadTo((stopx+2*beginx)/3, stopy, stopx, stopy);
         //画path
         canvas.drawPath(mPath, redPaint);
     }
