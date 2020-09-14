@@ -18,7 +18,7 @@ public class ZoomScrollLayout extends RelativeLayout implements ScaleGestureDete
 
     private ScaleGestureDetector mScaleDetector;
     private GestureDetector mGestureDetector;
-    private static final float MIN_ZOOM = 0.5f;
+    private static final float MIN_ZOOM = 0.1f;
     private static final float MAX_ZOOM = 2.0f;
 
     private int mLeft, mTop, mRight, mBottom;

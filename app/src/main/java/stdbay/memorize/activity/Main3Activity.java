@@ -7,7 +7,6 @@ import android.widget.RelativeLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import stdbay.memorize.R;
-import stdbay.memorize.model.DrawGeometryView;
 import stdbay.memorize.model.TreeNode;
 
 public class Main3Activity extends AppCompatActivity {
@@ -20,19 +19,14 @@ public class Main3Activity extends AppCompatActivity {
         RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(TreeNode.treeNodeW, TreeNode.treeNodeH);
         p.topMargin = 200;
         p.leftMargin = 100;
-
-        RelativeLayout zoom= findViewById(R.id.zoom);
-        zoom.addView(bt,p);
-        bt=new Button(this);
+        RelativeLayout hv=findViewById(R.id.hv);
+//        RelativeLayout zoom= findViewById(R.id.zoom);
+        hv.addView(bt,p);
+        Button b=new Button(this);
+        RelativeLayout.LayoutParams p2 = new RelativeLayout.LayoutParams(TreeNode.treeNodeW, TreeNode.treeNodeH);
         p.topMargin=400;
-        p.leftMargin=300;
-        zoom.addView(bt,p);
+        p.leftMargin=200;
+        hv.addView(b,p2);
 
-        DrawGeometryView view = new DrawGeometryView(this, 0, 0, 100 , 200);
-        p = new RelativeLayout.LayoutParams(400, 400);
-        view.invalidate();
-        p.topMargin =400;
-        p.leftMargin=400;
-        zoom.addView(view,p);
     }
 }

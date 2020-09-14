@@ -20,7 +20,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "viewTimes integer," +//查看次数
             "grade decimal(10,1)," +//得分
             "totalGrade decimal(10,1)," +//总分
-            "FOREIGN KEY(subId)REFERENCES subject(id) on delete cascade," +
+            "foreign key(subId)REFERENCES subject(id) on delete cascade," +
             "foreign key(fatherId)references problem_set(id) on delete cascade)";
 
     private static final String CREATE_PROBLEM_TABLE="create table problem(" +//习题表
