@@ -4,7 +4,7 @@ import java.util.List;
 
 public class TreeNode {
     public static int treeNodeIntervalY = 150;
-    public static int treeNodeIntervalX=200;
+    public static int treeNodeIntervalX=300;
     public static int treeNodeW=150;
     public static int treeNodeH = 100;
     public int x=0,y=0;

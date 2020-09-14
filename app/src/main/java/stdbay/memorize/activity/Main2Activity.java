@@ -41,6 +41,7 @@ public class Main2Activity extends Activity {
     private static  final int ADD_KNOWLEDGE=0;
     private int subId;
     private int id;
+
     //root是树根
     TreeNode root;
     //treeArragment是按层次记录树的结构
@@ -218,7 +219,7 @@ public class Main2Activity extends Activity {
 
 
     @SuppressLint("SetTextI18n")
-    public void drawbutton(List<TreeNode> node, float treeNodeY, float treeNodeX, int treeLevel,float[]levelNum) {
+    public void drawbutton(List<TreeNode> node, float treeNodeY, float treeNodeX, int treeLevel) {
         if(node.isEmpty())return;
 
         ScaleAnimation animation = new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
@@ -240,8 +241,10 @@ public class Main2Activity extends Activity {
         //topY存储的是本层最高节点位置
         float topY = treeNodeY - cnum * TreeNode.treeNodeIntervalY/2;
 
+        //doneNum代表本次已经绘制的叶子节点个数,用于调整位置
+        int doneNum=0;
         for (int i = 0; i < node.size(); i++) {
-            float finalTreeNodeY=(int)(topY+(levelNum[treeLevel]+(float)(memorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
+            float finalTreeNodeY=(int)(topY+(doneNum+(float)(memorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
             float finalTreeNodeX = treeNodeX + TreeNode.treeNodeIntervalX;
 
 //            定义及设置button属性
@@ -301,8 +304,8 @@ public class Main2Activity extends Activity {
                 lineParams.leftMargin = lineStartX + TreeNode.treeNodeW;
                 insertLayout.addView(view, lineParams);
             }
-            levelNum[treeLevel]+=(memorizeDB.getLeavesNum(node.get(i)));
-            drawbutton(node.get(i).getChildren(),finalTreeNodeY, finalTreeNodeX,treeLevel + 1,levelNum);
+            doneNum+=(memorizeDB.getLeavesNum(node.get(i)));
+            drawbutton(node.get(i).getChildren(),finalTreeNodeY, finalTreeNodeX,treeLevel + 1);
         }
     }
 
@@ -323,12 +326,11 @@ public class Main2Activity extends Activity {
                         //计算需要画布的大小,防止图形显示不全
                         //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
                         height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
-                        drawbutton(Root,height, 200, 0,new float[treeArragment.size()]);
+                        drawbutton(Root,height/2, 50, 0);
 //                        hv.scrollTo(0,height/2);
                     }
                 });
             }
-
             @Override
             public void onError(final Exception e) {
                 runOnUiThread(new Runnable() {
