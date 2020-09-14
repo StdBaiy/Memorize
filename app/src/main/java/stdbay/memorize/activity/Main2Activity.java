@@ -25,7 +25,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.shizhefei.view.hvscrollview.HVScrollView;
-import com.xuliwen.zoom.ZoomLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +35,7 @@ import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.DrawGeometryView;
 import stdbay.memorize.model.MemorizeDB;
 import stdbay.memorize.model.TreeNode;
+import stdbay.memorize.view.ZoomScrollLayout;
 
 @SuppressWarnings("ALL")
 public class Main2Activity extends Activity {
@@ -51,7 +51,7 @@ public class Main2Activity extends Activity {
 
 
     private ProgressDialog progressDialog;
-    private ZoomLayout zoom;
+    private ZoomScrollLayout zoom;
 
 
     //在获取了数信息之后,修改宽高以适应屏幕
@@ -125,7 +125,7 @@ public class Main2Activity extends Activity {
         setContentView(R.layout.activity_main2);
 
         memorizeDB=MemorizeDB.getInstance(this);
-        hv = findViewById(R.id.hvscrollview);
+//        hv = findViewById(R.id.hvscrollview);
 
 //        hv.setOnTouchListener(new View.OnTouchListener() {
 //            @Override
@@ -159,9 +159,9 @@ public class Main2Activity extends Activity {
         //需要减去状态栏高度
         height = dm.heightPixels-getStatusBarHeight();
         width = dm.widthPixels;
-//
-        LayoutParams layoutParams = new LayoutParams(width,height);
-        insertLayout.setLayoutParams(layoutParams);
+
+//        LayoutParams layoutParams = new LayoutParams(width,height);
+//        insertLayout.setLayoutParams(layoutParams);
 //        registerForContextMenu(insertLayout);
         showKnowledgeTree(5);
     }
@@ -216,17 +216,20 @@ public class Main2Activity extends Activity {
             treeNodeView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-//                    hv.scrollTo((int) (W-(width/2/hv.getScaleX())), (int) (H-(500/hv.getScaleX())));
-//                    hv.scrollTo((int) (W), (int) (H));
                     subId=5;
                     nowTreeNode.setId(nodeInstance.getId());
-//                    view.showContextMenu();
-                    float f=hv.getScaleX();
-//                    zoom.smoothScale(1.5f, 0, 0);
-                    hv.scrollTo(0,0);
-//                    hv.scrollTo(0,0);
-//                    Toast.makeText(Main2Activity.this,""+hv.getScaleX()+" w"+hv.getWidth()
-//                            +" h:"+hv.getHeight(),Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Main2Activity.this,"OK",0).show();
+//                    zoom.scrollTo(0,0);
+                    zoom.scrollTo(0,0);
+                }
+            });
+
+            treeNodeView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    subId=5;
+                    nowTreeNode.setId(nodeInstance.getId());
+                    return false;
                 }
             });
 //            把button通过布局add到页面里
@@ -279,6 +282,9 @@ public class Main2Activity extends Activity {
                         //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
                         if(height<MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY)
                             height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
+                        LayoutParams layoutParams = new LayoutParams(width+500,height+500);
+                        insertLayout.setLayoutParams(layoutParams);
+                        zoom.setLayoutParams(layoutParams);
                         drawbutton(Root,height/2, 50, 0);
 //                        hv.scrollTo(0,height/2);
                     }
