@@ -18,7 +18,8 @@ import java.util.Queue;
 import stdbay.memorize.db.MemorizeOpenHelper;
 
 public class MemorizeDB {
-    private static TreeInfo[] info;
+    private static TreeNode root;
+    private static int treeDepth;
 
 
     private static final String DB_NAME="memorize";
@@ -37,10 +38,9 @@ public class MemorizeDB {
 
     private Cursor cursor;
 
-    public static TreeInfo getTreeInfo(){
-        if(info.length!=0)return info[0];
-        else  return null;
-    }
+        public static TreeNode getTreeRoot(){
+            return root;
+        }
 
     //获取MemorizeDB实例
     public synchronized static MemorizeDB getInstance(Context context){
@@ -48,6 +48,10 @@ public class MemorizeDB {
             memorizeDB=new MemorizeDB(context);
         }
         return memorizeDB;
+    }
+
+    public static int getTreeDepth() {
+        return treeDepth;
     }
 
     @SuppressLint("Recycle")
@@ -278,21 +282,16 @@ public class MemorizeDB {
             @Override
             public void run() {
                 try {
-                    TreeInfo rtn=new TreeInfo();
                     TreeNode root = new TreeNode();
                     root.setName("根");
-                    List<List<TreeNode>>treeLevel=new ArrayList<>();
                     Queue<TreeNode> queue = new LinkedList<TreeNode>();
                     queue.offer(root);
-                    List<TreeNode>start=new ArrayList<>();
-                    start.add(root);
-                    treeLevel.add(start);
                     int length;
                     int tmpLength = 1;
+                    MemorizeDB.treeDepth=0;
                     while (!queue.isEmpty()) {
                         length = tmpLength;
                         tmpLength = 0;
-                        List<TreeNode>tmp=new ArrayList<>();
                         for (int i = 0; i < length; ++i) {
                             if (queue.peek() == root)//根节点没有父亲
                                 cursor = db.rawQuery("select*from knowledge where fatherId is null and subId is null", null);
@@ -308,18 +307,14 @@ public class MemorizeDB {
                                     treeNode.setFather(queue.peek());
                                     children.add(treeNode);
                                     queue.offer(treeNode);
-                                    tmp.add(treeNode);
                                 } while (cursor.moveToNext());
                             }
                             tmpLength += cursor.getCount();
                             Objects.requireNonNull(queue.poll()).setChildren(children);
                         }
-                        treeLevel.add(tmp);
+                        MemorizeDB.treeDepth++;
                     }
-                    rtn.setRoot(root);
-                    rtn.setTreeLevel(treeLevel);
-                    info=new TreeInfo[1];
-                    info[0]=rtn;
+                    MemorizeDB.root=root;
                     if (listener!=null)
                         listener.onFinished();
                 } catch (Exception e) {

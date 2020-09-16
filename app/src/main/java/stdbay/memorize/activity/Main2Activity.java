@@ -248,8 +248,7 @@ public class Main2Activity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        root=MemorizeDB.getTreeInfo().getRoot();
-                        treeArragment=MemorizeDB.getTreeInfo().getTreeLevel();
+                        root=MemorizeDB.getTreeRoot();
                         closeProgressDialog();
 //                        Toast.makeText(Main2Activity.this,"成功",Toast.LENGTH_SHORT).show();
                         List<TreeNode>Root=new ArrayList<>();
@@ -261,7 +260,7 @@ public class Main2Activity extends Activity {
                         LayoutParams layoutParams = new LayoutParams(width+500,height+500);
                         insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
-                        drawbutton(Root,height/2, 50, 0);
+                        drawbutton(Root,height, 50, 0);
 //                        hv.scrollTo(0,height/2);
                     }
                 });

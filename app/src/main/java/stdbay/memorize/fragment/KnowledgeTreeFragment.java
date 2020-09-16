@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -52,6 +51,8 @@ public class KnowledgeTreeFragment extends Fragment {
 
 
     private ProgressDialog progressDialog;
+
+    ScaleAnimation animation;
 
 
     //在获取了数信息之后,修改宽高以适应屏幕
@@ -131,11 +132,17 @@ public class KnowledgeTreeFragment extends Fragment {
             memorizeDB=MemorizeDB.getInstance(getActivity());
             hv = view.findViewById(R.id.hvscroll);
             insertLayout=view.findViewById(R.id.canvas);
+            animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
+                    Animation.RELATIVE_TO_SELF, 0.5f);
+            animation.setInterpolator(new OvershootInterpolator());
+            animation.setStartOffset(50);// 动画延迟
+            animation.setFillAfter(false);
+            animation.setDuration(500);
 
-            DisplayMetrics dm = getResources().getDisplayMetrics();
-            //需要减去状态栏高度
-            height = dm.heightPixels-getStatusBarHeight();
-            width = dm.widthPixels;
+//            DisplayMetrics dm = getResources().getDisplayMetrics();
+//            //需要减去状态栏高度
+//            height = dm.heightPixels-getStatusBarHeight();
+//            width = dm.widthPixels;
 
             showKnowledgeTree(5);
         }
@@ -146,12 +153,6 @@ public class KnowledgeTreeFragment extends Fragment {
     private void drawbutton(List<TreeNode> node, float treeNodeY, final float treeNodeX, int treeLevel) {
         if(node.isEmpty())return;
 
-        ScaleAnimation animation = new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f);
-        animation.setInterpolator(new OvershootInterpolator());
-        animation.setStartOffset(50);// 动画延迟
-        animation.setFillAfter(true);
-        animation.setDuration(500);
 
 //        存储线的起点y坐标
         float lineStartY = treeNodeY+ (TreeNode.treeNodeH >> 1);
@@ -181,7 +182,7 @@ public class KnowledgeTreeFragment extends Fragment {
             treeNodeView.setTextSize(10 - (int) Math.sqrt(node.get(i).getName().length() - 1));//调整字体
             treeNodeView.setText(node.get(i).getName());
 //            定义及设置出场动画
-//            treeNodeView.startAnimation(animation);
+            treeNodeView.startAnimation(animation);
 
             //把当前node实例化存储,用于view的点击事件的调用
             final TreeNode nodeInstance =node.get(i);
@@ -221,18 +222,17 @@ public class KnowledgeTreeFragment extends Fragment {
                 RelativeLayout.LayoutParams lineParams;
                 if (lineDeltaY >= 0) {
                     //+5是为了保证线条完整
-                    lineView = new DrawGeometryView(getActivity(), 0, 5, lineDeltaX, lineDeltaY+5 );
-                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (finalTreeNodeY-treeNodeY+5));
+                    lineView = new DrawGeometryView(getActivity(), 0, 5, lineDeltaX, lineDeltaY+5);
+                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (finalTreeNodeY-treeNodeY)+10);
                     lineParams.topMargin = (int) lineStartY;
                 } else {
                     //如果deltaY<0,从(0,0)开始绘制会导致图形丢失,因此需要调整位置
-                    //+2是因为了抵消正反向绘制时的损失
+                    //+5是因为了抵消正反向绘制时的损失
                     lineView = new DrawGeometryView(getActivity(), 0, -lineDeltaY+5, lineDeltaX , 5);
-                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (treeNodeY-finalTreeNodeY+5));
+                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (treeNodeY-finalTreeNodeY)+10);
                     lineParams.topMargin = (int) (lineStartY+lineDeltaY);
                 }
                 lineView.invalidate();
-//                lineView.startAnimation(animation);
                 lineParams.leftMargin = lineStartX + TreeNode.treeNodeW;
                 insertLayout.addView(lineView, lineParams);
             }
@@ -249,20 +249,19 @@ public class KnowledgeTreeFragment extends Fragment {
                 Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        assert MemorizeDB.getTreeInfo() != null;
-                        root=MemorizeDB.getTreeInfo().getRoot();
+                        root=MemorizeDB.getTreeRoot();
                         closeProgressDialog();
-//                        Toast.makeText(Main2Activity.this,"成功",Toast.LENGTH_SHORT).show();
+
                         List<TreeNode>Root=new ArrayList<>();
                         Root.add(root);
                         //计算需要画布的大小,防止图形显示不全
                         //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
-                        if(height<MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY)
-                            height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
-                        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width+500,height+500);
+                        width=MemorizeDB.getTreeDepth()*TreeNode.treeNodeIntervalX;
+                        height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
+                        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width,height);
                         insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
-                        drawbutton(Root,height/2, 50, 0);
+                        drawbutton(Root,(height-TreeNode.treeNodeH)/2, TreeNode.treeNodeW/2, 0);
                     }
                 });
             }
