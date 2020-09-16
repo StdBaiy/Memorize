@@ -47,19 +47,17 @@ public class KnowledgeTreeFragment extends Fragment {
     private TreeNode nowTreeNode=new TreeNode();
     //root是树根
     private TreeNode root;
-    //treeArrangment是按层次记录树的结构
-    private List<List<TreeNode>> treeArrangment;
+
+    private HVScrollView hv;
 
 
     private ProgressDialog progressDialog;
-    private HVScrollView hv;
 
 
     //在获取了数信息之后,修改宽高以适应屏幕
 
     private int height;
     private int width;
-    private float nowW=0,nowH=0;
 
     private RelativeLayout insertLayout;
 
@@ -145,7 +143,7 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     @SuppressLint("SetTextI18n")
-    private void drawbutton(List<TreeNode> node, float treeNodeY, float treeNodeX, int treeLevel) {
+    private void drawbutton(List<TreeNode> node, float treeNodeY, final float treeNodeX, int treeLevel) {
         if(node.isEmpty())return;
 
         ScaleAnimation animation = new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
@@ -170,7 +168,7 @@ public class KnowledgeTreeFragment extends Fragment {
         //doneNum代表本次已经绘制的叶子节点个数,用于调整位置
         int doneNum=0;
         for (int i = 0; i < node.size(); i++) {
-            float finalTreeNodeY=(int)(topY+(doneNum+(float)(MemorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
+            final float finalTreeNodeY=(int)(topY+(doneNum+(float)(MemorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
             float finalTreeNodeX = treeNodeX + TreeNode.treeNodeIntervalX;
 
 //            定义及设置button属性
@@ -188,13 +186,16 @@ public class KnowledgeTreeFragment extends Fragment {
             //把当前node实例化存储,用于view的点击事件的调用
             final TreeNode nodeInstance =node.get(i);
             registerForContextMenu(treeNodeView);
+
+            final int W= (int) treeNodeX;
+            final int H=(int) finalTreeNodeY;
             treeNodeView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     subId=5;
                     nowTreeNode.setId(nodeInstance.getId());
-                    Toast.makeText(getActivity(),"OK",Toast.LENGTH_SHORT).show();
-//                    zoom.scrollTo(0,0);
+                    Toast.makeText(getActivity(),nodeInstance.getName(),Toast.LENGTH_SHORT).show();
+                    hv.smoothScrollTo(W-500,H-500);
                 }
             });
 
@@ -242,7 +243,7 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private void showKnowledgeTree(int subId){
         showProgressDialog();
-        memorizeDB.GoThroughKnowledge(5,  new MemorizeDB.callBackListener() {
+        memorizeDB.GoThroughKnowledge(1,  new MemorizeDB.callBackListener() {
             @Override
             public void onFinished() {
                 Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
@@ -250,7 +251,6 @@ public class KnowledgeTreeFragment extends Fragment {
                     public void run() {
                         assert MemorizeDB.getTreeInfo() != null;
                         root=MemorizeDB.getTreeInfo().getRoot();
-                        treeArrangment=MemorizeDB.getTreeInfo().getTreeLevel();
                         closeProgressDialog();
 //                        Toast.makeText(Main2Activity.this,"成功",Toast.LENGTH_SHORT).show();
                         List<TreeNode>Root=new ArrayList<>();
@@ -263,7 +263,6 @@ public class KnowledgeTreeFragment extends Fragment {
                         insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
                         drawbutton(Root,height/2, 50, 0);
-//                        hv.scrollTo(0,height/2);
                     }
                 });
             }
@@ -304,7 +303,6 @@ public class KnowledgeTreeFragment extends Fragment {
                                             Toast.makeText(getActivity(),"添加知识点成功",Toast.LENGTH_SHORT).show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
-//                                            hv.scrollTo((int)nowW+width/2,0);
                                         }
                                     });
                                 }
@@ -332,7 +330,6 @@ public class KnowledgeTreeFragment extends Fragment {
                                             Toast.makeText(getActivity(),"改名成功",Toast.LENGTH_SHORT).show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
-//                                            hv.scrollTo(nowW,nowH);
                                         }
                                     });
                                 }

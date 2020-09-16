@@ -132,10 +132,10 @@ public class MemorizeDB {
             public void run() {
                 try {
                     if (fatherId == NO_FATHER)
-                        db.execSQL("insert into knowledge (name,subId) values (?,?)", new String[]{name, String.valueOf(subId)});
+                        db.execSQL("insert into knowledge (name) values (?)", new String[]{name});
                     else
-                        db.execSQL("insert into knowledge (name,subId,fatherId) values(?,?,?)",
-                                new String[]{name, String.valueOf(subId), String.valueOf(fatherId)});
+                        db.execSQL("insert into knowledge (name,fatherId) values(?,?)",
+                                new String[]{name, String.valueOf(fatherId)});
                     if (listener != null)
                         listener.onFinished();
                 } catch (SQLException e) {

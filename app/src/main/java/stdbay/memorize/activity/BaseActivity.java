@@ -2,7 +2,7 @@ package stdbay.memorize.activity;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -14,10 +14,10 @@ import stdbay.memorize.fragment.MyFragment;
 
 public class BaseActivity extends FragmentActivity implements View.OnClickListener{
 
-    private TextView observe;
-    private TextView knowledge;
-    private TextView statistics;
-    private TextView more;
+        private LinearLayout observe;
+        private LinearLayout knowledge;
+        private LinearLayout statistics;
+        private LinearLayout more;
     private MyFragment  myFragment3, myFragment4;
     private BookFragment bookFragment;
     private KnowledgeTreeFragment knowledgeTreeFragment;

@@ -13,53 +13,102 @@
         <LinearLayout
             android:id="@+id/tab_menu"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="60dp"
             android:orientation="horizontal">
 
-            <TextView
+            <LinearLayout
+                android:orientation="vertical"
                 android:id="@+id/observe"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/banner_bg"
-                android:drawablePadding="3dp"
-                android:drawableBottom="@drawable/banner_item"
-                android:gravity="center"
-                android:text="查看"
-                android:contentDescription="@string/todo" />
+                android:layout_height="match_parent"
+                android:background="@drawable/banner_bg">
 
-            <TextView
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="@string/todo"
+                    android:src="@drawable/banner_item" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="查看"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="3dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="vertical"
                 android:id="@+id/knowledge"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/banner_bg"
-                android:drawablePadding="3dp"
-                android:drawableTop="@drawable/banner_item"
-                android:gravity="center"
-                android:text="知识"/>
+                android:layout_height="match_parent"
+                android:background="@drawable/banner_bg">
 
-            <TextView
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="@string/todo"
+                    android:src="@drawable/banner_item" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="知识"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="3dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="vertical"
                 android:id="@+id/statistics"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/banner_bg"
-                android:drawablePadding="3dp"
-                android:drawableTop="@drawable/banner_item"
-                android:gravity="center"
-                android:text="统计"/>
+                android:layout_height="match_parent"
+                android:background="@drawable/banner_bg">
 
-            <TextView
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="@string/todo"
+                    android:src="@drawable/banner_item" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="统计"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="3dp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:orientation="vertical"
                 android:id="@+id/more"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/banner_bg"
-                android:drawablePadding="3dp"
-                android:drawableTop="@drawable/banner_item"
-                android:gravity="center"
-                android:text="更多"/>
+                android:layout_height="match_parent"
+                android:background="@drawable/banner_bg">
 
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="@string/todo"
+                    android:src="@drawable/banner_item" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="更多"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="3dp"/>
+            </LinearLayout>
         </LinearLayout>
  </LinearLayout>
