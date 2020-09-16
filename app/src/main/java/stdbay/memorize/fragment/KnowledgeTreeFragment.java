@@ -1,7 +1,6 @@
-package stdbay.memorize.activity;
+package stdbay.memorize.fragment;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -11,18 +10,21 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.OvershootInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.shizhefei.view.hvscrollview.HVScrollView;
 
@@ -36,17 +38,17 @@ import stdbay.memorize.model.DrawGeometryView;
 import stdbay.memorize.model.MemorizeDB;
 import stdbay.memorize.model.TreeNode;
 
-@SuppressWarnings("ALL")
-public class Main2Activity extends Activity {
+public class KnowledgeTreeFragment extends Fragment {
+
     private static  final int RENAME=-1;
     private static  final int ADD_KNOWLEDGE=0;
 
     private int subId;
     private TreeNode nowTreeNode=new TreeNode();
     //root是树根
-    TreeNode root;
-    //treeArragment是按层次记录树的结构
-    private List<List<TreeNode>> treeArragment;
+    private TreeNode root;
+    //treeArrangment是按层次记录树的结构
+    private List<List<TreeNode>> treeArrangment;
 
 
     private ProgressDialog progressDialog;
@@ -61,14 +63,20 @@ public class Main2Activity extends Activity {
 
     private RelativeLayout insertLayout;
 
-    private LayoutParams treeNodeParams;
-    private LayoutParams lineParams;
     private MemorizeDB memorizeDB;
 
+
+    public static KnowledgeTreeFragment getInstance(){
+        Bundle bundle = new Bundle();
+        KnowledgeTreeFragment myFragment = new KnowledgeTreeFragment();
+        myFragment.setArguments(bundle);
+        return myFragment;
+    }
+
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0,R.id.add_knowledge,0,R.string.add_knowledge);
+        menu.add(0, R.id.add_knowledge,0,R.string.add_knowledge);
         menu.add(0, R.id.rename_item, 0, R.string.rename);
         menu.add(0, R.id.delete_item, 0, R.string.delete);
     }
@@ -89,10 +97,10 @@ public class Main2Activity extends Activity {
                 memorizeDB.deleteItem(baseItem, new MemorizeDB.callBackListener() {
                     @Override
                     public void onFinished() {
-                        runOnUiThread(new Runnable() {
+                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(Main2Activity.this,"删除成功",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(),"删除成功",Toast.LENGTH_SHORT).show();
                                 insertLayout.removeAllViews();
                                 showKnowledgeTree(5);
 //                                hv.scrollTo(nowW,nowH);
@@ -102,10 +110,10 @@ public class Main2Activity extends Activity {
 
                     @Override
                     public void onError(Exception e) {
-                        runOnUiThread(new Runnable() {
+                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(Main2Activity.this,"删除失败",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
                             }
                         });
                         Log.d("sql", Objects.requireNonNull(e.getMessage()));
@@ -116,36 +124,28 @@ public class Main2Activity extends Activity {
         return super.onContextItemSelected(item);
     }
 
-    @SuppressLint("SetTextI18n")
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.knowledge_fragment, container, false);
+        Bundle bundle = getArguments();
+        if(bundle != null) {
+            memorizeDB=MemorizeDB.getInstance(getActivity());
+            hv = view.findViewById(R.id.hvscroll);
+            insertLayout=view.findViewById(R.id.canvas);
 
-        memorizeDB=MemorizeDB.getInstance(this);
-        hv = findViewById(R.id.hvscroll);
-        insertLayout=findViewById(R.id.canvas);
-//        Rect outSize = new Rect();
-//        getWindowManager().getDefaultDisplay().getRectSize(outSize);
-//        int left = outSize.left;
-//        int top = outSize.top;
-//        width = outSize.right;
-//        height = outSize.bottom;
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            //需要减去状态栏高度
+            height = dm.heightPixels-getStatusBarHeight();
+            width = dm.widthPixels;
 
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        //需要减去状态栏高度
-        height = dm.heightPixels-getStatusBarHeight();
-        width = dm.widthPixels;
-
-//        LayoutParams layoutParams = new LayoutParams(width,height);
-//        insertLayout.setLayoutParams(layoutParams);
-//        registerForContextMenu(insertLayout);
-        showKnowledgeTree(5);
+            showKnowledgeTree(5);
+        }
+        return view;
     }
 
-
     @SuppressLint("SetTextI18n")
-    public void drawbutton(List<TreeNode> node, float treeNodeY, float treeNodeX, int treeLevel) {
+    private void drawbutton(List<TreeNode> node, float treeNodeY, float treeNodeX, int treeLevel) {
         if(node.isEmpty())return;
 
         ScaleAnimation animation = new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
@@ -156,7 +156,7 @@ public class Main2Activity extends Activity {
         animation.setDuration(500);
 
 //        存储线的起点y坐标
-        float lineStartY = treeNodeY+TreeNode.treeNodeH/2;
+        float lineStartY = treeNodeY+ (TreeNode.treeNodeH >> 1);
 
         //获取这一层次所需的宽度
         int leavesNum=0;
@@ -165,16 +165,16 @@ public class Main2Activity extends Activity {
         }
 
         //topY存储的是本层最高节点位置
-        float topY = treeNodeY - leavesNum * TreeNode.treeNodeIntervalY/2;
+        float topY = treeNodeY - (leavesNum * TreeNode.treeNodeIntervalY >> 1);
 
         //doneNum代表本次已经绘制的叶子节点个数,用于调整位置
         int doneNum=0;
         for (int i = 0; i < node.size(); i++) {
-            float finalTreeNodeY=(int)(topY+(doneNum+(float)(memorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
+            float finalTreeNodeY=(int)(topY+(doneNum+(float)(MemorizeDB.getLeavesNum(node.get(i)))/2)*TreeNode.treeNodeIntervalY);
             float finalTreeNodeX = treeNodeX + TreeNode.treeNodeIntervalX;
 
 //            定义及设置button属性
-            Button treeNodeView=new Button(Main2Activity.this);
+            Button treeNodeView=new Button(getActivity());
             treeNodeView.setBackgroundResource(R.drawable.green_corner);
             treeNodeView.setTextColor(Color.WHITE);
             treeNodeView.setEllipsize(TextUtils.TruncateAt.END);
@@ -187,15 +187,13 @@ public class Main2Activity extends Activity {
 
             //把当前node实例化存储,用于view的点击事件的调用
             final TreeNode nodeInstance =node.get(i);
-            final float H=finalTreeNodeY;
-            final float W=treeNodeX;
             registerForContextMenu(treeNodeView);
             treeNodeView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     subId=5;
                     nowTreeNode.setId(nodeInstance.getId());
-                    Toast.makeText(Main2Activity.this,"OK",0).show();
+                    Toast.makeText(getActivity(),"OK",Toast.LENGTH_SHORT).show();
 //                    zoom.scrollTo(0,0);
                 }
             });
@@ -209,7 +207,7 @@ public class Main2Activity extends Activity {
                 }
             });
 //            把button通过布局add到页面里
-            treeNodeParams = new LayoutParams(TreeNode.treeNodeW, TreeNode.treeNodeH);
+            RelativeLayout.LayoutParams treeNodeParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeW, TreeNode.treeNodeH);
             treeNodeParams.topMargin = (int) finalTreeNodeY;
             treeNodeParams.leftMargin = (int) treeNodeX;
             insertLayout.addView(treeNodeView, treeNodeParams);
@@ -219,15 +217,17 @@ public class Main2Activity extends Activity {
                 final int lineDeltaX = TreeNode.treeNodeIntervalX-TreeNode.treeNodeW;
                 final int lineStartX= (int) (treeNodeX-TreeNode.treeNodeIntervalX);
                 DrawGeometryView lineView;
+                RelativeLayout.LayoutParams lineParams;
                 if (lineDeltaY >= 0) {
-                    lineView = new DrawGeometryView(this, 0, 0, lineDeltaX, lineDeltaY );
-                    lineParams = new LayoutParams(TreeNode.treeNodeIntervalX , (int) (finalTreeNodeY-treeNodeY+10));
+                    //+5是为了保证线条完整
+                    lineView = new DrawGeometryView(getActivity(), 0, 5, lineDeltaX, lineDeltaY+5 );
+                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (finalTreeNodeY-treeNodeY+5));
                     lineParams.topMargin = (int) lineStartY;
                 } else {
                     //如果deltaY<0,从(0,0)开始绘制会导致图形丢失,因此需要调整位置
                     //+2是因为了抵消正反向绘制时的损失
-                    lineView = new DrawGeometryView(this, 0, -lineDeltaY+2, lineDeltaX , 2);
-                    lineParams = new LayoutParams(TreeNode.treeNodeIntervalX , (int) (treeNodeY-finalTreeNodeY+10));
+                    lineView = new DrawGeometryView(getActivity(), 0, -lineDeltaY+5, lineDeltaX , 5);
+                    lineParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeIntervalX , (int) (treeNodeY-finalTreeNodeY+5));
                     lineParams.topMargin = (int) (lineStartY+lineDeltaY);
                 }
                 lineView.invalidate();
@@ -235,7 +235,7 @@ public class Main2Activity extends Activity {
                 lineParams.leftMargin = lineStartX + TreeNode.treeNodeW;
                 insertLayout.addView(lineView, lineParams);
             }
-            doneNum+=(memorizeDB.getLeavesNum(node.get(i)));
+            doneNum+=(MemorizeDB.getLeavesNum(node.get(i)));
             drawbutton(node.get(i).getChildren(),finalTreeNodeY, finalTreeNodeX,treeLevel + 1);
         }
     }
@@ -245,11 +245,12 @@ public class Main2Activity extends Activity {
         memorizeDB.GoThroughKnowledge(5,  new MemorizeDB.callBackListener() {
             @Override
             public void onFinished() {
-                runOnUiThread(new Runnable() {
+                Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        assert MemorizeDB.getTreeInfo() != null;
                         root=MemorizeDB.getTreeInfo().getRoot();
-                        treeArragment=MemorizeDB.getTreeInfo().getTreeLevel();
+                        treeArrangment=MemorizeDB.getTreeInfo().getTreeLevel();
                         closeProgressDialog();
 //                        Toast.makeText(Main2Activity.this,"成功",Toast.LENGTH_SHORT).show();
                         List<TreeNode>Root=new ArrayList<>();
@@ -258,7 +259,7 @@ public class Main2Activity extends Activity {
                         //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
                         if(height<MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY)
                             height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
-                        LayoutParams layoutParams = new LayoutParams(width+500,height+500);
+                        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width+500,height+500);
                         insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
                         drawbutton(Root,height/2, 50, 0);
@@ -268,11 +269,11 @@ public class Main2Activity extends Activity {
             }
             @Override
             public void onError(final Exception e) {
-                runOnUiThread(new Runnable() {
+                Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         closeProgressDialog();
-                        Toast.makeText(Main2Activity.this,"出现错误",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(),"出现错误",Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
                 });
@@ -282,11 +283,11 @@ public class Main2Activity extends Activity {
 
 
     private void inputTitleDialog(final int subId, final int fatherId, final int type) {
-        final EditText inputServer = new EditText(this);
+        final EditText inputServer = new EditText(getActivity());
         inputServer.setFocusable(true);
         String hint="请输入知识点名称";
         inputServer.setHint(hint);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(" ").setView(inputServer).setNegativeButton(
                 getString(R.string.cancel), null);
         builder.setPositiveButton(getString(R.string.ok),
@@ -297,10 +298,10 @@ public class Main2Activity extends Activity {
                             memorizeDB.addKnowledge(fatherId, subId, name, new MemorizeDB.callBackListener() {
                                 @Override
                                 public void onFinished() {
-                                    runOnUiThread(new Runnable() {
+                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(Main2Activity.this,"添加知识点成功",Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(getActivity(),"添加知识点成功",Toast.LENGTH_SHORT).show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
 //                                            hv.scrollTo((int)nowW+width/2,0);
@@ -310,10 +311,10 @@ public class Main2Activity extends Activity {
 
                                 @Override
                                 public void onError(Exception e) {
-                                    runOnUiThread(new Runnable() {
+                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(Main2Activity.this,"添加知识点失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(getActivity(),"添加知识点失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                 }
@@ -325,10 +326,10 @@ public class Main2Activity extends Activity {
                             memorizeDB.reName(item, name, new MemorizeDB.callBackListener() {
                                 @Override
                                 public void onFinished() {
-                                    runOnUiThread(new Runnable() {
+                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(Main2Activity.this,"改名成功",Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(getActivity(),"改名成功",Toast.LENGTH_SHORT).show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
 //                                            hv.scrollTo(nowW,nowH);
@@ -338,10 +339,10 @@ public class Main2Activity extends Activity {
 
                                 @Override
                                 public void onError(Exception e) {
-                                    runOnUiThread(new Runnable() {
+                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(Main2Activity.this,"改名失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(getActivity(),"改名失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                 }
@@ -356,7 +357,7 @@ public class Main2Activity extends Activity {
 
     private void showProgressDialog(){
         if(progressDialog==null){
-            progressDialog=new ProgressDialog(this);
+            progressDialog=new ProgressDialog(getActivity());
             progressDialog.setMessage("正在加载...");
             progressDialog.setCanceledOnTouchOutside(false);
         }
@@ -368,7 +369,7 @@ public class Main2Activity extends Activity {
             progressDialog.dismiss();
     }
 
-    public int getStatusBarHeight() {
+    private int getStatusBarHeight() {
         int result = 0;
         int resourceId = getResources().getIdentifier("status_bar_height",
                 "dimen", "android");

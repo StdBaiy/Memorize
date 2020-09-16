@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+
+        <LinearLayout
+            android:id="@+id/tab_menu"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/observe"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/banner_bg"
+                android:drawablePadding="3dp"
+                android:drawableBottom="@drawable/banner_item"
+                android:gravity="center"
+                android:text="查看"
+                android:contentDescription="@string/todo" />
+
+            <TextView
+                android:id="@+id/knowledge"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/banner_bg"
+                android:drawablePadding="3dp"
+                android:drawableTop="@drawable/banner_item"
+                android:gravity="center"
+                android:text="知识"/>
+
+            <TextView
+                android:id="@+id/statistics"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/banner_bg"
+                android:drawablePadding="3dp"
+                android:drawableTop="@drawable/banner_item"
+                android:gravity="center"
+                android:text="统计"/>
+
+            <TextView
+                android:id="@+id/more"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/banner_bg"
+                android:drawablePadding="3dp"
+                android:drawableTop="@drawable/banner_item"
+                android:gravity="center"
+                android:text="更多"/>
+
+        </LinearLayout>
+ </LinearLayout>

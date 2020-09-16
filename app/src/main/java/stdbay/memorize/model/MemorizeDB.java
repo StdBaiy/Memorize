@@ -295,10 +295,10 @@ public class MemorizeDB {
                         List<TreeNode>tmp=new ArrayList<>();
                         for (int i = 0; i < length; ++i) {
                             if (queue.peek() == root)//根节点没有父亲
-                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId=?", new String[]{String.valueOf(subId)});
+                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId is null", null);
                             else
-                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId=?",
-                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
+                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId is null",
+                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId())});
                             List<TreeNode> children = new ArrayList<>();
                             if (cursor.moveToFirst()) {
                                 do {

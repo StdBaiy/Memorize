@@ -21,6 +21,7 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
     @SuppressLint("ResourceType")
     @Override
     protected void convert(BaseViewHolder helper, BaseItem item) {
+
         switch(item.getType()){
             case BaseItem.SUBJECT_TYPE:
                 helper.setBackgroundRes(R.id.list_item,R.drawable.red_corner);
@@ -29,6 +30,7 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
                 helper.setBackgroundRes(R.id.list_item, R.drawable.green_corner);
                 break;
         }
+
         Map<String, Integer>map=item.getChildrenData();
         StringBuilder description= new StringBuilder();
         for(Map.Entry<String,Integer>entry:map.entrySet()){
@@ -39,5 +41,6 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
         }
         helper.setText(R.id.name,item.getName())
                 .setText(R.id.description,description);
+
     }
 }
