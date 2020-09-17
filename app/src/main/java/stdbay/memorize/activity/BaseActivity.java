@@ -4,15 +4,18 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
+
+import com.xuexiang.xui.XUI;
+import com.xuexiang.xui.utils.StatusBarUtils;
 
 import stdbay.memorize.R;
 import stdbay.memorize.fragment.BookFragment;
 import stdbay.memorize.fragment.KnowledgeTreeFragment;
 import stdbay.memorize.fragment.MyFragment;
 
-public class BaseActivity extends FragmentActivity implements View.OnClickListener{
+public class BaseActivity extends AppCompatActivity implements View.OnClickListener{
 
         private LinearLayout observe;
         private LinearLayout knowledge;
@@ -25,11 +28,15 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        XUI.initTheme(this);
         super.onCreate(savedInstanceState);
+        StatusBarUtils.translucent(this);
         setContentView(R.layout.activity_base);
 
         bindView();
 
+        //默认进入首页
         observe.setSelected(true);
         bookFragment = BookFragment.getInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();

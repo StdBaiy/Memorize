@@ -2,6 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+<!--    这个view仅用作呼出XUI的吐司-->
+<!--    <view-->
+<!--        android:id="@+id/toast"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="0dp"/>-->
+
     <com.shizhefei.view.hvscrollview.HVScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

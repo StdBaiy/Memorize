@@ -20,8 +20,7 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
 
     @SuppressLint("ResourceType")
     @Override
-    protected void convert(BaseViewHolder helper, BaseItem item) {
-
+    protected void convert(BaseViewHolder helper, final BaseItem item) {
         switch(item.getType()){
             case BaseItem.SUBJECT_TYPE:
                 helper.setBackgroundRes(R.id.list_item,R.drawable.red_corner);
@@ -41,6 +40,7 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
         }
         helper.setText(R.id.name,item.getName())
                 .setText(R.id.description,description);
+
 
     }
 }

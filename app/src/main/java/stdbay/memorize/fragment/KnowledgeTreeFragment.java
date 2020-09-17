@@ -1,11 +1,9 @@
 package stdbay.memorize.fragment;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -17,15 +15,17 @@ import android.view.animation.Animation;
 import android.view.animation.OvershootInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.shizhefei.view.hvscrollview.HVScrollView;
+import com.xuexiang.xui.utils.SnackbarUtils;
+import com.xuexiang.xui.utils.WidgetUtils;
+import com.xuexiang.xui.widget.dialog.MiniLoadingDialog;
+import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +39,10 @@ import stdbay.memorize.model.TreeNode;
 
 public class KnowledgeTreeFragment extends Fragment {
 
+    MiniLoadingDialog loadingDialog;
+
+    View toast;
+
     private static  final int RENAME=-1;
     private static  final int ADD_KNOWLEDGE=0;
 
@@ -50,9 +54,9 @@ public class KnowledgeTreeFragment extends Fragment {
     private HVScrollView hv;
 
 
-    private ProgressDialog progressDialog;
+//    private ProgressDialog progressDialog;
 
-    ScaleAnimation animation;
+    private ScaleAnimation animation;
 
 
     //在获取了数信息之后,修改宽高以适应屏幕
@@ -64,6 +68,11 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private MemorizeDB memorizeDB;
 
+    @Override
+    public void onDestroyView() {
+        loadingDialog.recycle();
+        super.onDestroyView();
+    }
 
     public static KnowledgeTreeFragment getInstance(){
         Bundle bundle = new Bundle();
@@ -84,10 +93,10 @@ public class KnowledgeTreeFragment extends Fragment {
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         switch(item.getItemId()){
             case R.id.add_knowledge:
-                inputTitleDialog(subId,nowTreeNode.getId(),ADD_KNOWLEDGE);
+                showInput(subId,nowTreeNode.getId(),ADD_KNOWLEDGE);
                 break;
             case R.id.rename_item:
-                inputTitleDialog(subId,nowTreeNode.getId(),RENAME);
+                showInput(subId,nowTreeNode.getId(),RENAME);
                 break;
             case R.id.delete_item:
                 BaseItem baseItem=new BaseItem();
@@ -99,7 +108,8 @@ public class KnowledgeTreeFragment extends Fragment {
                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(getActivity(),"删除成功",Toast.LENGTH_SHORT).show();
+                                SnackbarUtils.Short(hv,"删除成功")
+                                        .confirm().show();
                                 insertLayout.removeAllViews();
                                 showKnowledgeTree(5);
 //                                hv.scrollTo(nowW,nowH);
@@ -112,7 +122,9 @@ public class KnowledgeTreeFragment extends Fragment {
                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
+//                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
+                                SnackbarUtils.Short(hv,"删除失败")
+                                        .danger().show();
                             }
                         });
                         Log.d("sql", Objects.requireNonNull(e.getMessage()));
@@ -129,9 +141,15 @@ public class KnowledgeTreeFragment extends Fragment {
         View view = inflater.inflate(R.layout.knowledge_fragment, container, false);
         Bundle bundle = getArguments();
         if(bundle != null) {
+
+
+
+            loadingDialog = WidgetUtils.getMiniLoadingDialog(Objects.requireNonNull(getContext()));
+
             memorizeDB=MemorizeDB.getInstance(getActivity());
             hv = view.findViewById(R.id.hvscroll);
             insertLayout=view.findViewById(R.id.canvas);
+
             animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
                     Animation.RELATIVE_TO_SELF, 0.5f);
             animation.setInterpolator(new OvershootInterpolator());
@@ -195,7 +213,7 @@ public class KnowledgeTreeFragment extends Fragment {
                 public void onClick(View view) {
                     subId=5;
                     nowTreeNode.setId(nodeInstance.getId());
-                    Toast.makeText(getActivity(),nodeInstance.getName(),Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getActivity(),nodeInstance.getName(),Toast.LENGTH_SHORT).show();
                     hv.smoothScrollTo(W-500,H-500);
                 }
             });
@@ -242,7 +260,7 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     private void showKnowledgeTree(int subId){
-        showProgressDialog();
+        loadingDialog.show();
         memorizeDB.GoThroughKnowledge(1,  new MemorizeDB.callBackListener() {
             @Override
             public void onFinished() {
@@ -250,7 +268,7 @@ public class KnowledgeTreeFragment extends Fragment {
                     @Override
                     public void run() {
                         root=MemorizeDB.getTreeRoot();
-                        closeProgressDialog();
+                        loadingDialog.dismiss();
 
                         List<TreeNode>Root=new ArrayList<>();
                         Root.add(root);
@@ -270,8 +288,9 @@ public class KnowledgeTreeFragment extends Fragment {
                 Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        closeProgressDialog();
-                        Toast.makeText(getActivity(),"出现错误",Toast.LENGTH_SHORT).show();
+                        loadingDialog.dismiss();
+                        SnackbarUtils.Short(hv,"出现错误")
+                                .danger().show();
                         e.printStackTrace();
                     }
                 });
@@ -280,18 +299,20 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
 
-    private void inputTitleDialog(final int subId, final int fatherId, final int type) {
-        final EditText inputServer = new EditText(getActivity());
-        inputServer.setFocusable(true);
-        String hint="请输入知识点名称";
-        inputServer.setHint(hint);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(" ").setView(inputServer).setNegativeButton(
-                getString(R.string.cancel), null);
-        builder.setPositiveButton(getString(R.string.ok),
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        String name=inputServer.getText().toString();
+
+    private void showInput(final int subId, final int fatherId, final int type){
+        String s="";
+        if(type==ADD_KNOWLEDGE)
+            s="新建知识点";
+        else if(type==RENAME)
+            s="重命名";
+        new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                .title(s)
+                .inputType(InputType.TYPE_CLASS_TEXT)
+                .input("请输入名称", "", false,(new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull final MaterialDialog dialog, CharSequence input) {
+                        String name=input.toString();
                         if(type==ADD_KNOWLEDGE){
                             memorizeDB.addKnowledge(fatherId, subId, name, new MemorizeDB.callBackListener() {
                                 @Override
@@ -299,7 +320,8 @@ public class KnowledgeTreeFragment extends Fragment {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(getActivity(),"添加知识点成功",Toast.LENGTH_SHORT).show();
+                                            SnackbarUtils.Short(hv,"添加知识点成功")
+                                                    .confirm().show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
                                         }
@@ -311,7 +333,8 @@ public class KnowledgeTreeFragment extends Fragment {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(getActivity(),"添加知识点失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            SnackbarUtils.Short(hv,"添加知识点失败,请检查是否有同名项")
+                                                    .danger().show();
                                         }
                                     });
                                 }
@@ -326,7 +349,8 @@ public class KnowledgeTreeFragment extends Fragment {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(getActivity(),"改名成功",Toast.LENGTH_SHORT).show();
+                                            SnackbarUtils.Short(hv,"改名成功")
+                                                    .confirm().show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree(5);
                                         }
@@ -338,32 +362,21 @@ public class KnowledgeTreeFragment extends Fragment {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(getActivity(),"改名失败,请检查是否有同名项",Toast.LENGTH_SHORT).show();
+                                            SnackbarUtils.Short(hv,"改名失败,请检查是否有同名项")
+                                                    .danger().show();
                                         }
                                     });
                                 }
                             });
                         }
                     }
-                });
-        builder.show();
+                }))
+                .positiveText("确认")
+                .negativeText("取消")
+                .cancelable(true)
+                .show();
     }
 
-
-
-    private void showProgressDialog(){
-        if(progressDialog==null){
-            progressDialog=new ProgressDialog(getActivity());
-            progressDialog.setMessage("正在加载...");
-            progressDialog.setCanceledOnTouchOutside(false);
-        }
-        progressDialog.show();
-    }
-
-    private void closeProgressDialog(){
-        if(progressDialog!=null)
-            progressDialog.dismiss();
-    }
 
     private int getStatusBarHeight() {
         int result = 0;
