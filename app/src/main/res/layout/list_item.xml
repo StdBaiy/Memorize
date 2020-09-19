@@ -5,7 +5,8 @@
     android:layout_margin="20dp"
     android:id="@+id/list_item">
     <TextView
-        android:layout_width="250dp"
+        android:layout_width="match_parent"
+        android:layout_marginStart="40dp"
         android:gravity="center_horizontal"
         android:ellipsize="end"
         android:singleLine="true"

@@ -1,22 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#555">
 
-<!--    这个view仅用作呼出XUI的吐司-->
-<!--    <view-->
-<!--        android:id="@+id/toast"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"/>-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="#575"
+        android:gravity="center"
+        android:orientation="horizontal">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="请选择科目"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            tools:ignore="HardcodedText" />
+
+        <com.xuexiang.xui.widget.spinner.materialspinner.MaterialSpinner
+            android:id="@+id/spinner"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            style="@style/SpinnerStyle" />
+    </LinearLayout>
     <com.shizhefei.view.hvscrollview.HVScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#555"
+        android:overScrollMode="never"
         android:id="@+id/hvscroll">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/canvas"/>
     </com.shizhefei.view.hvscrollview.HVScrollView>
+
 </LinearLayout>

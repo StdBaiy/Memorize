@@ -62,8 +62,19 @@
                 android:contentDescription="@string/todo" />
         </LinearLayout>
     </RelativeLayout>
-
+    <TextView
+        android:id="@+id/notice"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="8"
+        android:textSize="25sp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="暂无内容,点击右上角添加"
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
     <androidx.recyclerview.widget.RecyclerView
+        android:overScrollMode="never"
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"

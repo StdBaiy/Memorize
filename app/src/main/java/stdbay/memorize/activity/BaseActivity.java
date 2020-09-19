@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.xuexiang.xui.XUI;
@@ -15,17 +15,17 @@ import stdbay.memorize.fragment.BookFragment;
 import stdbay.memorize.fragment.KnowledgeTreeFragment;
 import stdbay.memorize.fragment.MyFragment;
 
-public class BaseActivity extends AppCompatActivity implements View.OnClickListener{
+public class BaseActivity extends FragmentActivity implements View.OnClickListener{
 
-        private LinearLayout observe;
-        private LinearLayout knowledge;
-        private LinearLayout statistics;
-        private LinearLayout more;
-    private MyFragment  myFragment3, myFragment4;
-    private BookFragment bookFragment;
-    private KnowledgeTreeFragment knowledgeTreeFragment;
+    private LinearLayout observe;
+    private LinearLayout knowledge;
+    private LinearLayout statistics;
+    private LinearLayout more;
+    public MyFragment  myFragment3, myFragment4;
+    public BookFragment bookFragment;
+    public KnowledgeTreeFragment knowledgeTreeFragment;
 
-
+    public void f(){}
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -35,13 +35,13 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_base);
 
         bindView();
-
         //默认进入首页
         observe.setSelected(true);
         bookFragment = BookFragment.getInstance();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, bookFragment);
         transaction.commit();
+
     }
 
     private void bindView(){
@@ -49,7 +49,6 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
         knowledge = findViewById(R.id.knowledge);
         statistics = findViewById(R.id.statistics);
         more = findViewById(R.id.more);
-
         observe.setOnClickListener(this);
         knowledge.setOnClickListener(this);
         statistics.setOnClickListener(this);
@@ -57,7 +56,7 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //重置所有文本的选中状态
-    public void selected(){
+    public void clearSelected(){
         observe.setSelected(false);
         knowledge.setSelected(false);
         statistics.setSelected(false);
@@ -84,7 +83,7 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         hideAllFragment(transaction);
-        selected();
+        clearSelected();
         switch (v.getId()){
             case R.id.observe:
                 observe.setSelected(true);  // 设置 为 选中状态
@@ -92,16 +91,21 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
                     bookFragment = BookFragment.getInstance();
                     transaction.add(R.id.fragment_container, bookFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
-                    transaction.show(bookFragment);
+//                    if(bookFragment.isHidden())
+                        transaction.show(bookFragment);
+                        if(bookFragment.getNowItem()!=null)
+                            bookFragment.onBackPressed();
                 }
                 break;
+
             case R.id.knowledge:
                 knowledge.setSelected(true);  // 设置 为 选中状态
                 if(knowledgeTreeFragment == null){    // 如果 bookFragment 不存在 就创建一个
                     knowledgeTreeFragment = KnowledgeTreeFragment.getInstance();
                     transaction.add(R.id.fragment_container, knowledgeTreeFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
-                    transaction.show(knowledgeTreeFragment);
+//                    if(knowledgeTreeFragment.isHidden())
+                        transaction.show(knowledgeTreeFragment);
                 }
                 break;
             case R.id.statistics:
@@ -110,7 +114,8 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
                     myFragment3 = MyFragment.getInstance("发现");
                     transaction.add(R.id.fragment_container, myFragment3);
                 } else {
-                    transaction.show(myFragment3);
+//                    if(myFragment3.isHidden())
+                        transaction.show(myFragment3);
                 }
                 break;
             case R.id.more:
@@ -119,10 +124,22 @@ public class BaseActivity extends AppCompatActivity implements View.OnClickListe
                     myFragment4 = MyFragment.getInstance("我的");
                     transaction.add(R.id.fragment_container, myFragment4);
                 } else {
-                    transaction.show(myFragment4);
+//                    if(myFragment4.isHidden())
+                        transaction.show(myFragment4);
                 }
                 break;
         }
         transaction.commit();
+        if(knowledgeTreeFragment!=null)
+            knowledgeTreeFragment.clearCookieBar();
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        if(observe.isSelected())
+            bookFragment.onBackPressed();
+        else
+            finish();
     }
 }

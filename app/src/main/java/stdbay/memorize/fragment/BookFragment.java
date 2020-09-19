@@ -51,7 +51,10 @@ public class BookFragment extends Fragment {
 
     private TextView title;
 
+    private TextView notice;
+
     private  boolean isFromItem;
+
 
 
     private BaseItemAdapter mAdapter;
@@ -93,6 +96,7 @@ public class BookFragment extends Fragment {
 
     private void bindViews(View view){
         initListPopup();
+        notice=view.findViewById(R.id.notice);
         prevName = view.findViewById(R.id.prev_name);
         LinearLayout back = view.findViewById(R.id.back);
         title = view.findViewById(R.id.title);
@@ -115,11 +119,12 @@ public class BookFragment extends Fragment {
 
         mAdapter=new BaseItemAdapter(R.layout.list_item,data);
         mAdapter.isFirstOnly(false);
+        mAdapter.setDuration(500);
         mAdapter.openLoadAnimation(new BaseAnimation() {
             @Override
             public Animator[] getAnimators(View view) {
                 return new Animator[]{
-                        ObjectAnimator.ofFloat(view,"scaleX",1,1.05f,1)
+                        ObjectAnimator.ofFloat(view,"scaleX",1,1.07f,1)
                 };
             }
         });
@@ -168,6 +173,15 @@ public class BookFragment extends Fragment {
     private void query(){
         data.clear();
         data.addAll(memorizeDB.loadData(nowItem));
+        if(data.isEmpty()) {
+            notice.setVisibility(View.VISIBLE);
+            rv.setVisibility(View.GONE);
+        }
+        else {
+            notice.setVisibility(View.GONE);
+            rv.setVisibility(View.VISIBLE);
+        }
+
         if(nowItem==null){
             title.setText(R.string.home);
             prevName.setText("");
@@ -184,7 +198,7 @@ public class BookFragment extends Fragment {
     }
 
 
-    private void onBackPressed() {
+    public void onBackPressed() {
         if(nowItem==null) Objects.requireNonNull(getActivity()).finish();
         else{
             nowItem=prevItem;
@@ -360,5 +374,8 @@ public class BookFragment extends Fragment {
                     }
                 })
                 .setHasDivider(true);
+    }
+    public BaseItem getNowItem(){
+        return nowItem;
     }
 }

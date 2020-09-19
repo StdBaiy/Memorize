@@ -70,6 +70,8 @@ public class MemorizeDB {
                 queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
                 break;
             case BaseItem.PROBLEM_SET_TYPE:
+                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
+                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
                 break;
         }
         cursor.close();
@@ -111,10 +113,10 @@ public class MemorizeDB {
                                 int subId=0;
                                 cursor =db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(father.getId())}); //子节点的subId和父节点相同
                                 if (cursor.moveToFirst()) {
-                                    subId=cursor.getInt(cursor.getColumnIndex("fatherId"));
+                                    subId=cursor.getInt(cursor.getColumnIndex("subId"));
                                 }
                                 cursor.close();
-                                db.execSQL("insert into problem_set (name,subId,fatherId,createTime,viewTimes,grade,totalGrade)" +
+                                db.execSQL("insert into problem_set (name,fatherId,subId,createTime,viewTimes,grade,totalGrade)" +
                                         "values(?,?,?,(select date('now')),0,0,0)",
                                         new String[]{name, String.valueOf(father.getId()), String.valueOf(subId)});
                             }
@@ -282,6 +284,8 @@ public class MemorizeDB {
             @Override
             public void run() {
                 try {
+
+
                     TreeNode root = new TreeNode();
                     root.setName("根");
                     Queue<TreeNode> queue = new LinkedList<TreeNode>();
@@ -336,5 +340,17 @@ public class MemorizeDB {
             }
             return num;
         }
+    }
+
+    public Map<String,Integer> getSubjects(){
+        Map<String,Integer>rtn=new HashMap<>();
+        cursor=db.rawQuery("select * from subject",null);
+        if(cursor.moveToFirst()){
+            do{
+                rtn.put(cursor.getString(cursor.getColumnIndex("name")),
+                        cursor.getInt(cursor.getColumnIndex("id")));
+            }while (cursor.moveToNext());
+        }
+        return rtn;
     }
 }
