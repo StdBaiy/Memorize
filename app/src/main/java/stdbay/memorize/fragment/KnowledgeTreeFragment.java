@@ -63,6 +63,7 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private static  final int RENAME=-1;
     private static  final int ADD_KNOWLEDGE=0;
+    private static  final int CHANGE_ANNOTATION=1;
 
     private int subId;
     private TreeNode nowTreeNode=new TreeNode();
@@ -77,7 +78,7 @@ public class KnowledgeTreeFragment extends Fragment {
     private ScaleAnimation animation;
 
 
-    //在获取了数信息之后,修改宽高以适应屏幕
+    //在获取了数信息之后,改名宽高以适应屏幕
 
     private int height;
     private int width;
@@ -112,7 +113,7 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     @SuppressLint("SetTextI18n")
-    private void drawbutton(List<TreeNode> node, float treeNodeY, final float treeNodeX, int treeLevel) {
+    private void drawbutton(final List<TreeNode> node, float treeNodeY, final float treeNodeX, int treeLevel) {
         if(node.isEmpty())return;
 
 
@@ -162,7 +163,7 @@ public class KnowledgeTreeFragment extends Fragment {
                 @Override
                 public boolean onLongClick(View view) {
                     popup.showDown(view);
-                    nowTreeNode.setId(nodeInstance.getId());
+                    nowTreeNode=nodeInstance;
                     return true;
                 }
             });
@@ -247,26 +248,23 @@ public class KnowledgeTreeFragment extends Fragment {
 
 
 
-    private void showInput(final int fatherId, final int type){
+    private void showInput( final int type){
         String s="";
-        if(type==ADD_KNOWLEDGE)
+        if(type==ADD_KNOWLEDGE) {
             s="新建知识点";
-        else if(type==RENAME)
-            s="重命名";
-        new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
-                .title(s)
-                .customView(R.layout.add_knowledge_dialog,true)
-                .positiveText("确认")
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @SuppressLint("ResourceType")
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        String name=((EditText) ((dialog).getCustomView().
-                                findViewById(R.id.knowledge_name))).getText().toString();
-                        String annotation=((EditText)(dialog.getCustomView().
-                                findViewById(R.id.knowledge_annotation))).getText().toString();
-                        if(type==ADD_KNOWLEDGE){
-                            memorizeDB.addKnowledge(fatherId, subId, name, annotation,new MemorizeDB.callBackListener() {
+            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                    .title(s)
+                    .customView(R.layout.add_knowledge_dialog,true)
+                    .positiveText("确认")
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
+                        @SuppressLint("ResourceType")
+                        @Override
+                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                            String name=((EditText) ((dialog).getCustomView().
+                                    findViewById(R.id.knowledge_name))).getText().toString();
+                            String annotation=((EditText)(dialog.getCustomView().
+                                    findViewById(R.id.knowledge_annotation))).getText().toString();
+                            memorizeDB.addKnowledge(nowTreeNode.getId(), subId, name, annotation,new MemorizeDB.callBackListener() {
                                 @Override
                                 public void onFinished() {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
@@ -291,7 +289,22 @@ public class KnowledgeTreeFragment extends Fragment {
                                     });
                                 }
                             });
-                        }else if(type==RENAME){
+                        }
+                    })
+                    .negativeText("取消")
+                    .cancelable(true)
+                    .show();
+        }
+        else if(type==RENAME) {
+            s="改名";
+            new MaterialDialog.Builder(getContext())
+                    .title(s)
+                    .negativeText("取消")
+                    .positiveText("确认")
+                    .input("请输入新名称", nowTreeNode.getName(), false, new MaterialDialog.InputCallback() {
+                        @Override
+                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                            String name=input.toString();
                             BaseItem item=new BaseItem();
                             item.setType(BaseItem.KNOWLEDGE_TYPE);
                             item.setId(nowTreeNode.getId());
@@ -305,6 +318,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                                     .confirm().show();
                                             insertLayout.removeAllViews();
                                             showKnowledgeTree();
+                                            clearCookieBar();
                                         }
                                     });
                                 }
@@ -321,25 +335,60 @@ public class KnowledgeTreeFragment extends Fragment {
                                 }
                             });
                         }
-                    }
-                })
-                .negativeText("取消")
-                .cancelable(true)
-                .show();
+                    }).show();
+        }
+        else if(type==CHANGE_ANNOTATION) {
+            s="修改注释";
+            new MaterialDialog.Builder(getContext())
+                    .title(s)
+                    .negativeText("取消")
+                    .positiveText("确认")
+                    .input("请输入新注释", nowTreeNode.getAnnotation(), true, new MaterialDialog.InputCallback() {
+                        @Override
+                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                            memorizeDB.changeKnowledgeAnnotation(nowTreeNode.getId(), input.toString(), new MemorizeDB.callBackListener() {
+                                @Override
+                                public void onFinished() {
+                                    SnackbarUtils.Short(hv,"修改注释成功")
+                                            .confirm().show();
+                                    insertLayout.removeAllViews();
+                                    showKnowledgeTree();
+                                    clearCookieBar();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    SnackbarUtils.Short(hv,"修改注释失败")
+                                            .danger().show();
+                                }
+                            });
+                        }
+                    }).show();
+        }
     }
 
     private void initListPopup() {
-        String[] tmp = new String[]{"新建知识点","重命名","删除"};
+        String[] tmp = new String[]{"新建知识点","改名","修改注释","删除"};
         popup = new XUISimplePopup(Objects.requireNonNull(getContext()), tmp)
                 .create(DensityUtils.dp2px(getContext(), 170), new XUISimplePopup.OnPopupItemClickListener() {
                     @Override
                     public void onItemClick(XUISimpleAdapter adapter, AdapterItem item, int position) {
+                        //id等于0说明是根节点,不能改名
+                        if(!item.getTitle().toString().equals("新建知识点")
+                                &&nowTreeNode.getId()==0){
+                            SnackbarUtils.Short(hv, "不能对根节点操作")
+                                    .warning().show();
+                            return;
+                        }
                         switch(item.getTitle().toString()){
                             case "新建知识点":
-                                showInput(nowTreeNode.getId(),ADD_KNOWLEDGE);
+                                showInput(ADD_KNOWLEDGE);
                                 break;
-                            case "重命名":
-                                showInput(nowTreeNode.getId(),RENAME);
+                            case "改名":
+                                showInput(RENAME);
+                                break;
+                            case "修改注释":
+                                showInput(CHANGE_ANNOTATION);
                                 break;
                             case "删除":
                                 new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
@@ -350,7 +399,6 @@ public class KnowledgeTreeFragment extends Fragment {
                                         .onPositive(new MaterialDialog.SingleButtonCallback() {
                                             @Override
                                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-
                                                 BaseItem baseItem = new BaseItem();
                                                 baseItem.setId(nowTreeNode.getId());
                                                 baseItem.setType(BaseItem.KNOWLEDGE_TYPE);
@@ -364,7 +412,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                                                         .confirm().show();
                                                                 insertLayout.removeAllViews();
                                                                 showKnowledgeTree();
-//                                hv.scrollTo(nowW,nowH);
+                                                                clearCookieBar();
                                                             }
                                                         });
                                                     }

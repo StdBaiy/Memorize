@@ -39,6 +39,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="查看"
+                    android:textColor="@drawable/banner_text_color"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="3dp"/>
             </LinearLayout>
@@ -63,6 +64,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="知识"
+                    android:textColor="@drawable/banner_text_color"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="3dp"/>
             </LinearLayout>
@@ -87,6 +89,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="统计"
+                    android:textColor="@drawable/banner_text_color"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="3dp"/>
             </LinearLayout>
@@ -110,6 +113,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="更多"
+                    android:textColor="@drawable/banner_text_color"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="3dp"/>
             </LinearLayout>

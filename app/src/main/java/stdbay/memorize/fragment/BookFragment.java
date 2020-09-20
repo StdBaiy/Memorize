@@ -158,7 +158,6 @@ public class BookFragment extends Fragment {
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                    SnackbarUtils.Short(view,"12").show();
                 onBackPressed();
             }
         });
@@ -238,7 +237,7 @@ public class BookFragment extends Fragment {
                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                SnackbarUtils.Short(title,"添加成功")
+                                                SnackbarUtils.Custom(title,"添加成功",700)
                                                         .confirm().show();
                                                 query();
                                                 //用eventbus通知知识点树进行相应更改
@@ -252,7 +251,7 @@ public class BookFragment extends Fragment {
                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                SnackbarUtils.Short(title,"添加失败,请检查是否有同名项")
+                                                SnackbarUtils.Custom(title,"添加失败,请检查是否有同名项",700)
                                                         .danger().show();
                                             }
                                         });
@@ -266,8 +265,8 @@ public class BookFragment extends Fragment {
                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                SnackbarUtils.Short(title,"改名成功")
-                                                        .confirm().show();
+                                                SnackbarUtils.Custom(title,"改名成功",700)
+                                                        .confirm().show();;
                                                 query();
                                                 EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                             }
@@ -279,7 +278,7 @@ public class BookFragment extends Fragment {
                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                SnackbarUtils.Short(title,"改名失败,请检查是否有同名项")
+                                                SnackbarUtils.Custom(title,"改名失败,请检查是否有同名项",700)
                                                         .danger().show();
                                             }
                                         });
@@ -347,7 +346,7 @@ public class BookFragment extends Fragment {
                                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                                             @Override
                                                             public void run() {
-                                                                SnackbarUtils.Short(title,"删除成功")
+                                                                SnackbarUtils.Custom(title,"删除成功",700)
                                                                         .confirm().show();
                                                                 query();
                                                                 EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
@@ -360,7 +359,7 @@ public class BookFragment extends Fragment {
                                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
                                                             @Override
                                                             public void run() {
-                                                                SnackbarUtils.Short(title,"删除失败")
+                                                                SnackbarUtils.Custom(title,"删除失败",700)
                                                                         .danger().show();
                                                             }
                                                         });

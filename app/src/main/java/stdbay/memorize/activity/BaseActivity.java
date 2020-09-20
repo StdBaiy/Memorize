@@ -109,24 +109,24 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                 knowledge.setSelected(true);  // 设置 为 选中状态
                 break;
             case R.id.statistics:
-                statistics.setSelected(true);  // 设置 为 选中状态
                 if(myFragment3 == null){
                     myFragment3 = MyFragment.getInstance("发现");
                     transaction.add(R.id.fragment_container, myFragment3);
                 } else {
 //                    if(myFragment3.isHidden())
-                        transaction.show(myFragment3);
+                    transaction.show(myFragment3);
                 }
+                statistics.setSelected(true);  // 设置 为 选中状态
                 break;
             case R.id.more:
-                more.setSelected(true);  // 设置 为 选中状态
                 if(myFragment4 == null){
                     myFragment4 = MyFragment.getInstance("我的");
                     transaction.add(R.id.fragment_container, myFragment4);
                 } else {
 //                    if(myFragment4.isHidden())
-                        transaction.show(myFragment4);
+                    transaction.show(myFragment4);
                 }
+                more.setSelected(true);  // 设置 为 选中状态
                 break;
         }
         transaction.commit();

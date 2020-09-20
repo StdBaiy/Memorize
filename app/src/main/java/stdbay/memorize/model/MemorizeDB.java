@@ -272,6 +272,19 @@ public class MemorizeDB {
 
     }
 
+    public void changeKnowledgeAnnotation(int id,String annotation,callBackListener listener){
+        try {
+            db.execSQL("update knowledge set annotation=? where id=?",
+                    new String[]{annotation,String.valueOf(id)});
+            if(listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if(listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
+    }
+
 
     public interface callBackListener{
         void onFinished();
