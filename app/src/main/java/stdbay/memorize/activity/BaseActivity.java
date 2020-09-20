@@ -1,5 +1,6 @@
 package stdbay.memorize.activity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -24,8 +25,6 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     public MyFragment  myFragment3, myFragment4;
     public BookFragment bookFragment;
     public KnowledgeTreeFragment knowledgeTreeFragment;
-
-    public void f(){}
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -35,6 +34,8 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
         setContentView(R.layout.activity_base);
 
         bindView();
+        getWindow().setNavigationBarColor(Color.parseColor("#557755"));
+
         //默认进入首页
         observe.setSelected(true);
         bookFragment = BookFragment.getInstance();
@@ -86,27 +87,26 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
         clearSelected();
         switch (v.getId()){
             case R.id.observe:
-                observe.setSelected(true);  // 设置 为 选中状态
                 if(bookFragment == null){    // 如果 bookFragment 不存在 就创建一个
                     bookFragment = BookFragment.getInstance();
                     transaction.add(R.id.fragment_container, bookFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
-//                    if(bookFragment.isHidden())
-                        transaction.show(bookFragment);
-                        if(bookFragment.getNowItem()!=null)
-                            bookFragment.onBackPressed();
+                    if(!bookFragment.isHidden() && bookFragment.getNowItem()!=null)
+                        bookFragment.onBackPressed();
+                    transaction.show(bookFragment);
                 }
+                observe.setSelected(true);  // 设置 为 选中状态
                 break;
 
             case R.id.knowledge:
-                knowledge.setSelected(true);  // 设置 为 选中状态
                 if(knowledgeTreeFragment == null){    // 如果 bookFragment 不存在 就创建一个
                     knowledgeTreeFragment = KnowledgeTreeFragment.getInstance();
                     transaction.add(R.id.fragment_container, knowledgeTreeFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
 //                    if(knowledgeTreeFragment.isHidden())
-                        transaction.show(knowledgeTreeFragment);
+                    transaction.show(knowledgeTreeFragment);
                 }
+                knowledge.setSelected(true);  // 设置 为 选中状态
                 break;
             case R.id.statistics:
                 statistics.setSelected(true);  // 设置 为 选中状态
@@ -142,4 +142,6 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
         else
             finish();
     }
+
+
 }

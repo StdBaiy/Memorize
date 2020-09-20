@@ -30,6 +30,8 @@ import com.xuexiang.xui.widget.dialog.materialdialog.DialogAction;
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
 import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +40,7 @@ import stdbay.memorize.R;
 import stdbay.memorize.adapter.BaseItemAdapter;
 import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.MemorizeDB;
+import stdbay.memorize.util.MessageEvent;
 
 //import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
 
@@ -54,8 +57,6 @@ public class BookFragment extends Fragment {
     private TextView notice;
 
     private  boolean isFromItem;
-
-
 
     private BaseItemAdapter mAdapter;
 
@@ -240,6 +241,8 @@ public class BookFragment extends Fragment {
                                                 SnackbarUtils.Short(title,"添加成功")
                                                         .confirm().show();
                                                 query();
+                                                //用eventbus通知知识点树进行相应更改
+                                                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                             }
                                         });
                                     }
@@ -266,6 +269,7 @@ public class BookFragment extends Fragment {
                                                 SnackbarUtils.Short(title,"改名成功")
                                                         .confirm().show();
                                                 query();
+                                                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                             }
                                         });
                                     }
@@ -346,6 +350,7 @@ public class BookFragment extends Fragment {
                                                                 SnackbarUtils.Short(title,"删除成功")
                                                                         .confirm().show();
                                                                 query();
+                                                                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                                             }
                                                         });
                                                     }

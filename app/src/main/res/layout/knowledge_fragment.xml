@@ -1,32 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#555">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:background="#575"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="请选择科目"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            tools:ignore="HardcodedText" />
-
+        android:background="#575">
         <com.xuexiang.xui.widget.spinner.materialspinner.MaterialSpinner
             android:id="@+id/spinner"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
+            android:layout_marginStart="180dp"
+            app:ms_dropdown_max_height="250dp"
             style="@style/SpinnerStyle" />
-    </LinearLayout>
+    </RelativeLayout>
     <com.shizhefei.view.hvscrollview.HVScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

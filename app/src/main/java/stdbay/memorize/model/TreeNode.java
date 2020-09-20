@@ -13,6 +13,7 @@ public class TreeNode {
     private TreeNode father=null;
     private List<TreeNode>children;
     private String name;
+    private String annotation;
 
     public List<TreeNode> getChildren() {
         return children;
@@ -44,5 +45,13 @@ public class TreeNode {
 
     public void setFather(TreeNode father) {
         this.father = father;
+    }
+
+    public String getAnnotation() {
+        return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+        this.annotation = annotation;
     }
 }

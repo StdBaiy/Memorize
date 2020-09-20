@@ -132,16 +132,16 @@ public class MemorizeDB {
         }
     }
 
-    public void addKnowledge(final int fatherId,  final int subId,final String name, final callBackListener listener){
+    public void addKnowledge(final int fatherId,  final int subId,final String name,final String annotation, final callBackListener listener){
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     if (fatherId == NO_FATHER)
-                        db.execSQL("insert into knowledge (name) values (?)", new String[]{name});
+                        db.execSQL("insert into knowledge (name,subId,annotation) values (?,?,?)", new String[]{name, String.valueOf(subId),annotation});
                     else
-                        db.execSQL("insert into knowledge (name,fatherId) values(?,?)",
-                                new String[]{name, String.valueOf(fatherId)});
+                        db.execSQL("insert into knowledge (name,fatherId,subId,annotation) values(?,?,?,?)",
+                                new String[]{name, String.valueOf(fatherId), String.valueOf(subId),annotation});
                     if (listener != null)
                         listener.onFinished();
                 } catch (SQLException e) {
@@ -284,24 +284,28 @@ public class MemorizeDB {
             @Override
             public void run() {
                 try {
-
-
                     TreeNode root = new TreeNode();
-                    root.setName("根");
+                    cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(subId)});
+                    if(cursor.moveToFirst()){
+                        root.setName(cursor.getString(cursor.getColumnIndex("name")));
+                    }
                     Queue<TreeNode> queue = new LinkedList<TreeNode>();
                     queue.offer(root);
                     int length;
                     int tmpLength = 1;
+
+
+
                     MemorizeDB.treeDepth=0;
                     while (!queue.isEmpty()) {
                         length = tmpLength;
                         tmpLength = 0;
                         for (int i = 0; i < length; ++i) {
                             if (queue.peek() == root)//根节点没有父亲
-                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId is null", null);
+                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId =?", new String[]{String.valueOf(subId)});
                             else
-                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId is null",
-                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId())});
+                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId =?",
+                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
                             List<TreeNode> children = new ArrayList<>();
                             if (cursor.moveToFirst()) {
                                 do {
@@ -309,6 +313,7 @@ public class MemorizeDB {
                                     treeNode.setId(cursor.getInt(cursor.getColumnIndex("id")));
                                     treeNode.setName(cursor.getString(cursor.getColumnIndex("name")));
                                     treeNode.setFather(queue.peek());
+                                    treeNode.setAnnotation(cursor.getString(cursor.getColumnIndex("annotation")));
                                     children.add(treeNode);
                                     queue.offer(treeNode);
                                 } while (cursor.moveToNext());
@@ -344,7 +349,10 @@ public class MemorizeDB {
 
     public Map<String,Integer> getSubjects(){
         Map<String,Integer>rtn=new HashMap<>();
-        cursor=db.rawQuery("select * from subject",null);
+
+        //这里仅查询科目表中的叶子结点
+        cursor=db.rawQuery("select * from subject s1 where not exists " +
+                "(select * from subject s2 where s2.fatherId in (select id from subject where id=s1.id))",null);
         if(cursor.moveToFirst()){
             do{
                 rtn.put(cursor.getString(cursor.getColumnIndex("name")),
