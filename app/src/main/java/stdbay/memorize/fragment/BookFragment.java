@@ -1,15 +1,24 @@
 package stdbay.memorize.fragment;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -32,6 +41,7 @@ import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,6 +55,11 @@ import stdbay.memorize.util.MessageEvent;
 //import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
 
 public class BookFragment extends Fragment {
+
+    private static final int TAKE_PHOTO=1;
+    private static final int CROP_PHOTO=2;
+
+
 
     private XUISimplePopup popup;
 
@@ -72,6 +87,11 @@ public class BookFragment extends Fragment {
     private static final int RENAME=-1;
 
     private List<BaseItem> data= new ArrayList<>();
+    private Uri imgUri;
+    private ImageView picture;
+
+    public BookFragment() {
+    }
 
 
     public static BookFragment getInstance(){
@@ -168,7 +188,7 @@ public class BookFragment extends Fragment {
                 rv.smoothScrollToPosition(0);
             }
         });
-    };
+    }
 
     private void query(){
         data.clear();
@@ -199,8 +219,7 @@ public class BookFragment extends Fragment {
 
 
     public void onBackPressed() {
-        if(nowItem==null) Objects.requireNonNull(getActivity()).finish();
-        else{
+        if(nowItem!=null){
             nowItem=prevItem;
             prevItem=memorizeDB.findBackItem(nowItem);
             query();
@@ -210,6 +229,55 @@ public class BookFragment extends Fragment {
     private void showInput(final int type){
         String s = "";
         switch(type){
+            case BaseItem.PROBLEM_TYPE:
+                if (getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED||
+                        getActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                    SnackbarUtils.Custom(title,"没有存取权限,请到设置中手动开启",700)
+                            .danger().show();
+                    return;
+                }
+
+
+                //先获取一个布局实例,设置一些内部方法
+                @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.add_problem_dialog,null,false) ;
+                ImageButton camera = v.findViewById(R.id.camera);
+                picture=v.findViewById(R.id.picture);
+
+
+
+                camera.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+//                        File outputImg=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+"/Memorize"),"tmp.jpg");
+//                        try {
+//                            if(outputImg.exists())
+//                                outputImg.delete();
+//                            outputImg.createNewFile();
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        imgUri=Uri.fromFile(outputImg);
+//                        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//                        intent.putExtra(MediaStore.EXTRA_OUTPUT,imgUri);
+//                        getActivity().startActivityForResult(intent,TAKE_PHOTO);
+
+                    }
+                });
+
+                //再把该布局加载到对话框
+                new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                        .title(s)
+                        .customView(v,true)
+                        .positiveText("确认")
+                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                            @SuppressLint("ResourceType")
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+
+                                }
+                            }).show();
+                return;
             case BaseItem.SUBJECT_TYPE:
                 s="新建科目";
                 break;
@@ -220,6 +288,7 @@ public class BookFragment extends Fragment {
                 s="改名";
                 break;
         }
+
 
         new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                 .title(s)
@@ -266,7 +335,7 @@ public class BookFragment extends Fragment {
                                             @Override
                                             public void run() {
                                                 SnackbarUtils.Custom(title,"改名成功",700)
-                                                        .confirm().show();;
+                                                        .confirm().show();
                                                 query();
                                                 EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                             }
@@ -324,6 +393,10 @@ public class BookFragment extends Fragment {
                     public void onItemClick(XUISimpleAdapter adapter, AdapterItem item, int position) {
 
                         switch(item.getTitle().toString()){
+
+                            case "新建习题":
+                                showInput(BaseItem.PROBLEM_TYPE);
+                                break;
                             case "新建科目":
                                 showInput(BaseItem.SUBJECT_TYPE);
                                 break;
@@ -381,5 +454,34 @@ public class BookFragment extends Fragment {
     }
     public BaseItem getNowItem(){
         return nowItem;
+    }
+
+    @SuppressLint("RestrictedApi")
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            switch (requestCode) {
+                case TAKE_PHOTO:
+                    if (resultCode == Activity.RESULT_OK) {
+                        Intent intent = new Intent("com.android.camera.action.CROP");
+                        intent.setDataAndType(imgUri, "image/*");
+                        intent.putExtra("scale", true);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
+                        getActivity().startActivityForResult(intent,CROP_PHOTO);
+                    }
+                    break;
+                case CROP_PHOTO:
+                    if (resultCode == Activity.RESULT_OK) {
+                        try {
+                            Bitmap bitmap = BitmapFactory.decodeStream(getActivity().getContentResolver().openInputStream(imgUri));
+                            picture.setImageBitmap(bitmap);
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
     }
 }

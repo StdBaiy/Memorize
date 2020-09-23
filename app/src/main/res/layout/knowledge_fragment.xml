@@ -20,6 +20,18 @@
             app:ms_dropdown_max_height="250dp"
             style="@style/SpinnerStyle" />
     </RelativeLayout>
+
+    <TextView
+        android:id="@+id/notice"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="25sp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:textColor="#ccc"
+        android:text="暂无内容,请先添加科目"
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
     <com.shizhefei.view.hvscrollview.HVScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

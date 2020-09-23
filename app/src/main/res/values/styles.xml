@@ -26,4 +26,7 @@
         <item name="ms_background_selector">@drawable/drop_down_bg</item>
         <item name="ms_dropdown_bg">@drawable/ms_drop_down_bg_radius</item>
     </style>
+
+
+
 </resources>

@@ -1,10 +1,15 @@
 package stdbay.memorize.activity;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -25,13 +30,42 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     public MyFragment  myFragment3, myFragment4;
     public BookFragment bookFragment;
     public KnowledgeTreeFragment knowledgeTreeFragment;
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         XUI.initTheme(this);
+
+        // android 7.0系统解决拍照的问题
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+        builder.detectFileUriExposure();
+
+        checkPermission();
+
+
+
         super.onCreate(savedInstanceState);
         StatusBarUtils.translucent(this);
         setContentView(R.layout.activity_base);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         bindView();
         getWindow().setNavigationBarColor(Color.parseColor("#557755"));
@@ -91,7 +125,7 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                     bookFragment = BookFragment.getInstance();
                     transaction.add(R.id.fragment_container, bookFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
-                    if(!bookFragment.isHidden() && bookFragment.getNowItem()!=null)
+                    if(!bookFragment.isHidden())
                         bookFragment.onBackPressed();
                     transaction.show(bookFragment);
                 }
@@ -137,11 +171,27 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
 
     @Override
     public void onBackPressed() {
-        if(observe.isSelected())
+        if(observe.isSelected()&&bookFragment.getNowItem()!=null)
             bookFragment.onBackPressed();
         else
             finish();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        bookFragment.onActivityResult(requestCode,resultCode,data);
+    }
 
+    public void checkPermission() {
+        boolean isGranted = true;
+        if (this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED||
+                this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            this.requestPermissions(
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission
+                            .ACCESS_FINE_LOCATION,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    102);
+    }
 }

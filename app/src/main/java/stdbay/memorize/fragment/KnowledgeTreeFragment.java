@@ -16,6 +16,7 @@ import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,6 +55,8 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private XUISimplePopup popup;
     private CookieBar cookieBar;
+
+    private TextView notice;
 
     private View view;
 
@@ -107,7 +110,6 @@ public class KnowledgeTreeFragment extends Fragment {
         Bundle bundle = getArguments();
         if(bundle != null) {
             initView();
-            showKnowledgeTree();
         }
         return view;
     }
@@ -470,20 +472,26 @@ public class KnowledgeTreeFragment extends Fragment {
         for(Map.Entry<String,Integer>entry:subjects.entrySet()){
             l.add(entry.getKey());
         }
-        if(!l.isEmpty())
-            subId=subjects.get(l.get(0));
-        mMaterialSpinner.setItems(l);
-        mMaterialSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
+        if(!l.isEmpty()) {
+            notice.setVisibility(View.GONE);
+            hv.setVisibility(View.VISIBLE);
+            subId = subjects.get(l.get(0));
+            mMaterialSpinner.setItems(l);
+            mMaterialSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
 
-            @Override
-            public void onItemSelected(MaterialSpinner spinner, int position, long id, Object item) {
-                subId = subjects.get(item.toString());
-                insertLayout.removeAllViews();
-                showKnowledgeTree();
-            }
-        }).setSelectedIndex(0);
-        mMaterialSpinner.setEnabled(true);
-
+                @Override
+                public void onItemSelected(MaterialSpinner spinner, int position, long id, Object item) {
+                    subId = subjects.get(item.toString());
+                    insertLayout.removeAllViews();
+                    showKnowledgeTree();
+                }
+            }).setSelectedIndex(0);
+            mMaterialSpinner.setEnabled(true);
+        }else{
+            mMaterialSpinner.setItems(new ArrayList<>());
+            notice.setVisibility(View.VISIBLE);
+            hv.setVisibility(View.GONE);
+        }
     }
 
     private void initView(){
@@ -493,7 +501,7 @@ public class KnowledgeTreeFragment extends Fragment {
         memorizeDB=MemorizeDB.getInstance(getActivity());
         hv = view.findViewById(R.id.hvscroll);
         insertLayout=view.findViewById(R.id.canvas);
-
+        notice=view.findViewById(R.id.notice);
         animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
         animation.setInterpolator(new OvershootInterpolator());
@@ -502,6 +510,8 @@ public class KnowledgeTreeFragment extends Fragment {
         animation.setDuration(500);
         initListPopup();
         initDropDownMenu();
+        if(hv.getVisibility()==View.VISIBLE)
+            showKnowledgeTree();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -510,7 +520,8 @@ public class KnowledgeTreeFragment extends Fragment {
             //bookFragment的内容变动,这边相应需要更新
             insertLayout.removeAllViews();
             initDropDownMenu();
-            showKnowledgeTree();
+            if(hv.getVisibility()==View.VISIBLE)
+                showKnowledgeTree();
         }
     }
 

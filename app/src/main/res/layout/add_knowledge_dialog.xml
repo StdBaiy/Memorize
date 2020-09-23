@@ -10,7 +10,6 @@
         android:id="@+id/knowledge_name"
         android:layout_width="200dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp"
         android:singleLine="true"
         android:hint="请输入名称"
         tools:ignore="Autofill,HardcodedText,TextFields" />
@@ -19,7 +18,7 @@
         android:id="@+id/knowledge_annotation"
         android:layout_width="200dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:singleLine="true"
         android:hint="请输入注释(可选)"
         tools:ignore="Autofill,HardcodedText,TextFields" />
