@@ -50,6 +50,7 @@
     <EditText
         style="@style/EditText.Normal"
         android:id="@+id/summary"
+        android:padding="5dp"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
@@ -60,24 +61,31 @@
         android:maxLength="200"
         tools:ignore="Autofill,HardcodedText,TextFields" />
 
-    <LinearLayout
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:gravity="center"-->
+<!--        android:orientation="horizontal">-->
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginEnd="40dp"-->
+<!--            android:layout_gravity="center_horizontal"-->
+<!--            android:id="@+id/picture"-->
+<!--            tools:ignore="ContentDescription" />-->
+<!--        <ImageButton-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="40dp"-->
+<!--            android:id="@+id/camera"-->
+<!--            android:background="@drawable/ic_camera_old"-->
+<!--            tools:ignore="ContentDescription" />-->
+<!--    </LinearLayout>-->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="40dp"
-            android:layout_gravity="center_horizontal"
-            android:id="@+id/picture"
-            tools:ignore="ContentDescription" />
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:id="@+id/camera"
-            android:background="@drawable/ic_camera_old"
-            tools:ignore="ContentDescription" />
-    </LinearLayout>
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:overScrollMode="never" />
 </LinearLayout>
