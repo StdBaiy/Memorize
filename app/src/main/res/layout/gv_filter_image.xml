@@ -7,7 +7,8 @@
 
     <ImageView
         android:id="@+id/fiv"
-        android:layout_width="match_parent"
+        android:layout_width="50dp"
+        android:layout_marginTop="10dp"
         android:layout_height="match_parent"
         tools:src="@color/app_color_f6" />
 
@@ -15,12 +16,11 @@
         android:id="@+id/iv_del"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@id/fiv"
-        android:layout_alignRight="@id/fiv"
-        android:paddingLeft="10dp"
-        android:paddingBottom="10dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="-5dp"
+        android:layout_alignEnd="@+id/fiv"
         android:scaleType="centerInside"
-        android:src="@drawable/ic_delete_menu"
+        android:src="@drawable/ic_delete_red"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -31,8 +31,6 @@
         android:layout_alignLeft="@id/fiv"
         android:layout_alignRight="@id/fiv"
         android:layout_alignBottom="@id/fiv"
-        android:background="#555"
-        android:drawableLeft="@drawable/ic_album"
         android:drawablePadding="5dp"
         android:gravity="center_vertical"
         android:paddingLeft="5dp"
