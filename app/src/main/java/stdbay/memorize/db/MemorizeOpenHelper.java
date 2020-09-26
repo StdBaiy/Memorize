@@ -18,14 +18,13 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "fatherId integer," +
             "createTime date," +//创建时间
             "viewTimes integer," +//查看次数
-            "grade decimal(10,1)," +//得分
-            "totalGrade decimal(10,1)," +//总分
+//            "grade decimal(10,1)," +//得分
+//            "totalGrade decimal(10,1)," +//总分
             "foreign key(subId)REFERENCES subject(id) on delete cascade," +
             "foreign key(fatherId)references problem_set(id) on delete cascade)";
 
     private static final String CREATE_PROBLEM_TABLE="create table problem(" +//习题表
-            "name text not null UNIQUE ," +
-            "id integer primary key autoincrement," +
+            "id integer primary key," +
             "probSetId integer not null," +
             "subId integer not null," +
             "number integer," +//习题编号
@@ -39,7 +38,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_PROB_PIC_TABLE="create table prob_pic(" +//习题_图片表
             "probId integer," +
-            "picPosition text," +//图片保存地址
+            "picPath text," +//图片保存地址
             "foreign key(probId)references problem(id)on delete cascade)";
 
     private static final String CREATE_KNOWLEDGE_TABLE="create table knowledge(" +//知识点表

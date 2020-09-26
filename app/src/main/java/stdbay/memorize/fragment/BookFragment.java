@@ -5,7 +5,6 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
@@ -14,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -53,8 +53,11 @@ import stdbay.memorize.R;
 import stdbay.memorize.adapter.BaseItemAdapter;
 import stdbay.memorize.adapter.FullyGridLayoutManager;
 import stdbay.memorize.adapter.GridImageAdapter;
+import stdbay.memorize.adapter.ProblemAdapter;
 import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.MemorizeDB;
+import stdbay.memorize.model.ProblemItem;
+import stdbay.memorize.util.DeleteUtil;
 import stdbay.memorize.util.GlideEngine;
 import stdbay.memorize.util.MessageEvent;
 
@@ -62,7 +65,8 @@ import stdbay.memorize.util.MessageEvent;
 
 public class BookFragment extends Fragment {
     private GridImageAdapter gAdapter;
-    private int maxSelectNum = 9;
+    private int maxSelectNum = 8;
+
 
     private GridImageAdapter.onAddPicClickListener onAddPicClickListener=new GridImageAdapter.onAddPicClickListener() {
         @Override
@@ -109,19 +113,19 @@ public class BookFragment extends Fragment {
 //                    .isSingleDirectReturn(true)// 单选模式下是否直接返回，PictureConfig.SINGLE模式下有效
                     .isPreviewImage(true)// 是否可预览图片
 //                    .isPreviewVideo(cb_preview_video.isChecked())// 是否可预览视频
-                    //.querySpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
+                    //.queryBooksSpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
 //                    .isEnablePreviewAudio(cb_preview_audio.isChecked()) // 是否可播放音频
                     .isCamera(true)// 是否显示拍照按钮
 //                    .isMultipleSkipCrop(false)// 多图裁剪时是否支持跳过，默认支持
                     .isMultipleRecyclerAnimation(true)// 多图裁剪底部列表显示动画效果
                     .isZoomAnim(true)// 图片列表点击 缩放效果 默认true
-                    .imageFormat(PictureMimeType.PNG)// 拍照保存图片格式后缀,默认jpeg,Android Q使用PictureMimeType.PNG_Q
+                    .imageFormat(PictureMimeType.JPEG_Q)// 拍照保存图片格式后缀,默认jpeg,Android Q使用PictureMimeType.PNG_Q
                     .isEnableCrop(true)// 是否裁剪
                     //.basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
 //                    .isCompress(true)// 是否压缩
 //                    .compressQuality(80)// 图片压缩后输出质量 0~ 100
 //                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
-                    //.queryMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
+                    //.queryBooksMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
                     //.compressSavePath(getPath())//压缩图片保存地址
                     //.sizeMultiplier(0.5f)// glide 加载图片大小 0~1之间 如设置 .glideOverride()无效 注：已废弃
                     //.glideOverride(160, 160)// glide 加载宽高，越小图片列表越流畅，但会影响列表图片浏览的清晰度 注：已废弃
@@ -159,6 +163,8 @@ public class BookFragment extends Fragment {
     };
 
 
+
+    private static List<LocalMedia> mResult=new ArrayList<>();
     /**
      * 返回结果回调
      */
@@ -185,6 +191,7 @@ public class BookFragment extends Fragment {
 //                Log.i(TAG, "Size: " + media.getSize());
 //                 TODO 可以通过PictureSelectorExternalUtils.getExifInterface();方法获取一些额外的资源信息，如旋转角度、经纬度等信息
 //            }
+            mResult=result;
             if (mAdapterWeakReference.get() != null) {
                 mAdapterWeakReference.get().setList(result);
                 mAdapterWeakReference.get().notifyDataSetChanged();
@@ -229,10 +236,11 @@ public class BookFragment extends Fragment {
     private int modifiedPosiotion=0;
     private static final int RENAME=-1;
 
-    private List<BaseItem> data= new ArrayList<>();
+    private List<BaseItem> bookData= new ArrayList<>();
+    private List<ProblemItem> problemItems=new ArrayList<>();
 
-    public BookFragment() {
-    }
+//    public BookFragment() {
+//    }
 
 
     public static BookFragment getInstance(){
@@ -252,10 +260,13 @@ public class BookFragment extends Fragment {
         getDefaultStyle();
         if(bundle != null){
             bindViews(view);
-            query();
+            queryBooks();
         }
         return view;
     }
+
+    private RecyclerView rvp;
+    private ProblemAdapter pAdapter;
 
     private void bindViews(View view){
         initListPopup();
@@ -271,13 +282,13 @@ public class BookFragment extends Fragment {
             popup.showDown(view16);
         });
 
-        rv = view.findViewById(R.id.recycler_view);
-        registerForContextMenu(rv);
+//        registerForContextMenu(rv);
         memorizeDB=MemorizeDB.getInstance(getActivity());
 
+        rv = view.findViewById(R.id.recycler_view);
         rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        mAdapter=new BaseItemAdapter(R.layout.list_item,data);
+        mAdapter=new BaseItemAdapter(R.layout.list_item,bookData);
         mAdapter.isFirstOnly(false);
         mAdapter.setDuration(500);
         mAdapter.openLoadAnimation(view14 -> new Animator[]{
@@ -286,8 +297,8 @@ public class BookFragment extends Fragment {
 
         mAdapter.setOnItemClickListener((adapter, view15, position) -> {
             prevItem=nowItem;
-            nowItem=data.get(position);
-            query();
+            nowItem=bookData.get(position);
+            queryBooks();
             nowPosition=position;
         });
 
@@ -299,166 +310,205 @@ public class BookFragment extends Fragment {
             popup.showDown(view13);
             return true;
         });
-
         rv.setAdapter(mAdapter);
+
+
+
+//        @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
+        rvp=view.findViewById(R.id.problem_rv);
+        rvp.setLayoutManager(new LinearLayoutManager(getActivity()));
+        pAdapter=new ProblemAdapter(R.layout.problem_item,problemItems);
+        pAdapter.isFirstOnly(false);
+        pAdapter.setDuration(500);
+        pAdapter.openLoadAnimation(view14 -> new Animator[]{
+                ObjectAnimator.ofFloat(view14,"scaleX",1,1.07f,1)
+        });
+
+        pAdapter.setOnItemChildClickListener((adapter,view2,position)->{
+
+        });
+        rvp.setAdapter(pAdapter);
 
         back.setOnClickListener(view12 -> onBackPressed());
 
         title.setOnClickListener(view1 -> rv.smoothScrollToPosition(0));
     }
 
-    private void query(){
-        data.clear();
-        data.addAll(memorizeDB.loadData(nowItem));
-        if(data.isEmpty()) {
-            notice.setVisibility(View.VISIBLE);
-            rv.setVisibility(View.GONE);
+    private void queryBooks(){
+        //对于习题集和科目要分开查询
+        if(nowItem==null || nowItem.getType()==BaseItem.SUBJECT_TYPE){
+            bookData.clear();
+            bookData.addAll(memorizeDB.loadData(nowItem));
+            rvp.setVisibility(View.GONE);
+            if (bookData.isEmpty()) {
+                notice.setVisibility(View.VISIBLE);
+                rv.setVisibility(View.GONE);
+
+            } else {
+                notice.setVisibility(View.GONE);
+                rv.setVisibility(View.VISIBLE);
+            }
+
+
+            mAdapter.notifyDataSetChanged();
+            rv.scrollToPosition(nowPosition);
         }
-        else {
-            notice.setVisibility(View.GONE);
-            rv.setVisibility(View.VISIBLE);
+        else if(nowItem.getType()==BaseItem.PROBLEM_SET_TYPE) {
+            problemItems.clear();
+            problemItems.addAll(memorizeDB.getProblemItems(nowItem.getId()));
+            //设置可见性
+            rv.setVisibility(View.GONE);
+            if(problemItems.isEmpty()){
+                notice.setVisibility(View.VISIBLE);
+                rvp.setVisibility(View.GONE);
+            }else{
+                notice.setVisibility(View.GONE);
+                rvp.setVisibility(View.VISIBLE);
+            }
+            pAdapter.notifyDataSetChanged();
         }
 
-        if(nowItem==null){
+        if (nowItem == null) {
             title.setText(R.string.home);
             prevName.setText("");
-        }else{
+        } else {
             title.setText(nowItem.getName());
-            if(prevItem!=null)
+            if (prevItem != null)
                 prevName.setText(prevItem.getName());
             else
                 prevName.setText(R.string.home);
         }
-        mAdapter.notifyDataSetChanged();
-        rv.scrollToPosition(nowPosition);
 //        MoveToPosition(mLayoutManager,nowPosition);
     }
+
+    private void queryProblems(){
+        problemItems.clear();
+        problemItems.addAll(memorizeDB.getProblemItems(nowItem.getId()));
+//        int a=1;
+
+    } 
 
 
     public void onBackPressed() {
         if(nowItem!=null){
             nowItem=prevItem;
             prevItem=memorizeDB.findBackItem(nowItem);
-            query();
+            queryBooks();
         }
+    }
+
+    private void showProblemItem(){
+        //先获取一个布局实例,设置一些内部方法
+        @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.add_problem_dialog,null,false) ;
+//                ImageButton camera = v.findViewById(R.id.camera);
+//                picture=v.findViewById(R.id.picture);
+        RecyclerView recyclerView = v.findViewById(R.id.recycler);
+        EditText num= v.findViewById(R.id.problem_number);
+        String number = num.getText().toString();
+
+        EditText grd= v.findViewById(R.id.grade);
+        String grade = grd.getText().toString();
+
+        EditText tolGrd= v.findViewById(R.id.total_grade);
+        String totalGrade = tolGrd.getText().toString();
+
+        EditText smy= v.findViewById(R.id.summary);
+        String summary = smy.getText().toString();
+
+        FullyGridLayoutManager manager = new FullyGridLayoutManager(getActivity(),
+                4, GridLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(manager);
+
+        recyclerView.addItemDecoration(new GridSpacingItemDecoration(4,
+                ScreenUtils.dip2px(getActivity(), 8), false));
+        gAdapter = new GridImageAdapter(getContext(), onAddPicClickListener);
+        gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
+
+        gAdapter.setSelectMax(maxSelectNum);
+        recyclerView.setAdapter(gAdapter);
+
+        gAdapter.setOnItemClickListener((v1, position) -> {
+            List<LocalMedia> selectList = gAdapter.getData();
+            if (selectList.size() > 0) {
+                LocalMedia media = selectList.get(position);
+                String mimeType = media.getMimeType();
+                int mediaType = PictureMimeType.getMimeType(mimeType);
+                if (mediaType == PictureConfig.TYPE_VIDEO) {// 预览视频
+                    PictureSelector.create(BookFragment.this)
+                            .themeStyle(R.style.picture_default_style)
+//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
+                            .externalPictureVideo(TextUtils.isEmpty(media.getAndroidQToPath()) ? media.getPath() : media.getAndroidQToPath());
+                    //                    case PictureConfig.TYPE_AUDIO:
+//                        // 预览音频
+//                        PictureSelector.create(getActivity())
+//                                .externalPictureAudio(PictureMimeType.isContent(media.getPath()) ? media.getAndroidQToPath() : media.getPath());
+//                        break;
+                } else {// 预览图片 可自定长按保存路径
+//                        PictureWindowAnimationStyle animationStyle = new PictureWindowAnimationStyle();
+//                        animationStyle.activityPreviewEnterAnimation = R.anim.picture_anim_up_in;
+//                        animationStyle.activityPreviewExitAnimation = R.anim.picture_anim_down_out;
+                    PictureSelector.create(BookFragment.this)
+                            .themeStyle(R.style.picture_default_style) // xml设置主题
+//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
+                            //.setPictureWindowAnimationStyle(animationStyle)// 自定义页面启动动画
+                            .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
+                            .isNotPreviewDownload(true)// 预览图片长按是否可以下载
+                            //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义播放回调控制，用户可以使用自己的视频播放界面
+                            .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
+                            .openExternalPreview(position, selectList);
+                }
+            }
+        });
+
+        //用于判断本次添加是否作废
+        final boolean[] isEffective = {true};
+        //再把该布局加载到对话框
+        //不设置positiveText的话就没有确定按钮
+        //动态更改EditText的可编辑性,可以达到自由修改的效果
+        MaterialDialog problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                .title(" ")
+                .customView(v, true)
+                .positiveText("确认")
+                .onPositive((dialog, which) -> {
+                    isEffective[0] =false;
+                    memorizeDB.addProblem(nowItem.getId(), number, summary, grade, totalGrade, mResult,new MemorizeDB.callBackListener() {
+                        @Override
+                        public void onFinished() {
+                            SnackbarUtils.Custom(title,"题目添加成功",700)
+                                    .confirm().show();
+                            queryBooks();
+//                            queryProblems();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            SnackbarUtils.Custom(title,"题目添加失败",700)
+                                    .danger().show();
+                        }
+                    });
+                }).build();
+        problemDialog.setOnDismissListener(dialogInterface -> {
+            //作废的话就删除缓存文件以减少存储
+            if(isEffective[0]){
+                for(LocalMedia media:mResult){
+                    if(media.isCompressed()) {
+                        DeleteUtil.delete(media.getAndroidQToPath());
+                    }
+                    if(media.isCut()) {
+                        DeleteUtil.delete(media.getAndroidQToPath());
+                    }
+                }
+            }
+
+        });
+        problemDialog.show();
     }
 
     private void showInput(final int type){
         String s = "";
         switch(type){
             case BaseItem.PROBLEM_TYPE:
-                if (getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED||
-                        getActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-                    SnackbarUtils.Custom(title,"没有存取权限,请到设置中手动开启",700)
-                            .danger().show();
-                    return;
-                }
-
-
-                //先获取一个布局实例,设置一些内部方法
-                @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.add_problem_dialog,null,false) ;
-//                ImageButton camera = v.findViewById(R.id.camera);
-//                picture=v.findViewById(R.id.picture);
-                RecyclerView recyclerView = v.findViewById(R.id.recycler);
-
-
-                FullyGridLayoutManager manager = new FullyGridLayoutManager(getActivity(),
-                        4, GridLayoutManager.VERTICAL, false);
-                recyclerView.setLayoutManager(manager);
-
-                recyclerView.addItemDecoration(new GridSpacingItemDecoration(4,
-                        ScreenUtils.dip2px(getActivity(), 8), false));
-                gAdapter = new GridImageAdapter(getContext(), onAddPicClickListener);
-//                if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("selectorList") != null) {
-//                    mAdapter.setList(savedInstanceState.getParcelableArrayList("selectorList"));
-//                }
-
-//        List<LocalMedia> list = new ArrayList<>();
-//        LocalMedia m = new LocalMedia();
-//        m.setPath("https://wx1.sinaimg.cn/mw690/006e0i7xly1gaxqq5m7t8j31311g2ao6.jpg");
-//        LocalMedia m1 = new LocalMedia();
-//        m1.setPath("https://ww1.sinaimg.cn/bmiddle/bcd10523ly1g96mg4sfhag20c806wu0x.gif");
-//        list.add(m);
-//        list.add(m1);
-//        mAdapter.setList(list);
-
-                gAdapter.setSelectMax(maxSelectNum);
-                recyclerView.setAdapter(gAdapter);
-//                cb_original.setOnCheckedChangeListener((buttonView, isChecked) ->
-//                        tv_original_tips.setVisibility(isChecked ? View.VISIBLE : View.GONE));
-//                cb_choose_mode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-//                    cb_single_back.setVisibility(isChecked ? View.GONE : View.VISIBLE);
-//                    cb_single_back.setChecked(!isChecked && cb_single_back.isChecked());
-//                });
-                gAdapter.setOnItemClickListener((v1, position) -> {
-                    List<LocalMedia> selectList = gAdapter.getData();
-                    if (selectList.size() > 0) {
-                        LocalMedia media = selectList.get(position);
-                        String mimeType = media.getMimeType();
-                        int mediaType = PictureMimeType.getMimeType(mimeType);
-                        switch (mediaType) {
-                            case PictureConfig.TYPE_VIDEO:
-                                // 预览视频
-                                PictureSelector.create(BookFragment.this)
-                                        .themeStyle(R.style.picture_default_style)
-//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
-                                        .externalPictureVideo(TextUtils.isEmpty(media.getAndroidQToPath()) ? media.getPath() : media.getAndroidQToPath());
-                                break;
-                            case PictureConfig.TYPE_AUDIO:
-                                // 预览音频
-                                PictureSelector.create(getActivity())
-                                        .externalPictureAudio(PictureMimeType.isContent(media.getPath()) ? media.getAndroidQToPath() : media.getPath());
-                                break;
-                            default:
-                                // 预览图片 可自定长按保存路径
-//                        PictureWindowAnimationStyle animationStyle = new PictureWindowAnimationStyle();
-//                        animationStyle.activityPreviewEnterAnimation = R.anim.picture_anim_up_in;
-//                        animationStyle.activityPreviewExitAnimation = R.anim.picture_anim_down_out;
-                                PictureSelector.create(BookFragment.this)
-                                        .themeStyle(R.style.picture_default_style) // xml设置主题
-//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
-                                        //.setPictureWindowAnimationStyle(animationStyle)// 自定义页面启动动画
-                                        .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
-                                        .isNotPreviewDownload(true)// 预览图片长按是否可以下载
-                                        //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义播放回调控制，用户可以使用自己的视频播放界面
-                                        .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
-                                        .openExternalPreview(position, selectList);
-                                break;
-                        }
-                    }
-                });
-
-
-
-
-//                camera.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View view) {
-//
-////                        File outputImg=new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES+"/Memorize"),"tmp.jpg");
-////                        try {
-////                            if(outputImg.exists())
-////                                outputImg.delete();
-////                            outputImg.createNewFile();
-////                        } catch (IOException e) {
-////                            e.printStackTrace();
-////                        }
-////                        imgUri=Uri.fromFile(outputImg);
-////                        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-////                        intent.putExtra(MediaStore.EXTRA_OUTPUT,imgUri);
-////                        getActivity().startActivityForResult(intent,TAKE_PHOTO);
-//
-//                    }
-//                });
-
-                //再把该布局加载到对话框
-                new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
-                        .title(s)
-                        .customView(v,true)
-                        .positiveText("确认")
-                        .onPositive((dialog, which) -> {
-
-                            }).show();
+                showProblemItem();
                 return;
             case BaseItem.SUBJECT_TYPE:
                 s="新建科目";
@@ -486,7 +536,7 @@ public class BookFragment extends Fragment {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                                         SnackbarUtils.Custom(title,"添加成功",700)
                                                 .confirm().show();
-                                        query();
+                                        queryBooks();
                                         //用eventbus通知知识点树进行相应更改
                                         EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                     });
@@ -500,13 +550,13 @@ public class BookFragment extends Fragment {
                             });
                             break;
                         case RENAME:
-                            memorizeDB.reName(data.get(modifiedPosiotion), name, new MemorizeDB.callBackListener() {
+                            memorizeDB.reName(bookData.get(modifiedPosiotion), name, new MemorizeDB.callBackListener() {
                                 @Override
                                 public void onFinished() {
                                     Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                                         SnackbarUtils.Custom(title,"改名成功",700)
                                                 .confirm().show();
-                                        query();
+                                        queryBooks();
                                         EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                     });
                                 }
@@ -545,7 +595,7 @@ public class BookFragment extends Fragment {
                         tmp=new String[]{"新建科目","新建习题集"};
                         break;
                     case BaseItem.PROBLEM_SET_TYPE:
-                        tmp=new String[]{"新建习题集","新建习题"};
+                        tmp=new String[]{"新建习题"};
                         break;
                 }
         }
@@ -571,13 +621,13 @@ public class BookFragment extends Fragment {
                                     .positiveText("确认")
                                     .positiveColor(Color.parseColor("#cc5555"))
                                     .negativeText("取消")
-                                    .onPositive((dialog, which) -> memorizeDB.deleteItem(data.get(modifiedPosiotion), new MemorizeDB.callBackListener() {
+                                    .onPositive((dialog, which) -> memorizeDB.deleteItem(bookData.get(modifiedPosiotion), new MemorizeDB.callBackListener() {
                                         @Override
                                         public void onFinished() {
                                             Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                                                 SnackbarUtils.Custom(title,"删除成功",700)
                                                         .confirm().show();
-                                                query();
+                                                queryBooks();
                                                 EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                             });
                                         }
@@ -605,13 +655,13 @@ public class BookFragment extends Fragment {
 
 //    @SuppressLint("RestrictedApi")
 //    @Override
-//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-//            super.onActivityResult(requestCode, resultCode, data);
+//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent bookData) {
+//            super.onActivityResult(requestCode, resultCode, bookData);
 //            switch (requestCode) {
 ////                case TAKE_PHOTO:
 ////                    if (resultCode == Activity.RESULT_OK) {
 ////                        Intent intent = new Intent("com.android.camera.action.CROP");
-////                        intent.setDataAndType(imgUri, "image/*");
+////                        intent.setbookDataAndType(imgUri, "image/*");
 ////                        intent.putExtra("scale", true);
 ////                        intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
 ////                        getActivity().startActivityForResult(intent,CROP_PHOTO);

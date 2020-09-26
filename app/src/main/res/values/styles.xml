@@ -27,6 +27,12 @@
         <item name="ms_dropdown_bg">@drawable/ms_drop_down_bg_radius</item>
     </style>
 
+    <style name="SwitchButtonStyle">
+        <item name="android:paddingStart">?attr/xui_config_content_spacing_horizontal</item>
+        <item name="android:paddingEnd">?attr/xui_config_content_spacing_horizontal</item>
+        <item name="android:paddingTop">?attr/xui_config_content_spacing_vertical</item>
+        <item name="android:paddingBottom">?attr/xui_config_content_spacing_vertical</item>
+    </style>
 
 
 </resources>

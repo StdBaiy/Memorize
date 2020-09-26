@@ -7,6 +7,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.luck.picture.lib.entity.LocalMedia;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -55,6 +57,38 @@ public class MemorizeDB {
     }
 
     @SuppressLint("Recycle")
+    public List<ProblemItem>getProblemItems(int probSetId){
+        List<ProblemItem>rtn=new ArrayList<>();
+        cursor=db.rawQuery("select*from problem where probSetId=?",new String[]{String.valueOf(probSetId)});
+        if(cursor.moveToFirst()){
+            do{
+                ProblemItem problemItem=new ProblemItem();
+                List<String>picPath=new ArrayList<>();
+                int id=cursor.getInt(cursor.getColumnIndex("id"));
+                problemItem.setProbSetId(probSetId);
+                problemItem.setId(id);
+                problemItem.setCreateTime(cursor.getString(cursor.getColumnIndex("createTime")));
+                problemItem.setNumber(cursor.getInt(cursor.getColumnIndex("number")));;
+                problemItem.setGrade(cursor.getFloat(cursor.getColumnIndex("grade")));
+                problemItem.setTotalGrade(cursor.getFloat(cursor.getColumnIndex("totalGrade")));
+                problemItem.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
+                problemItem.setSummary(cursor.getString(cursor.getColumnIndex("summary")));
+
+                 Cursor csr=db.rawQuery("select*from prob_pic where probId=?",new String[]{String.valueOf(id)});
+                if(csr.moveToFirst()){
+                    do{
+                        picPath.add(csr.getString(csr.getColumnIndex("picPath")));
+
+                    }while(csr.moveToNext());
+                }
+                problemItem.setPictures(picPath);
+                rtn.add(problemItem);
+            }while(cursor.moveToNext());
+        }
+        return  rtn;
+    }
+
+    @SuppressLint("Recycle")
     public List<BaseItem>loadData(BaseItem nowItem){
         list.clear();
         if(nowItem==null){
@@ -69,14 +103,16 @@ public class MemorizeDB {
                         ,new String[]{String.valueOf(nowItem.getId())});
                 queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
                 break;
-            case BaseItem.PROBLEM_SET_TYPE:
-                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
-                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
-                break;
+//            case BaseItem.PROBLEM_SET_TYPE:
+//                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
+//                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
+//                break;
         }
         cursor.close();
         return list;
     }
+
+
 
     public void addItem(final BaseItem father, final String name, int type, final callBackListener listener){
         switch(type){
@@ -107,8 +143,8 @@ public class MemorizeDB {
                     public void run() {
                         try{
                             if(father.getType()==BaseItem.SUBJECT_TYPE){
-                                db.execSQL("insert into problem_set (name,subId,createTime,viewTimes,grade,totalGrade)" +
-                                        "values (?,?,(select date('now')),0,0,0)",new String[]{name, String.valueOf(father.getId())});
+                                db.execSQL("insert into problem_set (name,subId,createTime,viewTimes)" +
+                                        "values (?,?,(select date('now')),0)",new String[]{name, String.valueOf(father.getId())});
                             }else if(father.getType()==BaseItem.PROBLEM_SET_TYPE){
                                 int subId=0;
                                 cursor =db.rawQuery("select*from problem_set where id=?",new String[]{String.valueOf(father.getId())}); //子节点的subId和父节点相同
@@ -116,8 +152,8 @@ public class MemorizeDB {
                                     subId=cursor.getInt(cursor.getColumnIndex("subId"));
                                 }
                                 cursor.close();
-                                db.execSQL("insert into problem_set (name,fatherId,subId,createTime,viewTimes,grade,totalGrade)" +
-                                        "values(?,?,?,(select date('now')),0,0,0)",
+                                db.execSQL("insert into problem_set (name,fatherId,subId,createTime,viewTimes)" +
+                                        "values(?,?,?,(select date('now')),0)",
                                         new String[]{name, String.valueOf(father.getId()), String.valueOf(subId)});
                             }
                             if(listener!=null)
@@ -216,6 +252,7 @@ public class MemorizeDB {
                     csr.moveToFirst();
                     map.put("子习题",csr.getCount());
                     break;
+                case BaseItem.PROBLEM_TYPE:
             }
             item.setChildrenData(map);
             list.add(item);
@@ -373,5 +410,35 @@ public class MemorizeDB {
             }while (cursor.moveToNext());
         }
         return rtn;
+    }
+
+    public void addProblem(int probSetId,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,callBackListener listener){
+        try {
+            //通过这种方法,在插入主键之前就确定了主键值
+            cursor = db.rawQuery("select*from problem order by id desc", null);
+            int id = 1;
+            if (cursor.moveToFirst())
+                id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+            int subId = 0;
+            cursor = db.rawQuery("select*from problem_set where id=?", new String[]{String.valueOf(probSetId)});
+            if (cursor.moveToFirst())
+                subId = cursor.getInt(cursor.getColumnIndex("subId"));
+            db.execSQL("insert into problem (id,probSetId,subId,number,createTime,summary,grade,totalGrade)" +
+                            "values(?,?,?,?,(select date('now')),?,?,?)",
+                    new String[]{String.valueOf(id), String.valueOf(probSetId), String.valueOf(subId),
+                            summary, grade, totalGrade});
+
+            //把每一个照片地址存下来
+            for(LocalMedia media:mediaList){
+                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
+                        new String[]{String.valueOf(id),media.getAndroidQToPath()});
+            }
+            if (listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if (listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
     }
 }

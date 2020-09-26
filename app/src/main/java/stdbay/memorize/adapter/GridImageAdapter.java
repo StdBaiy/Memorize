@@ -35,15 +35,28 @@ import stdbay.memorize.listener.OnItemLongClickListener;
 public class GridImageAdapter extends
         RecyclerView.Adapter<GridImageAdapter.ViewHolder> {
     public static final String TAG = "PictureSelector";
-    public static final int TYPE_CAMERA = 1;
-    public static final int TYPE_PICTURE = 2;
+    private static final int TYPE_CAMERA = 1;
+    private static final int TYPE_PICTURE = 2;
     private LayoutInflater mInflater;
     private List<LocalMedia> list = new ArrayList<>();
-    private int selectMax = 9;
+    private int selectMax = 8;
+
+    public static final int SELECT_PIC = 1;
+    public static final int VIEW_PIC = 2;
+    private int viewType=VIEW_PIC;
+
     /**
      * 点击添加图片跳转
      */
     private onAddPicClickListener mOnAddPicClickListener;
+
+    public int getViewType() {
+        return viewType;
+    }
+
+    public void setViewType(int viewType) {
+        this.viewType = viewType;
+    }
 
 
     public interface onAddPicClickListener {
@@ -80,7 +93,7 @@ public class GridImageAdapter extends
     }
 
     public List<LocalMedia> getData() {
-        return list == null ? new ArrayList<LocalMedia>() : list;
+        return list == null ? new ArrayList<>() : list;
     }
 
     public void remove(int position) {
@@ -89,13 +102,13 @@ public class GridImageAdapter extends
         }
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         ImageView mImg;
         ImageView mIvDel;
         TextView tvDuration;
 
-        public ViewHolder(View view) {
+        ViewHolder(View view) {
             super(view);
             mImg = view.findViewById(R.id.fiv);
             mIvDel = view.findViewById(R.id.iv_del);
@@ -142,40 +155,51 @@ public class GridImageAdapter extends
      */
     @Override
     public void onBindViewHolder(@NotNull final ViewHolder viewHolder, final int position) {
-        //少于8张，显示继续添加的图标
-        if (getItemViewType(position) == TYPE_CAMERA) {
-            viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
-            viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
-            viewHolder.mIvDel.setVisibility(View.INVISIBLE);
-        } else {
-            viewHolder.mIvDel.setVisibility(View.VISIBLE);
-            viewHolder.mIvDel.setOnClickListener(view -> {
-                int index = viewHolder.getAdapterPosition();
-                // 这里有时会返回-1造成数据下标越界,具体可参考getAdapterPosition()源码，
-                // 通过源码分析应该是bindViewHolder()暂未绘制完成导致，知道原因的也可联系我~感谢
-                if (index != RecyclerView.NO_POSITION && list.size() > index) {
-                    list.remove(index);
-                    GridImageAdapter.this.notifyItemRemoved(index);
-                    GridImageAdapter.this.notifyItemRangeChanged(index, list.size());
+            if (getItemViewType(position) == TYPE_CAMERA) {
+                //少于8张，显示继续添加的图标
+                if(getViewType()==SELECT_PIC) {
+                    viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
+                    viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
+                    viewHolder.mIvDel.setVisibility(View.INVISIBLE);
+                }else{
+                    viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
+//                    viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
+                    viewHolder.mIvDel.setVisibility(View.INVISIBLE);
                 }
-            });
-            LocalMedia media = list.get(position);
-            if (media == null
-                    || TextUtils.isEmpty(media.getPath())) {
-                return;
-            }
-            int chooseModel = media.getChooseModel();
-            String path;
-            if (media.isCut() && !media.isCompressed()) {
-                // 裁剪过
-                path = media.getCutPath();
-            } else if (media.isCompressed() || (media.isCut() && media.isCompressed())) {
-                // 压缩过,或者裁剪同时压缩过,以最终压缩过图片为准
-                path = media.getCompressPath();
             } else {
-                // 原图
-                path = media.getPath();
-            }
+
+                if(getViewType()==SELECT_PIC) {
+                    viewHolder.mIvDel.setVisibility(View.VISIBLE);
+                    viewHolder.mIvDel.setOnClickListener(view -> {
+                        int index = viewHolder.getAdapterPosition();
+                        // 这里有时会返回-1造成数据下标越界,具体可参考getAdapterPosition()源码，
+                        // 通过源码分析应该是bindViewHolder()暂未绘制完成导致，知道原因的也可联系我~感谢
+                        if (index != RecyclerView.NO_POSITION && list.size() > index) {
+                            list.remove(index);
+                            GridImageAdapter.this.notifyItemRemoved(index);
+                            GridImageAdapter.this.notifyItemRangeChanged(index, list.size());
+                        }
+                    });
+                }else{
+                    viewHolder.mIvDel.setVisibility(View.INVISIBLE);
+                }
+                LocalMedia media = list.get(position);
+                if (media == null
+                        || TextUtils.isEmpty(media.getPath())) {
+                    return;
+                }
+                int chooseModel = media.getChooseModel();
+                String path;
+                if (media.isCut() && !media.isCompressed()) {
+                    // 裁剪过
+                    path = media.getCutPath();
+                } else if (media.isCompressed() || (media.isCut() && media.isCompressed())) {
+                    // 压缩过,或者裁剪同时压缩过,以最终压缩过图片为准
+                    path = media.getCompressPath();
+                } else {
+                    // 原图
+                    path = media.getPath();
+                }
 
 //            Log.i(TAG, "原图地址::" + media.getPath());
 //
@@ -194,46 +218,47 @@ public class GridImageAdapter extends
 //                Log.i(TAG, "开启原图功能后地址::" + media.getOriginalPath());
 //            }
 
-            long duration = media.getDuration();
-            viewHolder.tvDuration.setVisibility(PictureMimeType.isHasVideo(media.getMimeType())
-                    ? View.VISIBLE : View.GONE);
-            if (chooseModel == PictureMimeType.ofAudio()) {
-                viewHolder.tvDuration.setVisibility(View.VISIBLE);
-                viewHolder.tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds
-                        (R.drawable.picture_icon_audio, 0, 0, 0);
+                long duration = media.getDuration();
+                viewHolder.tvDuration.setVisibility(PictureMimeType.isHasVideo(media.getMimeType())
+                        ? View.VISIBLE : View.GONE);
+                if (chooseModel == PictureMimeType.ofAudio()) {
+                    viewHolder.tvDuration.setVisibility(View.VISIBLE);
+                    viewHolder.tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (R.drawable.picture_icon_audio, 0, 0, 0);
 
-            } else {
-                viewHolder.tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds
-                        (R.drawable.picture_icon_video, 0, 0, 0);
-            }
-            viewHolder.tvDuration.setText(DateUtils.formatDurationTime(duration));
-            if (chooseModel == PictureMimeType.ofAudio()) {
-                viewHolder.mImg.setImageResource(R.drawable.picture_audio_placeholder);
-            } else {
-                Glide.with(viewHolder.itemView.getContext())
-                        .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
-                                : path)
-                        .centerCrop()
-                        .placeholder(R.color.app_color_f6)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .into(viewHolder.mImg);
-            }
-            //itemView 的点击事件
-            if (mItemClickListener != null) {
-                viewHolder.itemView.setOnClickListener(v -> {
-                    int adapterPosition = viewHolder.getAdapterPosition();
-                    mItemClickListener.onItemClick(v, adapterPosition);
-                });
+                } else {
+                    viewHolder.tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (R.drawable.picture_icon_video, 0, 0, 0);
+                }
+                viewHolder.tvDuration.setText(DateUtils.formatDurationTime(duration));
+                if (chooseModel == PictureMimeType.ofAudio()) {
+                    viewHolder.mImg.setImageResource(R.drawable.picture_audio_placeholder);
+                } else {
+                    Glide.with(viewHolder.itemView.getContext())
+                            .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
+                                    : path)
+                            .centerCrop()
+                            .placeholder(R.color.app_color_f6)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .into(viewHolder.mImg);
+                }
+                //itemView 的点击事件
+                if (mItemClickListener != null) {
+                    viewHolder.itemView.setOnClickListener(v -> {
+                        int adapterPosition = viewHolder.getAdapterPosition();
+                        mItemClickListener.onItemClick(v, adapterPosition);
+                    });
+                }
+
+                if (mItemLongClickListener != null) {
+                    viewHolder.itemView.setOnLongClickListener(v -> {
+                        int adapterPosition = viewHolder.getAdapterPosition();
+                        mItemLongClickListener.onItemLongClick(viewHolder, adapterPosition, v);
+                        return true;
+                    });
+                }
             }
 
-            if (mItemLongClickListener != null) {
-                viewHolder.itemView.setOnLongClickListener(v -> {
-                    int adapterPosition = viewHolder.getAdapterPosition();
-                    mItemLongClickListener.onItemLongClick(viewHolder, adapterPosition, v);
-                    return true;
-                });
-            }
-        }
     }
 
     private OnItemClickListener mItemClickListener;
