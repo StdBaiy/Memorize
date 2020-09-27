@@ -84,6 +84,14 @@ public class GridImageAdapter extends
         this.mOnAddPicClickListener = mOnAddPicClickListener;
     }
 
+    public GridImageAdapter(Context context){
+        this.mInflater = LayoutInflater.from(context);
+    }
+
+    public void setmOnAddPicClickListener(onAddPicClickListener mOnAddPicClickListener){
+        this.mOnAddPicClickListener = mOnAddPicClickListener;
+    }
+
     public void setSelectMax(int selectMax) {
         this.selectMax = selectMax;
     }
@@ -159,15 +167,15 @@ public class GridImageAdapter extends
                 //少于8张，显示继续添加的图标
                 if(getViewType()==SELECT_PIC) {
                     viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
+                    viewHolder.mImg.setVisibility(View.VISIBLE);
                     viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
                     viewHolder.mIvDel.setVisibility(View.INVISIBLE);
                 }else{
-                    viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
-//                    viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
+                    viewHolder.mImg.setVisibility(View.INVISIBLE);
+                    viewHolder.mImg.setOnClickListener(null);
                     viewHolder.mIvDel.setVisibility(View.INVISIBLE);
                 }
             } else {
-
                 if(getViewType()==SELECT_PIC) {
                     viewHolder.mIvDel.setVisibility(View.VISIBLE);
                     viewHolder.mIvDel.setOnClickListener(view -> {
@@ -217,7 +225,6 @@ public class GridImageAdapter extends
 //                Log.i(TAG, "是否开启原图功能::" + true);
 //                Log.i(TAG, "开启原图功能后地址::" + media.getOriginalPath());
 //            }
-
                 long duration = media.getDuration();
                 viewHolder.tvDuration.setVisibility(PictureMimeType.isHasVideo(media.getMimeType())
                         ? View.VISIBLE : View.GONE);

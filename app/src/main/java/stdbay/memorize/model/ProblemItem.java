@@ -1,24 +1,26 @@
 package stdbay.memorize.model;
 
+import com.luck.picture.lib.entity.LocalMedia;
+
 import java.util.List;
 
 public class ProblemItem {
-    private int number;
+    private String number;
     private int id;
     private int subId;
     private int probSetId;
-    private float grade;
-    private float totalGrade;
+    private String grade;
+    private String totalGrade;
     private String summary;
     private String createTime;
-    private List<String>pictures;
+    private List<LocalMedia>pictures;
 
 
-    public int getNumber() {
+    public String getNumber() {
         return number;
     }
 
-    public void setNumber(int number) {
+    public void setNumber(String number) {
         this.number = number;
     }
 
@@ -46,19 +48,19 @@ public class ProblemItem {
         this.probSetId = probSetId;
     }
 
-    public float getGrade() {
+    public String getGrade() {
         return grade;
     }
 
-    public void setGrade(float grade) {
+    public void setGrade(String grade) {
         this.grade = grade;
     }
 
-    public float getTotalGrade() {
+    public String getTotalGrade() {
         return totalGrade;
     }
 
-    public void setTotalGrade(float totalGrade) {
+    public void setTotalGrade(String totalGrade) {
         this.totalGrade = totalGrade;
     }
 
@@ -78,11 +80,11 @@ public class ProblemItem {
         this.createTime = createTime;
     }
 
-    public List<String> getPictures() {
+    public List<LocalMedia> getPictures() {
         return pictures;
     }
 
-    public void setPictures(List<String> pictures) {
+    public void setPictures(List<LocalMedia> pictures) {
         this.pictures = pictures;
     }
 }

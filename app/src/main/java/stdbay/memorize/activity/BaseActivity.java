@@ -32,7 +32,9 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     public KnowledgeTreeFragment knowledgeTreeFragment;
 
 
-
+public BookFragment getBookFragment(){
+    return bookFragment;
+}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

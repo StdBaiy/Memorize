@@ -404,7 +404,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                                 BaseItem baseItem = new BaseItem();
                                                 baseItem.setId(nowTreeNode.getId());
                                                 baseItem.setType(BaseItem.KNOWLEDGE_TYPE);
-                                                memorizeDB.deleteItem(baseItem, new MemorizeDB.callBackListener() {
+                                                memorizeDB.deleteItem(baseItem.getId(),baseItem.getType(), new MemorizeDB.callBackListener() {
                                                     @Override
                                                     public void onFinished() {
                                                         Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {

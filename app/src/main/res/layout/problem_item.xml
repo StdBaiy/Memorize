@@ -1,13 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="100dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:layout_margin="20dp"
-    android:background="@drawable/red_corner"
+    android:padding="10dp"
     android:gravity="center">
-    <TextView
+
+    <ImageView
+        android:id="@+id/lock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="123"/>
+        android:background="@drawable/lock_selector"
+        tools:ignore="ContentDescription" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+            android:id="@+id/problem_number_show"
+            android:layout_width="60dp"
+            android:enabled="true"
+            android:layout_margin="10dp"
+            android:singleLine="true"
+            android:hint="题号"
+            android:inputType="number|numberDecimal"
+            android:maxLength="6"
+
+            app:met_floatingLabel="highlight"
+            app:met_primaryColor="#ccc"
+            app:met_textColor="#fff"
+            app:met_floatingLabelAlwaysShown="false"
+            app:met_floatingLabelTextSize="12sp"
+            
+            android:layout_height="wrap_content"
+
+            tools:ignore="Autofill,HardcodedText,TextFields"
+             />
+
+        <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+            style="@style/EditText.Normal"
+            android:id="@+id/grade_show"
+            android:layout_width="60dp"
+            android:enabled="true"
+            android:layout_margin="10dp"
+            android:singleLine="true"
+            android:hint="得分"
+            android:inputType="number|numberDecimal"
+            android:maxLength="5"
+            tools:ignore="Autofill,HardcodedText,TextFields"
+
+            app:met_floatingLabel="highlight"
+            app:met_primaryColor="#ccc"
+            app:met_textColor="#fff"
+            app:met_floatingLabelAlwaysShown="false"
+            app:met_floatingLabelTextSize="12sp"
+            
+            android:layout_height="wrap_content"/>
+
+        <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+            style="@style/EditText.Material"
+            android:id="@+id/total_grade_show"
+            android:layout_width="60dp"
+            android:enabled="true"
+            android:layout_margin="10dp"
+            android:singleLine="true"
+            android:hint="总分"
+            android:inputType="number|numberDecimal"
+            android:maxLength="5"
+            tools:ignore="Autofill,HardcodedText,TextFields"
+
+            app:met_floatingLabel="highlight"
+            app:met_primaryColor="#ccc"
+            app:met_textColor="#fff"
+            app:met_floatingLabelAlwaysShown="false"
+            app:met_floatingLabelTextSize="12sp"
+            
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+        style="@style/EditText.Normal"
+        android:id="@+id/summary_show"
+        android:padding="5dp"
+        android:enabled="true"
+        android:layout_width="180dp"
+        android:layout_margin="10dp"
+        android:lines="5"
+        android:minLines="1"
+        android:inputType="textMultiLine"
+        android:hint="摘要"
+        android:maxLength="200"
+        tools:ignore="Autofill,HardcodedText,TextFields"
+
+        app:met_floatingLabel="highlight"
+        app:met_primaryColor="#ccc"
+        app:met_textColor="#fff"
+        app:met_textColorHint="#aaa"
+        app:met_floatingLabelAlwaysShown="false"
+        app:met_floatingLabelTextSize="12sp"
+        
+        android:layout_height="wrap_content"/>
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:gravity="center"-->
+    <!--        android:orientation="horizontal">-->
+    <!--        <ImageView-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_marginEnd="40dp"-->
+    <!--            android:layout_gravity="center_horizontal"-->
+    <!--            android:id="@+id/picture"-->
+    <!--            tools:ignore="ContentDescription" />-->
+    <!--        <ImageButton-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_marginStart="40dp"-->
+    <!--            android:id="@+id/camera"-->
+    <!--            android:background="@drawable/ic_camera_old"-->
+    <!--            tools:ignore="ContentDescription" />-->
+    <!--    </LinearLayout>-->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_show"
+        android:layout_marginStart="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:overScrollMode="never" />
+
 
 </LinearLayout>

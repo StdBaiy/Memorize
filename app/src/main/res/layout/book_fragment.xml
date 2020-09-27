@@ -82,8 +82,8 @@
         android:longClickable="true"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:background="#333"
         android:id="@+id/problem_rv"
+        android:overScrollMode="never"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"/>

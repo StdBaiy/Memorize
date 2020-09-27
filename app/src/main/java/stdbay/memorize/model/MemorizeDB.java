@@ -63,25 +63,26 @@ public class MemorizeDB {
         if(cursor.moveToFirst()){
             do{
                 ProblemItem problemItem=new ProblemItem();
-                List<String>picPath=new ArrayList<>();
+                List<LocalMedia>pics=new ArrayList<>();
                 int id=cursor.getInt(cursor.getColumnIndex("id"));
                 problemItem.setProbSetId(probSetId);
                 problemItem.setId(id);
                 problemItem.setCreateTime(cursor.getString(cursor.getColumnIndex("createTime")));
-                problemItem.setNumber(cursor.getInt(cursor.getColumnIndex("number")));;
-                problemItem.setGrade(cursor.getFloat(cursor.getColumnIndex("grade")));
-                problemItem.setTotalGrade(cursor.getFloat(cursor.getColumnIndex("totalGrade")));
+                problemItem.setNumber(String.valueOf(cursor.getInt(cursor.getColumnIndex("number"))));;
+                problemItem.setGrade(String.valueOf(cursor.getFloat(cursor.getColumnIndex("grade"))));
+                problemItem.setTotalGrade(String.valueOf(cursor.getFloat(cursor.getColumnIndex("totalGrade"))));
                 problemItem.setSubId(cursor.getInt(cursor.getColumnIndex("subId")));
                 problemItem.setSummary(cursor.getString(cursor.getColumnIndex("summary")));
 
                  Cursor csr=db.rawQuery("select*from prob_pic where probId=?",new String[]{String.valueOf(id)});
                 if(csr.moveToFirst()){
                     do{
-                        picPath.add(csr.getString(csr.getColumnIndex("picPath")));
-
+                        LocalMedia media = new LocalMedia();
+                        media.setPath(csr.getString(csr.getColumnIndex("picPath")));
+                        pics.add(media);
                     }while(csr.moveToNext());
                 }
-                problemItem.setPictures(picPath);
+                problemItem.setPictures(pics);
                 rtn.add(problemItem);
             }while(cursor.moveToNext());
         }
@@ -245,12 +246,9 @@ public class MemorizeDB {
                     map.put("子习题集",csr.getCount());
                     break;
                 case BaseItem.PROBLEM_SET_TYPE:
-                    csr=db.rawQuery("select id from problem_set where fatherId=?",new String[]{String.valueOf(item.getId())});
-                    csr.moveToFirst();
-                    map.put("子习题集",csr.getCount());
                     csr=db.rawQuery("select id from problem where probSetId=?",new String[]{String.valueOf(item.getId())});
                     csr.moveToFirst();
-                    map.put("子习题",csr.getCount());
+                    map.put("习题",csr.getCount());
                     break;
                 case BaseItem.PROBLEM_TYPE:
             }
@@ -260,9 +258,9 @@ public class MemorizeDB {
         cursor.close();
     };
 
-    public void deleteItem(BaseItem item,callBackListener listener){
+    public void deleteItem(int id,int type,callBackListener listener){
         String sql="delete from ";
-        switch(item.getType()){
+        switch(type){
             case BaseItem.SUBJECT_TYPE:
                 sql+="subject";
                 break;
@@ -272,10 +270,13 @@ public class MemorizeDB {
             case BaseItem.KNOWLEDGE_TYPE:
                 sql+="knowledge";
                 break;
+            case BaseItem.PROBLEM_TYPE:
+                sql+="problem";
+                break;
         }
         sql+=" where id=?";
         try {
-            db.execSQL(sql, new String[]{String.valueOf(item.getId())});
+            db.execSQL(sql, new String[]{String.valueOf(id)});
             if(listener!=null)
                 listener.onFinished();
         } catch (SQLException e) {
@@ -425,14 +426,54 @@ public class MemorizeDB {
                 subId = cursor.getInt(cursor.getColumnIndex("subId"));
             db.execSQL("insert into problem (id,probSetId,subId,number,createTime,summary,grade,totalGrade)" +
                             "values(?,?,?,?,(select date('now')),?,?,?)",
-                    new String[]{String.valueOf(id), String.valueOf(probSetId), String.valueOf(subId),
+                    new String[]{String.valueOf(id), String.valueOf(probSetId), String.valueOf(subId),number,
                             summary, grade, totalGrade});
 
             //把每一个照片地址存下来
             for(LocalMedia media:mediaList){
+                String path="";
+                if(media.getCompressPath()!=null)
+                    path=media.getCompressPath();
+                else if(media.getCutPath()!=null)
+                    path=media.getCutPath();
+                else if(media.getAndroidQToPath()!=null)
+                    path=media.getAndroidQToPath();
                 db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
-                        new String[]{String.valueOf(id),media.getAndroidQToPath()});
+                        new String[]{String.valueOf(id),path});
             }
+            if (listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if (listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
+    }
+
+    public void changeProblem(int id,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,callBackListener listener){
+        try {
+//            //通过这种方法,在插入主键之前就确定了主键值
+//            cursor = db.rawQuery("select*from problem order by id desc", null);
+//            int id = 1;
+//            if (cursor.moveToFirst())
+//                id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+//            int subId = 0;
+//            cursor = db.rawQuery("select*from problem_set where id=?", new String[]{String.valueOf(probSetId)});
+//            if (cursor.moveToFirst())
+//                subId = cursor.getInt(cursor.getColumnIndex("subId"));
+            db.execSQL("update problem set number=?,summary=?,grade=?,totalGrade=? where id=?",
+                    new String[]{number,summary, grade, totalGrade, String.valueOf(id)});
+
+
+            //先删掉已经有的图片
+            db.execSQL("delete from prob_pic where probId=?",new String[]{String.valueOf(id)});
+            //再添加更改后的
+            if(!mediaList.isEmpty())
+            for(LocalMedia media:mediaList){
+                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
+                        new String[]{String.valueOf(id),media.getPath()});
+            }
+
             if (listener!=null)
                 listener.onFinished();
         } catch (SQLException e) {
