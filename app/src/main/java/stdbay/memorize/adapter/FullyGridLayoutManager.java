@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * author：luck
  * project：PictureSelector
@@ -16,9 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 
 public class FullyGridLayoutManager extends GridLayoutManager {
-    public FullyGridLayoutManager(Context context, int spanCount) {
-        super(context, spanCount);
-    }
 
     public FullyGridLayoutManager(Context context, int spanCount, int orientation, boolean reverseLayout) {
         super(context, spanCount, orientation, reverseLayout);
@@ -27,7 +26,7 @@ public class FullyGridLayoutManager extends GridLayoutManager {
     private int[] mMeasuredDimension = new int[2];
 
     @Override
-    public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state, int widthSpec, int heightSpec) {
+    public void onMeasure(@NotNull RecyclerView.Recycler recycler, @NotNull RecyclerView.State state, int widthSpec, int heightSpec) {
         final int widthMode = View.MeasureSpec.getMode(widthSpec);
         final int heightMode = View.MeasureSpec.getMode(heightSpec);
         final int widthSize = View.MeasureSpec.getSize(widthSpec);
@@ -77,7 +76,8 @@ public class FullyGridLayoutManager extends GridLayoutManager {
         setMeasuredDimension(width, height);
     }
 
-    final RecyclerView.State mState = new RecyclerView.State();
+    private final RecyclerView.State mState = new RecyclerView.State();
+
 
     private void measureScrapChild(RecyclerView.Recycler recycler, int position, int widthSpec,
                                    int heightSpec, int[] measuredDimension) {

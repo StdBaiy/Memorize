@@ -62,11 +62,8 @@ import stdbay.memorize.util.PictureStyle;
 
 //import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
 
-public class BookFragment extends Fragment {
+public class BookFragment extends Fragment implements  GridImageAdapter.onSrollListener{
     private GridImageAdapter gAdapter;
-    private int maxSelectNum = 8;
-
-
     private GridImageAdapter.onAddPicClickListener onAddPicClickListener=new GridImageAdapter.onAddPicClickListener() {
         @Override
         public void onAddPicClick() {
@@ -79,7 +76,7 @@ public class BookFragment extends Fragment {
 //                    .isWeChatStyle(true)// 是否开启微信图片选择风格
 //                    .isUseCustomCamera(cb_custom_camera.isChecked())// 是否使用自定义相机
 //                    .setLanguage(language)// 设置语言，默认中文
-//                    .isPageStrategy(cbPage.isChecked())// 是否开启分页策略 & 每页多少条；默认开启
+                    .isPageStrategy(true)// 是否开启分页策略 & 每页多少条；默认开启
                     .setPictureStyle(PictureStyle.getmPictureParameterStyle())// 动态自定义相册主题
                     .setPictureCropStyle(PictureStyle.getmCropParameterStyle())// 动态自定义裁剪主题
 //                    .setPictureWindowAnimationStyle(mWindowAnimationStyle)// 自定义相册启动退出动画
@@ -90,23 +87,23 @@ public class BookFragment extends Fragment {
                     //.loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
                     //.setOutputCameraPath()// 自定义相机输出目录，只针对Android Q以下，例如 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) +  File.separator + "Camera" + File.separator;
                     //.setButtonFeatures(CustomCameraView.BUTTON_STATE_BOTH)// 设置自定义相机按钮状态
-                    .maxSelectNum(maxSelectNum)// 最大图片选择数量
+                    .maxSelectNum(9)// 最大图片选择数量
                     .minSelectNum(1)// 最小选择数量
                     .maxVideoSelectNum(1) // 视频最大选择数量
                     //.minVideoSelectNum(1)// 视频最小选择数量
                     //.closeAndroidQChangeVideoWH(!SdkVersionUtils.checkedAndroid_Q())// 关闭在AndroidQ下获取图片或视频宽高相反自动转换
                     .imageSpanCount(3)// 每行显示个数
                     .isReturnEmpty(false)// 未选择数据时点击按钮是否可以返回
-                    .closeAndroidQChangeWH(true)//如果图片有旋转角度则对换宽高,默认为true
+//                    .closeAndroidQChangeWH(true)//如果图片有旋转角度则对换宽高,默认为true
 //                    .closeAndroidQChangeVideoWH(!SdkVersionUtils.checkedAndroid_Q())// 如果视频有旋转角度则对换宽高,默认为false
                     //.isAndroidQTransform(true)// 是否需要处理Android Q 拷贝至应用沙盒的操作，只针对compress(false); && .isEnableCrop(false);有效,默认处理
 //                    .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
                     //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义视频播放回调控制，用户可以使用自己的视频播放界面
                     //.bindCustomPreviewCallback(new MyCustomPreviewInterfaceListener())// 自定义图片预览回调接口
                     //.bindCustomCameraInterfaceListener(new MyCustomCameraInterfaceListener())// 提供给用户的一些额外的自定义操作回调
-                    .cameraFileName("123"+".jpg")    // 重命名拍照文件名、如果是相册拍照则内部会自动拼上当前时间戳防止重复，注意这个只在使用相机时可以使用，如果使用相机又开启了压缩或裁剪 需要配合压缩和裁剪文件名api
-                    .renameCompressFile("123" +".jpg")// 重命名压缩文件名、 如果是多张压缩则内部会自动拼上当前时间戳防止重复
-                    .renameCropFileName("123" + ".jpg")// 重命名裁剪文件名、 如果是多张裁剪则内部会自动拼上当前时间戳防止重复
+                    .cameraFileName("原图"+".jpg")    // 重命名拍照文件名、如果是相册拍照则内部会自动拼上当前时间戳防止重复，注意这个只在使用相机时可以使用，如果使用相机又开启了压缩或裁剪 需要配合压缩和裁剪文件名api
+                    .renameCompressFile("压缩" +".jpg")// 重命名压缩文件名、 如果是多张压缩则内部会自动拼上当前时间戳防止重复
+                    .renameCropFileName("裁剪" + ".jpg")// 重命名裁剪文件名、 如果是多张裁剪则内部会自动拼上当前时间戳防止重复
 //            System.currentTimeMillis()
                     .selectionMode(PictureConfig.MULTIPLE)// 多选 or 单选
 //                    .isSingleDirectReturn(true)// 单选模式下是否直接返回，PictureConfig.SINGLE模式下有效
@@ -122,7 +119,7 @@ public class BookFragment extends Fragment {
                     .isEnableCrop(true)// 是否裁剪
                     //.basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
                     .isCompress(true)// 是否压缩
-                    .compressQuality(90)// 图片压缩后输出质量 0~ 100
+                    .compressQuality(40)// 图片压缩后输出质量 0~ 100
 //                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
                     //.queryBooksMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
                     //.compressSavePath(getPath())//压缩图片保存地址
@@ -149,7 +146,7 @@ public class BookFragment extends Fragment {
                     .isPreviewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中)
                     //.cropCompressQuality(90)// 注：已废弃 改用cutOutQuality()
 //                    .cutOutQuality(90)// 裁剪输出质量 默认100
-//                    .minimumCompressSize(0)// 小于多少kb的图片不压缩
+                    .minimumCompressSize(100)// 小于多少kb的图片不压缩
                     //.cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                     //.cropImageWideHigh()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                     .rotateEnabled(false) // 裁剪是否可旋转图片
@@ -162,6 +159,19 @@ public class BookFragment extends Fragment {
 
     private static List<LocalMedia> mResult=new ArrayList<>();
     private int problemPosition;
+    private View problemInflate;
+    private RecyclerView recyclerView;
+    private EditText num;
+    private EditText smy;
+    private EditText grd;
+    private EditText tolGrd;
+    private ImageView  lock;
+
+    @Override
+    public void onScrollEnd() {
+        GridImageAdapter.isScrollEnd=true;
+    }
+
 
     /**
      * 返回结果回调
@@ -176,19 +186,7 @@ public class BookFragment extends Fragment {
 
         @Override
         public void onResult(List<LocalMedia> result) {
-//            for (LocalMedia media : result) {
-//                Log.i(TAG, "是否压缩:" + media.isCompressed());
-//                Log.i(TAG, "压缩:" + media.getCompressPath());
-//                Log.i(TAG, "原图:" + media.getPath());
-//                Log.i(TAG, "是否裁剪:" + media.isCut());
-//                Log.i(TAG, "裁剪:" + media.getCutPath());
-//                Log.i(TAG, "是否开启原图:" + media.isOriginal());
-//                Log.i(TAG, "原图路径:" + media.getOriginalPath());
-//                Log.i(TAG, "Android Q 特有Path:" + media.getAndroidQToPath());
-//                Log.i(TAG, "宽高: " + media.getWidth() + "x" + media.getHeight());
-//                Log.i(TAG, "Size: " + media.getSize());
-//                 TODO 可以通过PictureSelectorExternalUtils.getExifInterface();方法获取一些额外的资源信息，如旋转角度、经纬度等信息
-//            }
+//          TODO 可以通过PictureSelectorExternalUtils.getExifInterface();方法获取一些额外的资源信息，如旋转角度、经纬度等信息
             mResult=result;
             if (mAdapterWeakReference.get() != null) {
                 mAdapterWeakReference.get().setList(result);
@@ -198,14 +196,8 @@ public class BookFragment extends Fragment {
 
         @Override
         public void onCancel() {
-//            Log.i(TAG, "PictureSelector Cancel");
         }
     }
-
-
-
-//    private static final int TAKE_PHOTO=1;
-//    private static final int CROP_PHOTO=2;
 
 
 
@@ -249,7 +241,6 @@ public class BookFragment extends Fragment {
     }
 
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -266,13 +257,150 @@ public class BookFragment extends Fragment {
     private RecyclerView rvp;
     private ProblemAdapter pAdapter;
 
+    public void initGAdapter(){
+        gAdapter = new GridImageAdapter(getActivity());
+        gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
+        gAdapter.setmOnAddPicClickListener(() -> PictureSelector.create(getActivity())
+                .openGallery(PictureMimeType.ofImage())// 全部.PictureMimeType.ofAll()、图片.ofImage()、视频.ofVideo()、音频.ofAudio()
+                .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
+//                    .theme(R.style.picture_default_style)// 主题样式设置 具体参考 values/styles   用法：R.style.picture.white.style v2.3.3后 建议使用setPictureStyle()动态方式
+//                    .isWeChatStyle(true)// 是否开启微信图片选择风格
+//                    .isUseCustomCamera(cb_custom_camera.isChecked())// 是否使用自定义相机
+//                    .setLanguage(language)// 设置语言，默认中文
+                .isPageStrategy(true)// 是否开启分页策略 & 每页多少条；默认开启
+                .setPictureStyle(PictureStyle.getmPictureParameterStyle())// 动态自定义相册主题
+                .setPictureCropStyle(PictureStyle.getmCropParameterStyle())// 动态自定义裁剪主题
+//                    .setPictureWindowAnimationStyle(mWindowAnimationStyle)// 自定义相册启动退出动画
+//                    .setRecyclerAnimationMode(animationMode)// 列表动画效果
+//                    .isWithVideoImage(true)// 图片和视频是否可以同选,只在ofAll模式下有效
+//                    .isMaxSelectEnabledMask(true)// 选择数到了最大阀值列表是否启用蒙层效果
+                //.isAutomaticTitleRecyclerTop(false)// 连续点击标题栏RecyclerView是否自动回到顶部,默认true
+                //.loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
+                //.setOutputCameraPath()// 自定义相机输出目录，只针对Android Q以下，例如 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) +  File.separator + "Camera" + File.separator;
+                //.setButtonFeatures(CustomCameraView.BUTTON_STATE_BOTH)// 设置自定义相机按钮状态
+                .maxSelectNum(9)// 最大图片选择数量
+                .minSelectNum(1)// 最小选择数量
+                .maxVideoSelectNum(1) // 视频最大选择数量
+                //.minVideoSelectNum(1)// 视频最小选择数量
+                //.closeAndroidQChangeVideoWH(!SdkVersionUtils.checkedAndroid_Q())// 关闭在AndroidQ下获取图片或视频宽高相反自动转换
+                .imageSpanCount(3)// 每行显示个数
+                .isReturnEmpty(false)// 未选择数据时点击按钮是否可以返回
+//                .closeAndroidQChangeWH(true)//如果图片有旋转角度则对换宽高,默认为true
+//                    .closeAndroidQChangeVideoWH(!SdkVersionUtils.checkedAndroid_Q())// 如果视频有旋转角度则对换宽高,默认为false
+                //.isAndroidQTransform(true)// 是否需要处理Android Q 拷贝至应用沙盒的操作，只针对compress(false); && .isEnableCrop(false);有效,默认处理
+//                    .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
+                //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义视频播放回调控制，用户可以使用自己的视频播放界面
+                //.bindCustomPreviewCallback(new MyCustomPreviewInterfaceListener())// 自定义图片预览回调接口
+//                .bindCustomCameraInterfaceListener(new MyCustomCameraInterfaceListener())// 提供给用户的一些额外的自定义操作回调
+                .cameraFileName("原图"+".jpg")    // 重命名拍照文件名、如果是相册拍照则内部会自动拼上当前时间戳防止重复，注意这个只在使用相机时可以使用，如果使用相机又开启了压缩或裁剪 需要配合压缩和裁剪文件名api
+                .renameCompressFile("压缩" +".jpg")// 重命名压缩文件名、 如果是多张压缩则内部会自动拼上当前时间戳防止重复
+                .renameCropFileName("裁剪" + ".jpg")// 重命名裁剪文件名、 如果是多张裁剪则内部会自动拼上当前时间戳防止重复
+//            System.currentTimeMillis()
+                .selectionMode(PictureConfig.MULTIPLE)// 多选 or 单选
+//                    .isSingleDirectReturn(true)// 单选模式下是否直接返回，PictureConfig.SINGLE模式下有效
+                .isPreviewImage(true)// 是否可预览图片
+//                    .isPreviewVideo(cb_preview_video.isChecked())// 是否可预览视频
+                //.queryBooksSpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
+//                    .isEnablePreviewAudio(cb_preview_audio.isChecked()) // 是否可播放音频
+                .isCamera(true)// 是否显示拍照按钮
+//                    .isMultipleSkipCrop(false)// 多图裁剪时是否支持跳过，默认支持
+                .isMultipleRecyclerAnimation(true)// 多图裁剪底部列表显示动画效果
+                .isZoomAnim(true)// 图片列表点击 缩放效果 默认true
+                .imageFormat(PictureMimeType.JPEG_Q)// 拍照保存图片格式后缀,默认jpeg,Android Q使用PictureMimeType.PNG_Q
+                .isEnableCrop(true)// 是否裁剪
+                //.basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
+                .isCompress(true)// 是否压缩
+                .compressQuality(40)// 图片压缩后输出质量 0~ 100
+//                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
+                //.queryBooksMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
+//                .compressSavePath(getPath())//压缩图片保存地址
+                //.sizeMultiplier(0.5f)// glide 加载图片大小 0~1之间 如设置 .glideOverride()无效 注：已废弃
+//                .glideOverride(160, 160)// glide 加载宽高，越小图片列表越流畅，但会影响列表图片浏览的清晰度 注：已废弃
+//                    .withAspectRatio(aspect_ratio_x, aspect_ratio_y)// 裁剪比例 如16:9 3:2 3:4 1:1 可自定义
+//                    .hideBottomControls(!cb_hide.isChecked())// 是否显示uCrop工具栏，默认不显示
+//                    .isGif(cb_isGif.isChecked())// 是否显示gif图片
+                //.isWebp(false)// 是否显示webp图片,默认显示
+                //.isBmp(false)//是否显示bmp图片,默认显示
+                .freeStyleCropEnabled(true)// 裁剪框是否可拖拽
+//                    .circleDimmedLayer(cb_crop_circular.isChecked())// 是否圆形裁剪
+                .setCropDimmedColor(ContextCompat.getColor(getActivity(), R.color._333))// 设置裁剪背景色值
+                //.setCircleDimmedBorderColor(ContextCompat.getColor(getApplicationContext(), R.color.app_color_white))// 设置圆形裁剪边框色值
+                //.setCircleStrokeWidth(3)// 设置圆形裁剪边框粗细
+                .showCropFrame(true)// 是否显示裁剪矩形边框 圆形裁剪时建议设为false
+                .showCropGrid(true)// 是否显示裁剪矩形网格 圆形裁剪时建议设为false
+//                    .isOpenClickSound(cb_voice.isChecked())// 是否开启点击声音
+                .selectionData(gAdapter.getData())// 是否传入已选图片
+                //.isDragFrame(false)// 是否可拖动裁剪框(固定)
+                //.videoMinSecond(10)// 查询多少秒以内的视频
+                //.videoMaxSecond(15)// 查询多少秒以内的视频
+                //.recordVideoSecond(10)//录制视频秒数 默认60s
+                .isPreviewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中)
+                //.cropCompressQuality(90)// 注：已废弃 改用cutOutQuality()
+//                .cutOutQuality(60)// 裁剪输出质量 默认100
+                .minimumCompressSize(0)// 小于多少kb的图片不压缩
+                //.cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效
+                //.cropImageWideHigh()// 裁剪宽高比，设置如果大于图片本身宽高则无效
+                .rotateEnabled(false) // 裁剪是否可旋转图片
+                //.scaleEnabled(false)// 裁剪是否可放大缩小图片
+                //.videoQuality()// 视频录制质量 0 or 1
+                //.forResult(PictureConfig.CHOOSE_REQUEST);//结果回调onActivityResult code
+
+                .forResult(new MyResultCallback(gAdapter)));
+        gAdapter.setSelectMax(9);
+        gAdapter.setOnItemClickListener((v1, position1) -> {
+            List<LocalMedia> selectList = gAdapter.getData();
+            if (selectList.size() > 0) {
+                if(position1>=selectList.size())return;
+                LocalMedia media = selectList.get(position1);
+                String mimeType = media.getMimeType();
+                int mediaType = PictureMimeType.getMimeType(mimeType);
+                if (mediaType == PictureConfig.TYPE_VIDEO) {// 预览视频
+                    PictureSelector.create(getActivity())
+                            .themeStyle(R.style.picture_default_style)
+//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
+                            .externalPictureVideo(TextUtils.isEmpty(media.getAndroidQToPath()) ? media.getPath() : media.getAndroidQToPath());
+                    //                    case PictureConfig.TYPE_AUDIO:
+//                        // 预览音频
+//                        PictureSelector.create(getActivity())
+//                                .externalPictureAudio(PictureMimeType.isContent(media.getPath()) ? media.getAndroidQToPath() : media.getPath());
+//                        break;
+                } else {// 预览图片 可自定长按保存路径
+//                        PictureWindowAnimationStyle animationStyle = new PictureWindowAnimationStyle();
+//                        animationStyle.activityPreviewEnterAnimation = R.anim.picture_anim_up_in;
+//                        animationStyle.activityPreviewExitAnimation = R.anim.picture_anim_down_out;
+                    PictureSelector.create(getActivity())
+//                            .themeStyle(R.style.picture_default_style) // xml设置主题
+                            .setPictureStyle(PictureStyle.getmPictureParameterStyle())// 动态自定义相册主题
+                            //.setPictureWindowAnimationStyle(animationStyle)// 自定义页面启动动画
+                            .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
+                            .isNotPreviewDownload(true)// 预览图片长按是否可以下载
+                            //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义播放回调控制，用户可以使用自己的视频播放界面
+                            .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
+                            .openExternalPreview(position1, selectList);
+                }
+            }
+        });
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     private void bindViews(View view){
         initListPopup();
+        initGAdapter();
         notice=view.findViewById(R.id.notice);
         prevName = view.findViewById(R.id.prev_name);
         LinearLayout back = view.findViewById(R.id.back);
         title = view.findViewById(R.id.title);
         final ImageView menu = view.findViewById(R.id.menu);
+
+
+        problemInflate= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
+
+        recyclerView = problemInflate.findViewById(R.id.recycler_show);
+        num= problemInflate.findViewById(R.id.problem_number_show);
+        grd= problemInflate.findViewById(R.id.grade_show);
+        tolGrd= problemInflate.findViewById(R.id.total_grade_show);
+        smy= problemInflate.findViewById(R.id.summary_show);
+        lock= problemInflate.findViewById(R.id.lock);
 
         menu.setOnClickListener(view16 -> {
             isFromItem=false;
@@ -291,7 +419,7 @@ public class BookFragment extends Fragment {
         mAdapter.isFirstOnly(false);
         mAdapter.setDuration(500);
         mAdapter.openLoadAnimation(view14 -> new Animator[]{
-                ObjectAnimator.ofFloat(view14,"scaleX",1,1.07f,1)
+                ObjectAnimator.ofFloat(view14,"scaleX",1,1.08f,1)
         });
 
         mAdapter.setOnItemClickListener((adapter, view15, position) -> {
@@ -316,29 +444,108 @@ public class BookFragment extends Fragment {
 
 //        @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
         rvp=view.findViewById(R.id.problem_rv);
-        rvp.setLayoutManager(new LinearLayoutManager(getActivity()));
-        pAdapter=new ProblemAdapter(R.layout.problem_item,problemItems,getActivity());
+
+        LinearLayoutManager manager = new LinearLayoutManager(getActivity());
+        manager.setInitialPrefetchItemCount(5);
+        rvp.setLayoutManager(manager);
+        rvp.setHasFixedSize(true);
+//        rvp.setNestedScrollingEnabled(false);
+        rvp.setItemViewCacheSize(200);
+//        rvp.setOnTouchListener(this);
+        RecyclerView.RecycledViewPool pool= new RecyclerView.RecycledViewPool();
+        pool.setMaxRecycledViews(0, 10);
+        rvp.setRecycledViewPool(pool);
+
+        pAdapter=new ProblemAdapter(R.layout.list_item,problemItems);
         pAdapter.isFirstOnly(false);
         pAdapter.setDuration(500);
         pAdapter.openLoadAnimation(view14 -> new Animator[]{
-                ObjectAnimator.ofFloat(view14,"scaleX",1,1.07f,1)
+                ObjectAnimator.ofFloat(view14,"scaleX",1,1.08f,1)
         });
+
+        pAdapter.setPreLoadNumber(10);
+        pAdapter.setOnItemClickListener((adapter, view17, position) -> {
+            ProblemItem item= problemItems.get(position);
+
+            num.setEnabled(false);
+            grd.setEnabled(false);
+            tolGrd.setEnabled(false);
+            smy.setEnabled(false);
+            gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
+
+            FullyGridLayoutManager fManager = new FullyGridLayoutManager(getActivity(),
+                        3, GridLayoutManager.VERTICAL, false);
+            recyclerView.setLayoutManager(fManager);
+            recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
+            ScreenUtils.dip2px(getActivity(), 0), false));
+            num.setText(item.getNumber());
+            grd.setText(item.getGrade());
+            tolGrd.setText(item.getTotalGrade());
+            smy.setText(item.getSummary());
+            recyclerView.setAdapter(gAdapter);
+            //锁用于禁止更改内容
+
+            lock.setVisibility(View.VISIBLE);
+            lock.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view22) {
+                    if (view22.isSelected()) {
+                        view22.setSelected(false);
+                        num.setEnabled(false);
+                        grd.setEnabled(false);
+                        tolGrd.setEnabled(false);
+                        smy.setEnabled(false);
+                        memorizeDB.changeProblem(item.getId(), num.getText().toString(), smy.getText().toString(),
+                                grd.getText().toString(), tolGrd.getText().toString(), gAdapter.getData(), null);
+                        gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
+                        //动态修改内容
+                        item.setNumber(num.getText().toString());
+                        item.setSummary(smy.getText().toString());
+                        item.setGrade(grd.getText().toString());
+                        item.setTotalGrade(tolGrd.getText().toString());
+                        item.setPictures(gAdapter.getData());
+                    } else {
+                        view22.setSelected(true);
+                        num.setEnabled(true);
+                        grd.setEnabled(true);
+                        tolGrd.setEnabled(true);
+                        smy.setEnabled(true);
+                        gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
+                    }
+                    gAdapter.notifyDataSetChanged();
+                }
+            });
+
+            gAdapter.setList(item.getPictures());
+
+            MaterialDialog problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                    .backgroundColorRes(R.color.problem_blue)
+                    .positiveColorRes(R.color._ccc)
+                    .customView(problemInflate, true)
+                    .build();
+            problemDialog.show();
+        });
+
 
         pAdapter.setOnItemLongClickListener((adapter, view13, position) -> {
 
             problemPosition=position;
             isFromItem=false;
             isFromProblem=true;
-//                    menu.showContextMenu();
+
             initListPopup();
             popup.showDown(view13);
             return true;
         });
+
         rvp.setAdapter(pAdapter);
 
-        back.setOnClickListener(view12 -> onBackPressed());
 
-        title.setOnClickListener(view1 -> rv.smoothScrollToPosition(0));
+        back.setOnClickListener(view12 -> onBackPressed());
+        title.setOnClickListener(view1 -> {
+            rv.smoothScrollToPosition(0);
+            rvp.smoothScrollToPosition(0);
+        });
     }
 
     private void queryBooks(){
@@ -373,6 +580,7 @@ public class BookFragment extends Fragment {
                 rvp.setVisibility(View.VISIBLE);
             }
             pAdapter.notifyDataSetChanged();
+            rvp.scrollToPosition(0);
         }
 
         if (nowItem == null) {
@@ -397,67 +605,31 @@ public class BookFragment extends Fragment {
         }
     }
 
+    //显示添加界面
     private void showProblemItem(){
         //先获取一个布局实例,设置一些内部方法
-        @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
-//                ImageButton camera = v.findViewById(R.id.camera);
-//                picture=v.findViewById(R.id.picture);
-        RecyclerView recyclerView = v.findViewById(R.id.recycler_show);
-        EditText num= v.findViewById(R.id.problem_number_show);
-        EditText grd= v.findViewById(R.id.grade_show);
-        EditText tolGrd= v.findViewById(R.id.total_grade_show);
-        EditText smy= v.findViewById(R.id.summary_show);
+        smy.setText("");
+        grd.setText("");
+        tolGrd.setText("");
+        num.setText("");
 
+        smy.setEnabled(true);
+        grd.setEnabled(true);
+        tolGrd.setEnabled(true);
+        num.setEnabled(true);
 
+        gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
         //隐藏锁图标
-        v.findViewById(R.id.lock).setVisibility(View.GONE);
+        lock.setVisibility(View.GONE);
 
         FullyGridLayoutManager manager = new FullyGridLayoutManager(getActivity(),
-                4, GridLayoutManager.VERTICAL, false);
+                3, GridLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(manager);
 
-        recyclerView.addItemDecoration(new GridSpacingItemDecoration(4,
+        recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
                 ScreenUtils.dip2px(getActivity(), 8), false));
-
-
-        gAdapter = new GridImageAdapter(getContext(), onAddPicClickListener);
-        gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
-
-        gAdapter.setSelectMax(maxSelectNum);
         recyclerView.setAdapter(gAdapter);
-
-        gAdapter.setOnItemClickListener((v1, position) -> {
-            List<LocalMedia> selectList = gAdapter.getData();
-            if (selectList.size() > 0) {
-                LocalMedia media = selectList.get(position);
-                String mimeType = media.getMimeType();
-                int mediaType = PictureMimeType.getMimeType(mimeType);
-                if (mediaType == PictureConfig.TYPE_VIDEO) {// 预览视频
-                    PictureSelector.create(getActivity())
-                            .themeStyle(R.style.picture_default_style)
-//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
-                            .externalPictureVideo(TextUtils.isEmpty(media.getAndroidQToPath()) ? media.getPath() : media.getAndroidQToPath());
-                    //                    case PictureConfig.TYPE_AUDIO:
-//                        // 预览音频
-//                        PictureSelector.create(getActivity())
-//                                .externalPictureAudio(PictureMimeType.isContent(media.getPath()) ? media.getAndroidQToPath() : media.getPath());
-//                        break;
-                } else {// 预览图片 可自定长按保存路径
-//                        PictureWindowAnimationStyle animationStyle = new PictureWindowAnimationStyle();
-//                        animationStyle.activityPreviewEnterAnimation = R.anim.picture_anim_up_in;
-//                        animationStyle.activityPreviewExitAnimation = R.anim.picture_anim_down_out;
-                    PictureSelector.create(getActivity())
-                            .themeStyle(R.style.picture_default_style) // xml设置主题
-//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
-                            //.setPictureWindowAnimationStyle(animationStyle)// 自定义页面启动动画
-                            .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)// 设置相册Activity方向，不设置默认使用系统
-                            .isNotPreviewDownload(true)// 预览图片长按是否可以下载
-                            //.bindCustomPlayVideoCallback(new MyVideoSelectedPlayCallback(getContext()))// 自定义播放回调控制，用户可以使用自己的视频播放界面
-                            .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
-                            .openExternalPreview(position, selectList);
-                }
-            }
-        });
+        gAdapter.setList(new ArrayList<>());
 
         //用于判断本次添加是否作废
         final boolean[] isEffective = {true};
@@ -466,9 +638,8 @@ public class BookFragment extends Fragment {
         //动态更改EditText的可编辑性,可以达到自由修改的效果
         MaterialDialog problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                 .backgroundColorRes(R.color.problem_blue)
-                .title(" ")
                 .positiveColorRes(R.color._ccc)
-                .customView(v, true)
+                .customView(problemInflate, true)
                 .positiveText("添加")
                 .onPositive((dialog, which) -> {
                     isEffective[0] =false;
@@ -491,6 +662,7 @@ public class BookFragment extends Fragment {
                         }
                     });
                 }).build();
+
         problemDialog.setOnDismissListener(dialogInterface -> {
             //作废的话就删除缓存文件以减少存储
             if(isEffective[0]){
@@ -525,7 +697,6 @@ public class BookFragment extends Fragment {
                 s="改名";
                 break;
         }
-
 
         new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                 .title(s)
@@ -675,38 +846,6 @@ public class BookFragment extends Fragment {
         return nowItem;
     }
 
-//    @SuppressLint("RestrictedApi")
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent bookData) {
-//            super.onActivityResult(requestCode, resultCode, bookData);
-//            switch (requestCode) {
-////                case TAKE_PHOTO:
-////                    if (resultCode == Activity.RESULT_OK) {
-////                        Intent intent = new Intent("com.android.camera.action.CROP");
-////                        intent.setbookDataAndType(imgUri, "image/*");
-////                        intent.putExtra("scale", true);
-////                        intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
-////                        getActivity().startActivityForResult(intent,CROP_PHOTO);
-////                    }
-////                    break;
-////                case CROP_PHOTO:
-////                    if (resultCode == Activity.RESULT_OK) {
-////                        try {
-////                            Bitmap bitmap = BitmapFactory.decodeStream(getActivity().getContentResolver().openInputStream(imgUri));
-////                            picture.setImageBitmap(bitmap);
-////                        } catch (FileNotFoundException e) {
-////                            e.printStackTrace();
-////                        }
-////                    }
-////                    break;
-//                default:
-//                    break;
-//            }
-//    }
-
-
-
-
     private void clearCache() {
         // 清空图片缓存，包括裁剪、压缩后的图片 注意:必须要在上传完成后调用 必须要获取权限
         if (PermissionChecker.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
@@ -718,9 +857,4 @@ public class BookFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onDestroy() {
-        clearCache();
-        super.onDestroy();
-    }
 }

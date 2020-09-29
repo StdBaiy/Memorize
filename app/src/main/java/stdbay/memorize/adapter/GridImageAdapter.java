@@ -1,11 +1,13 @@
 package stdbay.memorize.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.luck.picture.lib.config.PictureMimeType;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.listener.OnItemClickListener;
@@ -161,6 +165,7 @@ public class GridImageAdapter extends
     /**
      * 设置值
      */
+    @SuppressLint("CheckResult")
     @Override
     public void onBindViewHolder(@NotNull final ViewHolder viewHolder, final int position) {
             if (getItemViewType(position) == TYPE_CAMERA) {
@@ -168,12 +173,14 @@ public class GridImageAdapter extends
                 if(getViewType()==SELECT_PIC) {
                     viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
                     viewHolder.mImg.setVisibility(View.VISIBLE);
+//                    viewHolder.mImg.setAnimation();
+                    viewHolder.mImg.startAnimation(new AlphaAnimation(0.5f,1f));
                     viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
-                    viewHolder.mIvDel.setVisibility(View.INVISIBLE);
+                    viewHolder.mIvDel.setVisibility(View.GONE);
                 }else{
-                    viewHolder.mImg.setVisibility(View.INVISIBLE);
+                    viewHolder.mImg.setVisibility(View.GONE);
                     viewHolder.mImg.setOnClickListener(null);
-                    viewHolder.mIvDel.setVisibility(View.INVISIBLE);
+                    viewHolder.mIvDel.setVisibility(View.GONE);
                 }
             } else {
                 if(getViewType()==SELECT_PIC) {
@@ -241,14 +248,23 @@ public class GridImageAdapter extends
                 if (chooseModel == PictureMimeType.ofAudio()) {
                     viewHolder.mImg.setImageResource(R.drawable.picture_audio_placeholder);
                 } else {
-                    Glide.with(viewHolder.itemView.getContext())
-                            .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
-                                    : path)
-                            .centerCrop()
-                            .placeholder(R.color.app_color_f6)
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .into(viewHolder.mImg);
+                    new RequestOptions();
+                    RequestOptions requestOptions = new RequestOptions();
+                    requestOptions.placeholder(R.color.f4);
+//                    RequestOptions.circleCropTransform();
+//                    requestOptions.centerCrop();
+                    requestOptions.transforms( new RoundedCorners(20));
+
+//                    if(isScrollEnd) {
+                        Glide.with(viewHolder.itemView.getContext())
+                                .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
+                                        : path)
+                                .apply(requestOptions)
+                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                .into(viewHolder.mImg);
                 }
+
+         }
                 //itemView 的点击事件
                 if (mItemClickListener != null) {
                     viewHolder.itemView.setOnClickListener(v -> {
@@ -264,9 +280,7 @@ public class GridImageAdapter extends
                         return true;
                     });
                 }
-            }
-
-    }
+           }
 
     private OnItemClickListener mItemClickListener;
 
@@ -279,4 +293,23 @@ public class GridImageAdapter extends
     public void setItemLongClickListener(OnItemLongClickListener l) {
         this.mItemLongClickListener = l;
     }
+
+//    private Activity activity;
+//    public  void setActivity(Activity activity){
+//        this.activity=activity;
+//    }
+
+//    protected boolean isScrolling = false;
+//
+//    public void setScrolling(boolean scrolling) {
+//        isScrolling = scrolling;
+//    }
+
+    public interface onSrollListener{
+        public void onScrollEnd();
+    }
+
+    public static boolean isScrollEnd=true;
+
+
 }

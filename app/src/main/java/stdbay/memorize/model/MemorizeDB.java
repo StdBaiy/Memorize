@@ -431,13 +431,15 @@ public class MemorizeDB {
 
             //把每一个照片地址存下来
             for(LocalMedia media:mediaList){
-                String path="";
+                String path;
                 if(media.getCompressPath()!=null)
                     path=media.getCompressPath();
                 else if(media.getCutPath()!=null)
                     path=media.getCutPath();
                 else if(media.getAndroidQToPath()!=null)
                     path=media.getAndroidQToPath();
+                else
+                    path=media.getPath();
                 db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
                         new String[]{String.valueOf(id),path});
             }
@@ -470,8 +472,18 @@ public class MemorizeDB {
             //再添加更改后的
             if(!mediaList.isEmpty())
             for(LocalMedia media:mediaList){
+                String path;
+                if(media.getCompressPath()!=null)
+                    path=media.getCompressPath();
+                else if(media.getCutPath()!=null)
+                    path=media.getCutPath();
+                else if(media.getAndroidQToPath()!=null)
+                    path=media.getAndroidQToPath();
+                else
+                    path=media.getPath();
+
                 db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
-                        new String[]{String.valueOf(id),media.getPath()});
+                        new String[]{String.valueOf(id),path});
             }
 
             if (listener!=null)

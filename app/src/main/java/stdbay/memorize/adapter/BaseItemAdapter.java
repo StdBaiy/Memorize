@@ -40,7 +40,5 @@ public class BaseItemAdapter extends BaseQuickAdapter<BaseItem,BaseViewHolder> {
         }
         helper.setText(R.id.name,item.getName())
                 .setText(R.id.description,description);
-
-
     }
 }
