@@ -233,4 +233,173 @@ public class MemorizeDB {
         void onFinished();
         void onError(Exception e);
     }
+<<<<<<< HEAD
+=======
+
+
+    public void GoThroughKnowledge(final int subId,  final callBackListener listener){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    TreeNode root = new TreeNode();
+                    cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(subId)});
+                    if(cursor.moveToFirst()){
+                        root.setName(cursor.getString(cursor.getColumnIndex("name")));
+                    }
+                    Queue<TreeNode> queue = new LinkedList<TreeNode>();
+                    queue.offer(root);
+                    int length;
+                    int tmpLength = 1;
+
+
+
+                    MemorizeDB.treeDepth=0;
+                    while (!queue.isEmpty()) {
+                        length = tmpLength;
+                        tmpLength = 0;
+                        for (int i = 0; i < length; ++i) {
+                            if (queue.peek() == root)//根节点没有父亲
+                                cursor = db.rawQuery("select*from knowledge where fatherId is null and subId =?", new String[]{String.valueOf(subId)});
+                            else
+                                cursor = db.rawQuery("select * from knowledge where fatherId =? and subId =?",
+                                        new String[]{String.valueOf(Objects.requireNonNull(queue.peek()).getId()), String.valueOf(subId)});
+                            List<TreeNode> children = new ArrayList<>();
+                            if (cursor.moveToFirst()) {
+                                do {
+                                    TreeNode treeNode = new TreeNode();
+                                    treeNode.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                                    treeNode.setName(cursor.getString(cursor.getColumnIndex("name")));
+                                    treeNode.setFather(queue.peek());
+                                    treeNode.setAnnotation(cursor.getString(cursor.getColumnIndex("annotation")));
+                                    children.add(treeNode);
+                                    queue.offer(treeNode);
+                                } while (cursor.moveToNext());
+                            }
+                            tmpLength += cursor.getCount();
+                            Objects.requireNonNull(queue.poll()).setChildren(children);
+                        }
+                        MemorizeDB.treeDepth++;
+                    }
+                    MemorizeDB.root=root;
+                    if (listener!=null)
+                        listener.onFinished();
+                } catch (Exception e) {
+                    if (listener!=null)
+                        listener.onError(e);
+                }
+            }
+        }).start();
+    }
+
+    //计算给定节点的叶子节点数,用于规划布局位置
+    public static int getLeavesNum(TreeNode node){
+        if(node.getChildren().isEmpty())return 1;
+        else{
+            int num=0;
+            for(int i=0;i<node.getChildren().size();++i){
+                if(node.getChildren().get(i).getChildren().isEmpty())num++;
+                else num+=getLeavesNum(node.getChildren().get(i));
+            }
+            return num;
+        }
+    }
+
+    public Map<String,Integer> getSubjects(){
+        Map<String,Integer>rtn=new HashMap<>();
+
+        //这里仅查询科目表中的叶子结点
+        cursor=db.rawQuery("select * from subject s1 where not exists " +
+                "(select * from subject s2 where s2.fatherId in (select id from subject where id=s1.id))",null);
+        if(cursor.moveToFirst()){
+            do{
+                rtn.put(cursor.getString(cursor.getColumnIndex("name")),
+                        cursor.getInt(cursor.getColumnIndex("id")));
+            }while (cursor.moveToNext());
+        }
+        return rtn;
+    }
+
+    public void addProblem(int probSetId,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,callBackListener listener){
+        try {
+            //通过这种方法,在插入主键之前就确定了主键值
+            cursor = db.rawQuery("select*from problem order by id desc", null);
+            int id = 1;
+            if (cursor.moveToFirst())
+                id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+            int subId = 0;
+            cursor = db.rawQuery("select*from problem_set where id=?", new String[]{String.valueOf(probSetId)});
+            if (cursor.moveToFirst())
+                subId = cursor.getInt(cursor.getColumnIndex("subId"));
+            db.execSQL("insert into problem (id,probSetId,subId,number,createTime,summary,grade,totalGrade)" +
+                            "values(?,?,?,?,(select date('now')),?,?,?)",
+                    new String[]{String.valueOf(id), String.valueOf(probSetId), String.valueOf(subId),number,
+                            summary, grade, totalGrade});
+
+            //把每一个照片地址存下来
+            for(LocalMedia media:mediaList){
+                String path;
+                if(media.getCompressPath()!=null)
+                    path=media.getCompressPath();
+                else if(media.getCutPath()!=null)
+                    path=media.getCutPath();
+                else if(media.getAndroidQToPath()!=null)
+                    path=media.getAndroidQToPath();
+                else
+                    path=media.getPath();
+                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
+                        new String[]{String.valueOf(id),path});
+            }
+            if (listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if (listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
+    }
+
+    public void changeProblem(int id,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,callBackListener listener){
+        try {
+//            //通过这种方法,在插入主键之前就确定了主键值
+//            cursor = db.rawQuery("select*from problem order by id desc", null);
+//            int id = 1;
+//            if (cursor.moveToFirst())
+//                id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+//            int subId = 0;
+//            cursor = db.rawQuery("select*from problem_set where id=?", new String[]{String.valueOf(probSetId)});
+//            if (cursor.moveToFirst())
+//                subId = cursor.getInt(cursor.getColumnIndex("subId"));
+            db.execSQL("update problem set number=?,summary=?,grade=?,totalGrade=? where id=?",
+                    new String[]{number,summary, grade, totalGrade, String.valueOf(id)});
+
+
+            //先删掉已经有的图片
+            db.execSQL("delete from prob_pic where probId=?",new String[]{String.valueOf(id)});
+            //再添加更改后的
+            if(!mediaList.isEmpty())
+            for(LocalMedia media:mediaList){
+                String path;
+                if(media.getCompressPath()!=null)
+                    path=media.getCompressPath();
+                else if(media.getCutPath()!=null)
+                    path=media.getCutPath();
+                else if(media.getAndroidQToPath()!=null)
+                    path=media.getAndroidQToPath();
+                else
+                    path=media.getPath();
+
+                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
+                        new String[]{String.valueOf(id),path});
+            }
+
+            if (listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if (listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
+    }
+>>>>>>> f71716a... 完成相册功能
 }
