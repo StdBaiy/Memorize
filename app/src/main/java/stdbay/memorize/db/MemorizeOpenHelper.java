@@ -38,7 +38,32 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_PROB_PIC_TABLE="create table prob_pic(" +//习题_图片表
             "probId integer," +
-            "picPath text," +//图片保存地址
+            "path text," +//图片保存地址
+            "compressPath text," +
+            "cutPath text," +
+            "realPath text," +
+            "id integer," +
+            "originalPath text," +
+            "duration int," +
+            "isChecked integer," +
+            "androidQToPath text,"+
+            "isCut integer," +
+            "position integer," +
+            "num integer," +
+            "mimeType text," +
+            "chooseModel integer," +
+            "compressed integer," +
+            "width integer," +
+            "height integer," +
+            "size integer," +
+            "isOriginal integer," +
+            "fileName text," +
+            "parentFolderName text," +
+            "orientation integer," +
+            "loadLongImageStatus integer," +
+            "isLongImage integer," +
+            "bucketId integer," +
+            "isMaxSelectEnabledMask integer,"+
             "foreign key(probId)references problem(id)on delete cascade)";
 
     private static final String CREATE_KNOWLEDGE_TABLE="create table knowledge(" +//知识点表

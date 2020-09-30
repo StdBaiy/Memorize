@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -174,7 +173,7 @@ public class GridImageAdapter extends
                     viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
                     viewHolder.mImg.setVisibility(View.VISIBLE);
 //                    viewHolder.mImg.setAnimation();
-                    viewHolder.mImg.startAnimation(new AlphaAnimation(0.5f,1f));
+//                    viewHolder.mImg.startAnimation(new AlphaAnimation(0.5f,1f));
                     viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
                     viewHolder.mIvDel.setVisibility(View.GONE);
                 }else{

@@ -77,8 +77,38 @@ public class MemorizeDB {
                  Cursor csr=db.rawQuery("select*from prob_pic where probId=?",new String[]{String.valueOf(id)});
                 if(csr.moveToFirst()){
                     do{
+//                        db.execSQL("insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
+//                                        "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
+//                                        "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+//                                new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
+//                                        media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
+//                                        media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
+//                                        String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
+//                                        media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
+
                         LocalMedia media = new LocalMedia();
-                        media.setPath(csr.getString(csr.getColumnIndex("picPath")));
+                        media.setPath(csr.getString(csr.getColumnIndex("path")));
+                        media.setCompressPath(csr.getString(csr.getColumnIndex("compressPath")));
+                        media.setAndroidQToPath(csr.getString(csr.getColumnIndex("androidQToPath")));
+                        media.setBucketId(csr.getInt(csr.getColumnIndex("id")));
+                        media.setChecked(csr.getInt(csr.getColumnIndex("isChecked"))==1);
+                        media.setCut(csr.getInt(csr.getColumnIndex("isCut"))==1);
+                        media.setCutPath(csr.getString(csr.getColumnIndex("cutPath")));
+                        media.setRealPath(csr.getString(csr.getColumnIndex("realPath")));
+                        media.setPosition(csr.getInt(csr.getColumnIndex("position")));
+                        media.setNum(csr.getInt(csr.getColumnIndex("num")));
+                        media.setMimeType(csr.getString(csr.getColumnIndex("mimeType")));
+                        media.setChooseModel(csr.getInt(csr.getColumnIndex("chooseModel")));
+                        media.setCompressed(csr.getInt(csr.getColumnIndex("compressed"))==1);
+                        media.setWidth(csr.getInt(csr.getColumnIndex("width")));
+                        media.setHeight(csr.getInt(csr.getColumnIndex("height")));
+                        media.setSize(csr.getInt(csr.getColumnIndex("size")));
+                        media.setFileName(csr.getString(csr.getColumnIndex("fileName")));
+                        media.setParentFolderName(csr.getString(csr.getColumnIndex("parentFolderName")));
+                        media.setOrientation(csr.getInt(csr.getColumnIndex("orientation")));
+                        media.loadLongImageStatus=csr.getInt(csr.getColumnIndex("loadLongImageStatus"));
+                        media.isLongImage=csr.getInt(csr.getColumnIndex("isLongImage"))==1;
+                        media.setMaxSelectEnabledMask(csr.getInt(csr.getColumnIndex("isMaxSelectEnabledMask"))==1);
                         pics.add(media);
                     }while(csr.moveToNext());
                 }
@@ -95,16 +125,13 @@ public class MemorizeDB {
         if(nowItem==null){
             cursor=db.rawQuery("select*from subject where fatherId is null",null);
             queryFromCursorToList(BaseItem.SUBJECT_TYPE);
-        }else
-        switch(nowItem.getType()){
-            case BaseItem.SUBJECT_TYPE:
-                cursor=db.rawQuery("select*from subject where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
-                queryFromCursorToList(BaseItem.SUBJECT_TYPE);
-                cursor=db.rawQuery("select*from problem_set where fatherId is null and subId=?"
-                        ,new String[]{String.valueOf(nowItem.getId())});
-                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
-                break;
-//            case BaseItem.PROBLEM_SET_TYPE:
+        }else if (nowItem.getType() == BaseItem.SUBJECT_TYPE) {
+            cursor = db.rawQuery("select*from subject where fatherId=?", new String[]{String.valueOf(nowItem.getId())});
+            queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+            cursor = db.rawQuery("select*from problem_set where fatherId is null and subId=?"
+                    , new String[]{String.valueOf(nowItem.getId())});
+            queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
+            //            case BaseItem.PROBLEM_SET_TYPE:
 //                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
 //                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
 //                break;
@@ -431,17 +458,15 @@ public class MemorizeDB {
 
             //把每一个照片地址存下来
             for(LocalMedia media:mediaList){
-                String path;
-                if(media.getCompressPath()!=null)
-                    path=media.getCompressPath();
-                else if(media.getCutPath()!=null)
-                    path=media.getCutPath();
-                else if(media.getAndroidQToPath()!=null)
-                    path=media.getAndroidQToPath();
-                else
-                    path=media.getPath();
-                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
-                        new String[]{String.valueOf(id),path});
+
+                db.execSQL("insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
+                                "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
+                                "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
+                        media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
+                        media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
+                        String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
+                        media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
             }
             if (listener!=null)
                 listener.onFinished();
@@ -472,18 +497,14 @@ public class MemorizeDB {
             //再添加更改后的
             if(!mediaList.isEmpty())
             for(LocalMedia media:mediaList){
-                String path;
-                if(media.getCompressPath()!=null)
-                    path=media.getCompressPath();
-                else if(media.getCutPath()!=null)
-                    path=media.getCutPath();
-                else if(media.getAndroidQToPath()!=null)
-                    path=media.getAndroidQToPath();
-                else
-                    path=media.getPath();
-
-                db.execSQL("insert into prob_pic (probId,picPath)values(?,?)",
-                        new String[]{String.valueOf(id),path});
+                db.execSQL("insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
+                                "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
+                                "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
+                                media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
+                                media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
+                                String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
+                                media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
             }
 
             if (listener!=null)
