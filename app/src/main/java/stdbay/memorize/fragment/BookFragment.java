@@ -17,7 +17,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -25,7 +24,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
@@ -37,16 +35,10 @@ import com.luck.picture.lib.tools.PictureFileUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.xuexiang.xui.utils.DensityUtils;
 import com.xuexiang.xui.utils.SnackbarUtils;
+import com.xuexiang.xui.widget.activity.BaseSplashActivity;
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
 import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
-
 import org.greenrobot.eventbus.EventBus;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import stdbay.memorize.R;
 import stdbay.memorize.adapter.BaseItemAdapter;
 import stdbay.memorize.adapter.FullyGridLayoutManager;
@@ -59,6 +51,11 @@ import stdbay.memorize.util.DeleteUtil;
 import stdbay.memorize.util.GlideEngine;
 import stdbay.memorize.util.MessageEvent;
 import stdbay.memorize.util.PictureStyle;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 //import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
 
@@ -115,20 +112,20 @@ public class BookFragment extends Fragment{
                 .isEnableCrop(true)// 是否裁剪
                 //.basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
                 .isCompress(true)// 是否压缩
-                .compressQuality(40)// 图片压缩后输出质量 0~ 100
+                .compressQuality(80)// 图片压缩后输出质量 0~ 100
 //                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
                 //.queryBooksMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
                 //.compressSavePath(getPath())//压缩图片保存地址
                 //.sizeMultiplier(0.5f)// glide 加载图片大小 0~1之间 如设置 .glideOverride()无效 注：已废弃
                 //.glideOverride(160, 160)// glide 加载宽高，越小图片列表越流畅，但会影响列表图片浏览的清晰度 注：已废弃
 //                    .withAspectRatio(aspect_ratio_x, aspect_ratio_y)// 裁剪比例 如16:9 3:2 3:4 1:1 可自定义
-                .hideBottomControls(true)// 是否显示uCrop工具栏，默认不显示
-//                    .isGif(cb_isGif.isChecked())// 是否显示gif图片
+                .hideBottomControls(false)// 是否显示uCrop工具栏，默认不显示
+                .isGif(true)// 是否显示gif图片
                 //.isWebp(false)// 是否显示webp图片,默认显示
                 //.isBmp(false)//是否显示bmp图片,默认显示
                 .freeStyleCropEnabled(true)// 裁剪框是否可拖拽
 //                    .circleDimmedLayer(cb_crop_circular.isChecked())// 是否圆形裁剪
-                .setCropDimmedColor(ContextCompat.getColor(getContext(), R.color._333))// 设置裁剪背景色值
+                .setCropDimmedColor(ContextCompat.getColor(Objects.requireNonNull(getContext()), R.color._333))// 设置裁剪背景色值
                 //.setCircleDimmedBorderColor(ContextCompat.getColor(getApplicationContext(), R.color.app_color_white))// 设置圆形裁剪边框色值
                 //.setCircleStrokeWidth(3)// 设置圆形裁剪边框粗细
                 .showCropFrame(true)// 是否显示裁剪矩形边框 圆形裁剪时建议设为false
@@ -142,7 +139,7 @@ public class BookFragment extends Fragment{
                 .isPreviewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中)
                 //.cropCompressQuality(90)// 注：已废弃 改用cutOutQuality()
 //                    .cutOutQuality(90)// 裁剪输出质量 默认100
-                .minimumCompressSize(100)// 小于多少kb的图片不压缩
+//                .minimumCompressSize(300)// 小于多少kb的图片不压缩
                 //.cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 //.cropImageWideHigh()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 .rotateEnabled(false) // 裁剪是否可旋转图片
@@ -155,7 +152,6 @@ public class BookFragment extends Fragment{
     private static List<LocalMedia> mResult=new ArrayList<>();
     private int problemPosition;
     private View problemInflate;
-    private RecyclerView recyclerView;
     private EditText num;
     private EditText smy;
     private EditText grd;
@@ -299,13 +295,13 @@ public class BookFragment extends Fragment{
 
         problemInflate= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
 
-        recyclerView = problemInflate.findViewById(R.id.recycler_show);
+        RecyclerView recyclerView = problemInflate.findViewById(R.id.recycler_show);
         recyclerView.setAdapter(gAdapter);
         FullyGridLayoutManager fManager = new FullyGridLayoutManager(getActivity(),
                 3, GridLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(fManager);
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
-                ScreenUtils.dip2px(getActivity(), 8), false));
+                ScreenUtils.dip2px(Objects.requireNonNull(getActivity()), 8), false));
         num= problemInflate.findViewById(R.id.problem_number_show);
         grd= problemInflate.findViewById(R.id.grade_show);
         tolGrd= problemInflate.findViewById(R.id.total_grade_show);
@@ -378,6 +374,8 @@ public class BookFragment extends Fragment{
             problemPosition=position;
 //            = problemItems.get(position);
             ProblemItem item= problemItems.get(position);
+            List<LocalMedia> beforeList = new ArrayList<>(item.getPictures());
+
             num.setEnabled(false);
             grd.setEnabled(false);
             tolGrd.setEnabled(false);
@@ -415,6 +413,16 @@ public class BookFragment extends Fragment{
                     item.setSummary(smy.getText().toString());
                     item.setGrade(grd.getText().toString());
                     item.setTotalGrade(tolGrd.getText().toString());
+
+
+                    for(LocalMedia media:beforeList){
+                        if(!gAdapter.getData().contains(media)){
+                            Log.d("tag",media.getFileName());
+                            DeleteUtil.delete(media);
+                        }
+                    }
+
+
                     item.setPictures(gAdapter.getData());
                 } else {
                     view22.setSelected(true);
@@ -532,16 +540,6 @@ public class BookFragment extends Fragment{
         //隐藏锁图标
         lock.setVisibility(View.GONE);
 
-//        FullyGridLayoutManager manager = new FullyGridLayoutManager(getActivity(),
-//                3, GridLayoutManager.VERTICAL, false);
-//        recyclerView.setLayoutManager(manager);
-//
-//        recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
-//                ScreenUtils.dip2px(getActivity(), 8), false));
-//        recyclerView.setAdapter(gAdapter);
-
-
-
         //用于判断本次添加是否作废
         final boolean[] isEffective = {true};
         //再把该布局加载到对话框
@@ -578,16 +576,9 @@ public class BookFragment extends Fragment{
             //作废的话就删除缓存文件以减少存储
             if(isEffective[0]){
                 for(LocalMedia media:mResult){
-                    if(media.getAndroidQToPath()!=null)
-                        DeleteUtil.delete(media.getAndroidQToPath());
-                    if(media.getCompressPath()!=null)
-                        DeleteUtil.delete(media.getCompressPath());
-                    if(media.getCutPath()!=null) {
-                        DeleteUtil.delete(media.getCutPath());
-                    }
+                    DeleteUtil.delete(media);
                 }
             }
-
         });
         problemDialog.show();
     }
@@ -759,7 +750,7 @@ public class BookFragment extends Fragment{
 
     private void clearCache() {
         // 清空图片缓存，包括裁剪、压缩后的图片 注意:必须要在上传完成后调用 必须要获取权限
-        if (PermissionChecker.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        if (PermissionChecker.checkSelfPermission(Objects.requireNonNull(getContext()), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             //PictureFileUtils.deleteCacheDirFile(this, PictureMimeType.ofImage());
             PictureFileUtils.deleteAllCacheDirFile(getContext());
         } else {
@@ -768,4 +759,9 @@ public class BookFragment extends Fragment{
         }
     }
 
+    @Override
+    public void onDestroy() {
+        clearCache();
+        super.onDestroy();
+    }
 }

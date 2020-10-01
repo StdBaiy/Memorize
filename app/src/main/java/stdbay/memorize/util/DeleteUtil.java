@@ -2,24 +2,37 @@ package stdbay.memorize.util;
 
 import android.util.Log;
 
+import com.luck.picture.lib.entity.LocalMedia;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DeleteUtil {
 
     /** 删除文件，可以是文件或文件夹
-     * @param delFile 要删除的文件夹或文件名
-     * @return 删除成功返回true，否则返回false
+     * @param media 要删除的文件夹或文件名
      */
-    public static boolean  delete(String delFile) {
-        File file = new File(delFile);
-        if (!file.exists()) {
-            //Toast.makeText(MyApplication.getContext(), "删除文件失败:" + delFile + "不存在！", //Toast.LENGTH_SHORT).show();
-            return false;
-        } else {
-            if (file.isFile())
-                return deleteSingleFile(delFile);
-            else
-                return deleteDirectory(delFile);
+    public static void delete(LocalMedia media) {
+        List<String>paths=new ArrayList<>();
+        if(media.isCompressed())
+            paths.add(media.getCompressPath());
+        if(media.isCut())
+            paths.add(media.getCutPath());
+//        if(media.getAndroidQToPath()!=null)
+//            paths.add(media.getAndroidQToPath());
+
+        for(String delFile:paths) {
+            File file = new File(delFile);
+            if (!file.exists()) {
+                //Toast.makeText(MyApplication.getContext(), "删除文件失败:" + delFile + "不存在！", //Toast.LENGTH_SHORT).show();
+            } else {
+                if (file.isFile()) {
+                    deleteSingleFile(delFile);
+                } else {
+                    deleteDirectory(delFile);
+                }
+            }
         }
     }
 

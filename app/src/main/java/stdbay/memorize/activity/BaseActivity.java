@@ -23,6 +23,9 @@ import stdbay.memorize.fragment.MyFragment;
 
 public class BaseActivity extends FragmentActivity implements View.OnClickListener{
 
+    public final static String KEY_IS_DISPLAY = "key_is_display";
+    public final static String KEY_ENABLE_ALPHA_ANIM = "key_enable_alpha_anim";
+
     private LinearLayout observe;
     private LinearLayout knowledge;
     private LinearLayout statistics;
@@ -40,11 +43,12 @@ public BookFragment getBookFragment(){
     protected void onCreate(Bundle savedInstanceState) {
 
         XUI.initTheme(this);
-
+        
         // android 7.0系统解决拍照的问题
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         builder.detectFileUriExposure();
+
 
         checkPermission();
 
@@ -53,7 +57,6 @@ public BookFragment getBookFragment(){
         super.onCreate(savedInstanceState);
         StatusBarUtils.translucent(this);
         setContentView(R.layout.activity_base);
-
 
 
 

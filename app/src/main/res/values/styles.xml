@@ -34,5 +34,12 @@
         <item name="android:paddingBottom">?attr/xui_config_content_spacing_vertical</item>
     </style>
 
-
+    <style name="SplashActivityTheme" parent="android:Theme.Holo.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+<!--        <item name="android:windowBackground"></item>-->
+        <item name="android:background">@drawable/splash</item>
+        <item name="android:windowBackground">@color/_333</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 </resources>
