@@ -25,7 +25,8 @@
     <TextView
         android:id="@+id/notice"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:textSize="25sp"
         android:layout_gravity="center"
         android:gravity="center"
@@ -35,7 +36,8 @@
         tools:ignore="HardcodedText" />
     <com.shizhefei.view.hvscrollview.HVScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:background="#555"
         android:overScrollMode="never"
         android:id="@+id/hvscroll">
@@ -45,4 +47,48 @@
             android:id="@+id/canvas"/>
     </com.shizhefei.view.hvscrollview.HVScrollView>
 
+    <LinearLayout
+        android:id="@+id/info_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:background="@color/_333">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/selects_knowledges"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:overScrollMode="never"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/cancel_select"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="取消"
+                android:textColor="@color/_ccc"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:id="@+id/select_info"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="@color/_ccc"
+                android:text="已经选中n项"
+                android:layout_weight="1"
+                tools:ignore="HardcodedText,NestedWeights" />
+
+            <Button
+                android:id="@+id/return_knowledge"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textColor="@color/_ccc"
+                android:text="确定"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

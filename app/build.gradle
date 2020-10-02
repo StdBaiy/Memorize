@@ -47,6 +47,9 @@ dependencies {
     //工具类
     implementation 'com.github.xuexiangjys.XUtil:xutil-core:1.1.8'
     implementation 'com.github.xuexiangjys.XUtil:xutil-sub:1.1.8'
+
+    //弹性布局
+    implementation 'com.google.android:flexbox:0.3.1'
     //PictureSelector图片选择
     //    implementation 'com.github.xuexiangjys.PictureSelector:picture-core:1.0.5'
 }

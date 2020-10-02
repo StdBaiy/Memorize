@@ -18,7 +18,7 @@ public class StartPageActivity extends Activity {
             @Override
             public void run() {
                 try {
-                    sleep(300);//使程序休眠
+                    sleep(200);//使程序休眠
                     Intent it = new Intent(getApplicationContext(), BaseActivity.class);
                     startActivity(it);
                     finish();//关闭当前活动

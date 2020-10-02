@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -13,10 +14,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -24,6 +28,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
@@ -35,12 +44,20 @@ import com.luck.picture.lib.tools.PictureFileUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.xuexiang.xui.utils.DensityUtils;
 import com.xuexiang.xui.utils.SnackbarUtils;
-import com.xuexiang.xui.widget.activity.BaseSplashActivity;
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
 import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
+import com.xuexiang.xui.widget.searchview.MaterialSearchView;
+
 import org.greenrobot.eventbus.EventBus;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import stdbay.memorize.R;
 import stdbay.memorize.adapter.BaseItemAdapter;
+import stdbay.memorize.adapter.FlexboxLayoutAdapter;
 import stdbay.memorize.adapter.FullyGridLayoutManager;
 import stdbay.memorize.adapter.GridImageAdapter;
 import stdbay.memorize.adapter.ProblemAdapter;
@@ -52,15 +69,14 @@ import stdbay.memorize.util.GlideEngine;
 import stdbay.memorize.util.MessageEvent;
 import stdbay.memorize.util.PictureStyle;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 //import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
 
 public class BookFragment extends Fragment{
     private GridImageAdapter gAdapter;
+    public MaterialDialog problemDialog;
+    private RecyclerView knowledgeRV;
+
+
     private GridImageAdapter.onAddPicClickListener initOnAddPicListener(GridImageAdapter gAdapter){
         return () -> PictureSelector.create(getActivity())
                 .openGallery(PictureMimeType.ofImage())// 全部.PictureMimeType.ofAll()、图片.ofImage()、视频.ofVideo()、音频.ofAudio()
@@ -105,7 +121,7 @@ public class BookFragment extends Fragment{
                 //.queryBooksSpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
 //                    .isEnablePreviewAudio(cb_preview_audio.isChecked()) // 是否可播放音频
                 .isCamera(true)// 是否显示拍照按钮
-//                    .isMultipleSkipCrop(false)// 多图裁剪时是否支持跳过，默认支持
+                .isMultipleSkipCrop(true)// 多图裁剪时是否支持跳过，默认支持
                 .isMultipleRecyclerAnimation(true)// 多图裁剪底部列表显示动画效果
                 .isZoomAnim(true)// 图片列表点击 缩放效果 默认true
                 .imageFormat(PictureMimeType.JPEG_Q)// 拍照保存图片格式后缀,默认jpeg,Android Q使用PictureMimeType.PNG_Q
@@ -139,7 +155,7 @@ public class BookFragment extends Fragment{
                 .isPreviewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中)
                 //.cropCompressQuality(90)// 注：已废弃 改用cutOutQuality()
 //                    .cutOutQuality(90)// 裁剪输出质量 默认100
-//                .minimumCompressSize(300)// 小于多少kb的图片不压缩
+                .minimumCompressSize(0)// 小于多少kb的图片不压缩
                 //.cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 //.cropImageWideHigh()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 .rotateEnabled(false) // 裁剪是否可旋转图片
@@ -157,6 +173,7 @@ public class BookFragment extends Fragment{
     private EditText grd;
     private EditText tolGrd;
     private ImageView  lock;
+    private MaterialSearchView mSearchView;
 
 
     /**
@@ -197,6 +214,8 @@ public class BookFragment extends Fragment{
     private TextView title;
 
     private TextView notice;
+
+    private Button selectKnowledge;
 
     private  boolean isFromItem;
     private boolean isFromProblem;
@@ -295,6 +314,11 @@ public class BookFragment extends Fragment{
 
         problemInflate= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
 
+//        selectKnowledge=problemInflate.findViewById(R.id.select_knowledge);
+//        selectKnowledge.setOnClickListener(view1 -> {
+//
+//        });
+
         RecyclerView recyclerView = problemInflate.findViewById(R.id.recycler_show);
         recyclerView.setAdapter(gAdapter);
         FullyGridLayoutManager fManager = new FullyGridLayoutManager(getActivity(),
@@ -307,6 +331,59 @@ public class BookFragment extends Fragment{
         tolGrd= problemInflate.findViewById(R.id.total_grade_show);
         smy= problemInflate.findViewById(R.id.summary_show);
         lock= problemInflate.findViewById(R.id.lock);
+        mSearchView=problemInflate.findViewById(R.id.search_view);
+
+        LinearLayout l1=problemInflate.findViewById(R.id.linear1);
+        LinearLayout l2=problemInflate.findViewById(R.id.linear2);
+
+        l1.setOnClickListener(view1 -> {
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.SELECT_KNOWLEDGE));
+            problemDialog.hide();
+        });
+
+        l2.setOnClickListener(view1 -> {
+            if (lock.isSelected())
+                gAdapter.callOnAddPicClick();
+            else
+                SnackbarUtils.Custom(title,"解锁后才能修改",700)
+                        .confirm().show();
+
+        });
+
+        knowledgeRV=problemInflate.findViewById(R.id.knowledge_items);
+        knowledgeRV.setLayoutManager(getFlexboxLayoutManager(getContext()));
+        knowledgeRV.setItemAnimator(null);
+
+        mSearchView.setVoiceSearch(false);
+        mSearchView.setEllipsize(true);
+        mSearchView.setSuggestions(getResources().getStringArray(R.array.query_suggestions));
+        mSearchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                SnackbarUtils.Long(mSearchView, "Query: " + query).show();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                //Do some magic
+                return false;
+            }
+        });
+        mSearchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
+            @Override
+            public void onSearchViewShown() {
+                //Do some magic
+            }
+
+            @Override
+            public void onSearchViewClosed() {
+                //Do some magic
+            }
+        });
+        mSearchView.setSubmitOnClick(true);
+//        mSearchView.showSearch(false);
+
 
         menu.setOnClickListener(view16 -> {
             isFromItem=false;
@@ -384,11 +461,7 @@ public class BookFragment extends Fragment{
             gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
             gAdapter.setList(item.getPictures());
             gAdapter.notifyDataSetChanged();
-//            FullyGridLayoutManager fManager = new FullyGridLayoutManager(getActivity(),
-//                        3, GridLayoutManager.VERTICAL, false);
-//            recyclerView.setLayoutManager(fManager);
-//            recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
-//            ScreenUtils.dip2px(getActivity(), 8), false));
+
             num.setText(item.getNumber());
             grd.setText(item.getGrade());
             tolGrd.setText(item.getTotalGrade());
@@ -435,12 +508,13 @@ public class BookFragment extends Fragment{
                 gAdapter.notifyDataSetChanged();
             });
 
-            MaterialDialog problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+            problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                     .backgroundColorRes(R.color.problem_blue)
                     .positiveColorRes(R.color._ccc)
                     .customView(problemInflate, true)
                     .build();
             problemDialog.show();
+//            mSearchView.showSearch();
         });
 
 
@@ -545,7 +619,7 @@ public class BookFragment extends Fragment{
         //再把该布局加载到对话框
         //不设置positiveText的话就没有确定按钮
         //动态更改EditText的可编辑性,可以达到自由修改的效果
-        MaterialDialog problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+        problemDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                 .backgroundColorRes(R.color.problem_blue)
                 .positiveColorRes(R.color._ccc)
                 .customView(problemInflate, true)
@@ -556,7 +630,7 @@ public class BookFragment extends Fragment{
                     String grade = grd.getText().toString();
                     String totalGrade = tolGrd.getText().toString();
                     String summary = smy.getText().toString();
-                    memorizeDB.addProblem(nowItem.getId(), number, summary, grade, totalGrade, mResult,new MemorizeDB.callBackListener() {
+                    memorizeDB.addProblem(nowItem.getId(), number, summary, grade, totalGrade, gAdapter.getData(),new MemorizeDB.callBackListener() {
                         @Override
                         public void onFinished() {
                             SnackbarUtils.Custom(title,"题目添加成功",700)
@@ -707,6 +781,10 @@ public class BookFragment extends Fragment{
                                         if(isFromProblem){
                                             id=problemItems.get(problemPosition).getId();
                                             type=BaseItem.PROBLEM_TYPE;
+                                            //删除本地文件
+                                            for(LocalMedia media:problemItems.get(problemPosition).getPictures()){
+                                                DeleteUtil.delete(media);
+                                            }
                                         }
                                         else if(isFromItem) {
                                             id=bookData.get(itemPosition).getId();
@@ -761,7 +839,51 @@ public class BookFragment extends Fragment{
 
     @Override
     public void onDestroy() {
+        if (mSearchView.isSearchOpen()) {
+            mSearchView.closeSearch();
+        }
         clearCache();
         super.onDestroy();
+    }
+
+    private FlexboxLayoutManager getFlexboxLayoutManager(Context context) {
+        //设置布局管理器
+        FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager(context);
+        //flexDirection 属性决定主轴的方向（即项目的排列方向）。类似 LinearLayout 的 vertical 和 horizontal:
+        // 主轴为水平方向，起点在左端。
+        flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
+        //flexWrap 默认情况下 Flex 跟 LinearLayout 一样，都是不带换行排列的，但是flexWrap属性可以支持换行排列:
+        // 按正常方向换行
+        flexboxLayoutManager.setFlexWrap(FlexWrap.WRAP);
+        //justifyContent 属性定义了项目在主轴上的对齐方式:
+        // 交叉轴的起点对齐
+        flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
+        return flexboxLayoutManager;
+    }
+    
+    public void updateKnowledgeItems(){
+        problemDialog.show();
+        List<BaseItem> list=MessageEvent.selectedknowledges;
+        FlexboxLayoutAdapter adapter;
+        adapter = new FlexboxLayoutAdapter(list);
+        adapter.setIsMultiSelectMode(true);
+        adapter.setCancelable(false);
+        adapter.multiSelect();
+        knowledgeRV.setAdapter(adapter);
+//        adapter.multiSelect(1, 2, 3);
+        for (int i=0;i<list.size();++i){
+            adapter.select(i);
+        }
+        adapter.setOnItemClickListener((itemView, item, position) -> {
+            if(lock.isSelected()) {
+                adapter.select(position);
+//            XToastUtils.toast("选中的内容：" + StringUtils.listToString(adapter.getMultiContent(), ","));
+            }else{
+                Toast.makeText(getContext(), adapter.getData().get(position).getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        //刷新知识点树,让选中的清空
+        EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
     }
 }

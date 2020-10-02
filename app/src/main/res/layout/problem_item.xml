@@ -101,7 +101,6 @@
         android:maxLength="200"
         tools:ignore="Autofill,HardcodedText,TextFields"
 
-
         app:met_floatingLabel="highlight"
         app:met_floatingLabelAlwaysShown="false"
         app:met_floatingLabelTextSize="12sp"
@@ -109,13 +108,87 @@
         app:met_textColor="#fff"
         android:layout_height="wrap_content"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:layout_centerHorizontal="true"
-            android:id="@+id/recycler_show"
-
-            android:layout_marginStart="30dp"
-            android:layout_below="@+id/summary_show"
-            android:layout_width="match_parent"
+    <LinearLayout
+        android:padding="10dp"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:layout_marginStart="30dp"
+        android:id="@+id/linear1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/summary_show">
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_mind_map"
+            android:id="@+id/select_knowledge"
+            tools:ignore="HardcodedText" />
+        <TextView
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:overScrollMode="never"/>
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="@color/_ccc"
+            android:text="@string/select_knowledge"
+            android:gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            />
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginStart="30dp"
+        android:layout_width="match_parent"
+        android:layout_below="@+id/linear1"
+        android:id="@+id/knowledge_items"
+        android:layout_centerHorizontal="true"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"/>
+
+
+    <com.xuexiang.xui.widget.searchview.MaterialSearchView
+        android:id="@+id/search_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/summary_show"
+        app:msv_searchBackground="@drawable/gray_corner"
+        app:msv_searchBackIcon="@drawable/ic_back"
+        />
+
+
+    <LinearLayout
+        android:layout_centerHorizontal="true"
+        android:padding="10dp"
+        android:orientation="horizontal"
+        android:layout_marginTop="50dp"
+        android:layout_marginStart="30dp"
+        android:id="@+id/linear2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/knowledge_items">
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_album"
+            tools:ignore="HardcodedText" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="@color/_ccc"
+            android:text="@string/select_picture"
+            android:gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_centerHorizontal="true"
+        android:id="@+id/recycler_show"
+        android:layout_marginStart="30dp"
+        android:layout_below="@+id/linear2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"/>
 </RelativeLayout>

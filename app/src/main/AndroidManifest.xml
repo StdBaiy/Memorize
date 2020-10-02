@@ -29,7 +29,15 @@
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning"
         tools:targetApi="q">
-        <activity android:name=".activity.StartPageActivity"
+        <activity android:name=".activity.MainActivity">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity
+            android:name=".activity.StartPageActivity"
             android:theme="@style/SplashActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,10 +45,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--        <activity android:name=".activity.OpenActivity">-->
-<!--            -->
-<!--        </activity>-->
-<!--        <activity android:name=".activity.SplashActivity" />-->
         <activity
             android:name=".activity.BaseActivity"
             android:screenOrientation="portrait" />

@@ -427,7 +427,6 @@ public class MemorizeDB {
 
     public Map<String,Integer> getSubjects(){
         Map<String,Integer>rtn=new HashMap<>();
-
         //这里仅查询科目表中的叶子结点
         cursor=db.rawQuery("select * from subject s1 where not exists " +
                 "(select * from subject s2 where s2.fatherId in (select id from subject where id=s1.id))",null);

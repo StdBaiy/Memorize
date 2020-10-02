@@ -15,21 +15,20 @@ import android.view.animation.OvershootInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.shizhefei.view.hvscrollview.HVScrollView;
-import com.xuexiang.xui.adapter.simple.AdapterItem;
-import com.xuexiang.xui.adapter.simple.XUISimpleAdapter;
 import com.xuexiang.xui.utils.DensityUtils;
 import com.xuexiang.xui.utils.SnackbarUtils;
 import com.xuexiang.xui.utils.WidgetUtils;
 import com.xuexiang.xui.widget.dialog.MiniLoadingDialog;
-import com.xuexiang.xui.widget.dialog.materialdialog.DialogAction;
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
 import com.xuexiang.xui.widget.popupwindow.bar.CookieBar;
 import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
@@ -53,8 +52,14 @@ import stdbay.memorize.util.MessageEvent;
 
 public class KnowledgeTreeFragment extends Fragment {
 
+    public boolean isSelectMode=false;
+
     private XUISimplePopup popup;
     private CookieBar cookieBar;
+
+    private LinearLayout infoBanner;
+    private TextView selectInfo;
+    private Button returnKnowledge;
 
     private TextView notice;
 
@@ -93,6 +98,7 @@ public class KnowledgeTreeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         loadingDialog.recycle();
+        MessageEvent.selectedknowledges.clear();
         super.onDestroyView();
     }
 
@@ -139,7 +145,6 @@ public class KnowledgeTreeFragment extends Fragment {
 
 //            定义及设置button属性
             Button treeNodeView=new Button(getActivity());
-            treeNodeView.setBackgroundResource(R.drawable.green_corner);
             treeNodeView.setTextColor(Color.WHITE);
             treeNodeView.setEllipsize(TextUtils.TruncateAt.END);
             treeNodeView.setSingleLine(true);
@@ -151,23 +156,61 @@ public class KnowledgeTreeFragment extends Fragment {
 
             //把当前node实例化存储,用于view的点击事件的调用
             final TreeNode nodeInstance =node.get(i);
+
+            final BaseItem item=new BaseItem();
+
+
+            treeNodeView.setSelected(false);
+            treeNodeView.setBackgroundResource(R.drawable.green_corner);
+//
+            for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
+                if(nodeInstance.getId()==MessageEvent.selectedknowledges.get(j).getId()){
+                    treeNodeView.setSelected(true);
+                    treeNodeView.setBackgroundResource(R.drawable.red_corner);
+                }
+            }
+
+            item.setType(BaseItem.KNOWLEDGE_TYPE);
+            item.setId(nodeInstance.getId());
+            item.setName(nodeInstance.getName());
+            if(nodeInstance.getFather()!=null) {
+                item.setFatherId(nodeInstance.getFather().getId());
+            }
+
+//            if(MessageEvent.selectedknowledges.contains(item)) {
+//                treeNodeView.setSelected(true);
+//                treeNodeView.setBackgroundResource(R.drawable.red_corner);
+//            }else{
+//                treeNodeView.setSelected(false);
+//                treeNodeView.setBackgroundResource(R.drawable.green_corner);
+//            }
             final int W= (int) treeNodeX;
             final int H=(int) finalTreeNodeY;
-            treeNodeView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    showCookieBar(nodeInstance.getName(),nodeInstance.getAnnotation());
-                    hv.smoothScrollTo(W-500,H-500);
+            treeNodeView.setOnClickListener(view -> {
+                if (isSelectMode){
+                    infoBanner.setVisibility(View.VISIBLE);
+                    if (!view.isSelected()){
+                        view.setSelected(true);
+                        view.setBackgroundResource(R.drawable.red_corner);
+                        if(!MessageEvent.selectedknowledges.contains(item))
+                            MessageEvent.selectedknowledges.add(item);
+                    }else{
+                        view.setSelected(false);
+                        view.setBackgroundResource(R.drawable.green_corner);
+                        MessageEvent.selectedknowledges.remove(item);
+                    }
+                    selectInfo.setText("已选择"+MessageEvent.selectedknowledges.size()+"项");
+                }else {
+                    infoBanner.setVisibility(View.GONE);
+                    showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
+                    hv.smoothScrollTo(W - 500, H - 500);
                 }
             });
 
-            treeNodeView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    popup.showDown(view);
-                    nowTreeNode=nodeInstance;
-                    return true;
-                }
+            treeNodeView.setOnLongClickListener(view -> {
+                popup.showDown(view);
+                nowTreeNode=nodeInstance;
+                return true;
             });
 //            把button通过布局add到页面里
             RelativeLayout.LayoutParams treeNodeParams = new RelativeLayout.LayoutParams(TreeNode.treeNodeW, TreeNode.treeNodeH);
@@ -207,42 +250,36 @@ public class KnowledgeTreeFragment extends Fragment {
         memorizeDB.GoThroughKnowledge(subId,  new MemorizeDB.callBackListener() {
             @Override
             public void onFinished() {
-                Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadingDialog.dismiss();
+                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                    loadingDialog.dismiss();
 
-                        root=MemorizeDB.getTreeRoot();
+                    root=MemorizeDB.getTreeRoot();
 
-                        List<TreeNode>Root=new ArrayList<>();
-                        Root.add(root);
-                        //计算需要画布的大小,防止图形显示不全
-                        //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
-                        Display defaultDisplay = getActivity().getWindowManager().getDefaultDisplay();
-                        Point point = new Point();
-                        defaultDisplay.getSize(point);
-                        int h=point.y;
-                        height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
-                        if(h>height)
-                            height=h;
-                        width=MemorizeDB.getTreeDepth()*TreeNode.treeNodeIntervalX;
-                        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width,height);
-                        insertLayout.setLayoutParams(layoutParams);
+                    List<TreeNode>Root=new ArrayList<>();
+                    Root.add(root);
+                    //计算需要画布的大小,防止图形显示不全
+                    //由于relativeLayour会自动向右下方扩展,所以只需要计算高度
+                    Display defaultDisplay = getActivity().getWindowManager().getDefaultDisplay();
+                    Point point = new Point();
+                    defaultDisplay.getSize(point);
+                    int h=point.y;
+                    height=MemorizeDB.getLeavesNum(root)*TreeNode.treeNodeIntervalY;
+                    if(h>height)
+                        height=h;
+                    width=MemorizeDB.getTreeDepth()*TreeNode.treeNodeIntervalX;
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width,height);
+                    insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
-                        drawbutton(Root,(height-TreeNode.treeNodeH)/2, TreeNode.treeNodeW/2, 0);
-                    }
+                    drawbutton(Root,(height-TreeNode.treeNodeH)/2, TreeNode.treeNodeW/2, 0);
                 });
             }
             @Override
             public void onError(final Exception e) {
-                Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadingDialog.dismiss();
-                        SnackbarUtils.Short(hv,"出现错误")
-                                .danger().show();
-                        e.printStackTrace();
-                    }
+                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                    loadingDialog.dismiss();
+                    SnackbarUtils.Short(hv,"出现错误")
+                            .danger().show();
+                    e.printStackTrace();
                 });
             }
         });
@@ -251,47 +288,36 @@ public class KnowledgeTreeFragment extends Fragment {
 
 
     private void showInput( final int type){
-        String s="";
+        String s;
         if(type==ADD_KNOWLEDGE) {
             s="新建知识点";
             new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                     .title(s)
                     .customView(R.layout.add_knowledge_dialog,true)
                     .positiveText("确认")
-                    .onPositive(new MaterialDialog.SingleButtonCallback() {
-                        @SuppressLint("ResourceType")
-                        @Override
-                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                            String name=((EditText) ((dialog).getCustomView().
-                                    findViewById(R.id.knowledge_name))).getText().toString();
-                            String annotation=((EditText)(dialog.getCustomView().
-                                    findViewById(R.id.knowledge_annotation))).getText().toString();
-                            memorizeDB.addKnowledge(nowTreeNode.getId(), subId, name, annotation,new MemorizeDB.callBackListener() {
-                                @Override
-                                public void onFinished() {
-                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            SnackbarUtils.Short(hv,"添加知识点成功")
-                                                    .confirm().show();
-                                            insertLayout.removeAllViews();
-                                            showKnowledgeTree();
-                                        }
-                                    });
-                                }
+                    .onPositive((dialog, which) -> {
+                        assert (dialog).getCustomView() != null;
+                        String name=((EditText) ((dialog).getCustomView().
+                                findViewById(R.id.knowledge_name))).getText().toString();
+                        String annotation=((EditText)(dialog.getCustomView().
+                                findViewById(R.id.knowledge_annotation))).getText().toString();
+                        memorizeDB.addKnowledge(nowTreeNode.getId(), subId, name, annotation,new MemorizeDB.callBackListener() {
+                            @Override
+                            public void onFinished() {
+                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                                    SnackbarUtils.Short(hv,"添加知识点成功")
+                                            .confirm().show();
+                                    insertLayout.removeAllViews();
+                                    showKnowledgeTree();
+                                });
+                            }
 
-                                @Override
-                                public void onError(Exception e) {
-                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            SnackbarUtils.Short(hv,"添加知识点失败,请检查是否有同名项")
-                                                    .danger().show();
-                                        }
-                                    });
-                                }
-                            });
-                        }
+                            @Override
+                            public void onError(Exception e) {
+                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> SnackbarUtils.Short(hv,"添加知识点失败,请检查是否有同名项")
+                                        .danger().show());
+                            }
+                        });
                     })
                     .negativeText("取消")
                     .cancelable(true)
@@ -299,144 +325,116 @@ public class KnowledgeTreeFragment extends Fragment {
         }
         else if(type==RENAME) {
             s="改名";
-            new MaterialDialog.Builder(getContext())
+            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                     .title(s)
                     .negativeText("取消")
                     .positiveText("确认")
-                    .input("请输入新名称", nowTreeNode.getName(), false, new MaterialDialog.InputCallback() {
-                        @Override
-                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                            String name=input.toString();
-                            BaseItem item=new BaseItem();
-                            item.setType(BaseItem.KNOWLEDGE_TYPE);
-                            item.setId(nowTreeNode.getId());
-                            memorizeDB.reName(item, name, new MemorizeDB.callBackListener() {
-                                @Override
-                                public void onFinished() {
-                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            SnackbarUtils.Short(hv,"改名成功")
-                                                    .confirm().show();
-                                            insertLayout.removeAllViews();
-                                            showKnowledgeTree();
-                                            clearCookieBar();
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onError(Exception e) {
-                                    Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            SnackbarUtils.Short(hv,"改名失败,请检查是否有同名项")
-                                                    .danger().show();
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    }).show();
-        }
-        else if(type==CHANGE_ANNOTATION) {
-            s="修改注释";
-            new MaterialDialog.Builder(getContext())
-                    .title(s)
-                    .negativeText("取消")
-                    .positiveText("确认")
-                    .input("请输入新注释", nowTreeNode.getAnnotation(), true, new MaterialDialog.InputCallback() {
-                        @Override
-                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                            memorizeDB.changeKnowledgeAnnotation(nowTreeNode.getId(), input.toString(), new MemorizeDB.callBackListener() {
-                                @Override
-                                public void onFinished() {
-                                    SnackbarUtils.Short(hv,"修改注释成功")
+                    .input("请输入新名称", nowTreeNode.getName(), false, (dialog, input) -> {
+                        String name=input.toString();
+                        BaseItem item=new BaseItem();
+                        item.setType(BaseItem.KNOWLEDGE_TYPE);
+                        item.setId(nowTreeNode.getId());
+                        memorizeDB.reName(item, name, new MemorizeDB.callBackListener() {
+                            @Override
+                            public void onFinished() {
+                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                                    SnackbarUtils.Short(hv,"改名成功")
                                             .confirm().show();
                                     insertLayout.removeAllViews();
                                     showKnowledgeTree();
                                     clearCookieBar();
-                                }
+                                });
+                            }
 
-                                @Override
-                                public void onError(Exception e) {
-                                    SnackbarUtils.Short(hv,"修改注释失败")
-                                            .danger().show();
-                                }
-                            });
-                        }
+                            @Override
+                            public void onError(Exception e) {
+                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> SnackbarUtils.Short(hv,"改名失败,请检查是否有同名项")
+                                        .danger().show());
+                            }
+                        });
                     }).show();
+        }
+        else if(type==CHANGE_ANNOTATION) {
+            s="修改注释";
+            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                    .title(s)
+                    .negativeText("取消")
+                    .positiveText("确认")
+                    .input("请输入新注释", nowTreeNode.getAnnotation(), true, (dialog, input) -> memorizeDB.changeKnowledgeAnnotation(nowTreeNode.getId(), input.toString(), new MemorizeDB.callBackListener() {
+                        @Override
+                        public void onFinished() {
+                            SnackbarUtils.Short(hv,"修改注释成功")
+                                    .confirm().show();
+                            insertLayout.removeAllViews();
+                            showKnowledgeTree();
+                            clearCookieBar();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            SnackbarUtils.Short(hv,"修改注释失败")
+                                    .danger().show();
+                        }
+                    })).show();
         }
     }
 
     private void initListPopup() {
         String[] tmp = new String[]{"新建知识点","改名","修改注释","删除"};
         popup = new XUISimplePopup(Objects.requireNonNull(getContext()), tmp)
-                .create(DensityUtils.dp2px(getContext(), 170), new XUISimplePopup.OnPopupItemClickListener() {
-                    @Override
-                    public void onItemClick(XUISimpleAdapter adapter, AdapterItem item, int position) {
-                        //id等于0说明是根节点,不能改名
-                        if(!item.getTitle().toString().equals("新建知识点")
-                                &&nowTreeNode.getId()==0){
-                            SnackbarUtils.Short(hv, "不能对根节点操作")
-                                    .warning().show();
-                            return;
-                        }
-                        switch(item.getTitle().toString()){
-                            case "新建知识点":
-                                showInput(ADD_KNOWLEDGE);
-                                break;
-                            case "改名":
-                                showInput(RENAME);
-                                break;
-                            case "修改注释":
-                                showInput(CHANGE_ANNOTATION);
-                                break;
-                            case "删除":
-                                new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
-                                        .content("确认删除吗?")
-                                        .positiveText("确认")
-                                        .positiveColor(Color.parseColor("#cc5555"))
-                                        .negativeText("取消")
-                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                .create(DensityUtils.dp2px(getContext(), 170), (adapter, item, position) -> {
+                    //id等于0说明是根节点,不能改名
+                    if(!item.getTitle().toString().equals("新建知识点")
+                            &&nowTreeNode.getId()==0){
+                        SnackbarUtils.Short(hv, "不能对根节点操作")
+                                .warning().show();
+                        return;
+                    }
+                    switch(item.getTitle().toString()){
+                        case "新建知识点":
+                            showInput(ADD_KNOWLEDGE);
+                            break;
+                        case "改名":
+                            showInput(RENAME);
+                            break;
+                        case "修改注释":
+                            showInput(CHANGE_ANNOTATION);
+                            break;
+                        case "删除":
+                            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                                    .content("确认删除吗?")
+                                    .positiveText("确认")
+                                    .positiveColor(Color.parseColor("#cc5555"))
+                                    .negativeText("取消")
+                                    .onPositive((dialog, which) -> {
+                                        BaseItem baseItem = new BaseItem();
+                                        baseItem.setId(nowTreeNode.getId());
+                                        baseItem.setType(BaseItem.KNOWLEDGE_TYPE);
+                                        memorizeDB.deleteItem(baseItem.getId(),baseItem.getType(), new MemorizeDB.callBackListener() {
                                             @Override
-                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                BaseItem baseItem = new BaseItem();
-                                                baseItem.setId(nowTreeNode.getId());
-                                                baseItem.setType(BaseItem.KNOWLEDGE_TYPE);
-                                                memorizeDB.deleteItem(baseItem.getId(),baseItem.getType(), new MemorizeDB.callBackListener() {
-                                                    @Override
-                                                    public void onFinished() {
-                                                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                SnackbarUtils.Short(hv, "删除成功")
-                                                                        .confirm().show();
-                                                                insertLayout.removeAllViews();
-                                                                showKnowledgeTree();
-                                                                clearCookieBar();
-                                                            }
-                                                        });
-                                                    }
-
-                                                    @Override
-                                                    public void onError(Exception e) {
-                                                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-//                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
-                                                                SnackbarUtils.Short(hv, "删除失败")
-                                                                        .danger().show();
-                                                            }
-                                                        });
-                                                        Log.d("sql", Objects.requireNonNull(e.getMessage()));
-                                                    }
+                                            public void onFinished() {
+                                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                                                    SnackbarUtils.Short(hv, "删除成功")
+                                                            .confirm().show();
+                                                    insertLayout.removeAllViews();
+                                                    showKnowledgeTree();
+                                                    clearCookieBar();
                                                 });
                                             }
-                                        })
-                                        .show();
-                                break;
-                        }
+
+                                            @Override
+                                            public void onError(Exception e) {
+                                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+//                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
+                                                    SnackbarUtils.Short(hv, "删除失败")
+                                                            .danger().show();
+                                                });
+                                                Log.d("sql", Objects.requireNonNull(e.getMessage()));
+                                            }
+                                        });
+                                    })
+                                    .show();
+                            break;
                     }
                 })
                 .setHasDivider(true);
@@ -452,11 +450,8 @@ public class KnowledgeTreeFragment extends Fragment {
                 .setBackgroundColor(R.color.dark_green)
                 .setActionColor(android.R.color.white)
                 .setTitleColor(android.R.color.white)
-                .setAction("关闭", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
+                .setAction("关闭", view -> {
 
-                    }
                 })
                 .show();
     }
@@ -477,15 +472,12 @@ public class KnowledgeTreeFragment extends Fragment {
             hv.setVisibility(View.VISIBLE);
             subId = subjects.get(l.get(0));
             mMaterialSpinner.setItems(l);
-            mMaterialSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
-
-                @Override
-                public void onItemSelected(MaterialSpinner spinner, int position, long id, Object item) {
-                    subId = subjects.get(item.toString());
-                    insertLayout.removeAllViews();
-                    showKnowledgeTree();
-                }
-            }).setSelectedIndex(0);
+            mMaterialSpinner.setOnItemSelectedListener((spinner, position, id, item) -> {
+                subId = subjects.get(item.toString());
+                insertLayout.removeAllViews();
+                showKnowledgeTree();
+            });
+            mMaterialSpinner.setSelectedIndex(0);
             mMaterialSpinner.setEnabled(true);
         }else{
             mMaterialSpinner.setItems(new ArrayList<>());
@@ -502,6 +494,14 @@ public class KnowledgeTreeFragment extends Fragment {
         hv = view.findViewById(R.id.hvscroll);
         insertLayout=view.findViewById(R.id.canvas);
         notice=view.findViewById(R.id.notice);
+
+        infoBanner=view.findViewById(R.id.info_banner);
+        selectInfo=view.findViewById(R.id.select_info);
+        returnKnowledge=view.findViewById(R.id.return_knowledge);
+        returnKnowledge.setOnClickListener(view1 -> {
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.KNOWLEDGE_RETURN));
+        });
+
         animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
         animation.setInterpolator(new OvershootInterpolator());
@@ -530,11 +530,30 @@ public class KnowledgeTreeFragment extends Fragment {
     public void onStart() {
         super.onStart();
         EventBus.getDefault().register(this);
+        if(isSelectMode)
+            infoBanner.setVisibility(View.VISIBLE);
+        else
+            infoBanner.setVisibility(View.GONE);
     }
 
     @Override
     public void onStop() {
         EventBus.getDefault().unregister(this);
         super.onStop();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden) {
+            Toast.makeText(getContext(), "暂停", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            if(isSelectMode)
+                infoBanner.setVisibility(View.VISIBLE);
+            else
+                infoBanner.setVisibility(View.GONE);
+            Toast.makeText(getContext(), "开启", Toast.LENGTH_SHORT).show();
+        }
     }
 }

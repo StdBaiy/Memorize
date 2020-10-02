@@ -14,12 +14,18 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.xuexiang.xui.XUI;
+import com.xuexiang.xui.utils.SnackbarUtils;
 import com.xuexiang.xui.utils.StatusBarUtils;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import stdbay.memorize.R;
 import stdbay.memorize.fragment.BookFragment;
 import stdbay.memorize.fragment.KnowledgeTreeFragment;
 import stdbay.memorize.fragment.MyFragment;
+import stdbay.memorize.util.MessageEvent;
 
 public class BaseActivity extends FragmentActivity implements View.OnClickListener{
 
@@ -35,43 +41,19 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     public KnowledgeTreeFragment knowledgeTreeFragment;
 
 
-public BookFragment getBookFragment(){
-    return bookFragment;
-}
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         XUI.initTheme(this);
-        
+
         // android 7.0系统解决拍照的问题
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         builder.detectFileUriExposure();
-
-
         checkPermission();
-
-
-
         super.onCreate(savedInstanceState);
         StatusBarUtils.translucent(this);
         setContentView(R.layout.activity_base);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         bindView();
         getWindow().setNavigationBarColor(Color.parseColor("#557755"));
 
@@ -121,6 +103,12 @@ public BookFragment getBookFragment(){
 
     @Override
     public void onClick(View v) {
+        if(knowledgeTreeFragment!=null && knowledgeTreeFragment.isSelectMode){
+            SnackbarUtils.Short(observe,"请先完成选择操作")
+                    .warning().show();
+            return;
+        }
+
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         hideAllFragment(transaction);
         clearSelected();
@@ -198,5 +186,36 @@ public BookFragment getBookFragment(){
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     102);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(MessageEvent event){
+        if(event.getType()==MessageEvent.SELECT_KNOWLEDGE){
+            knowledge.callOnClick();
+            knowledgeTreeFragment.isSelectMode=true;
+        }
+        if(event.getType()==MessageEvent.KNOWLEDGE_RETURN){
+            knowledgeTreeFragment.isSelectMode=false;
+            observe.callOnClick();
+            bookFragment.updateKnowledgeItems();
+        }
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        EventBus.getDefault().unregister(this);
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 }
