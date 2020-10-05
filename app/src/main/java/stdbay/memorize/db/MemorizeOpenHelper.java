@@ -78,6 +78,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
     private  static final String CREATE_PROB_KNOW_TABLE="create table prob_know(" +//习题_知识表
             "probId integer," +
             "knowId integer," +
+            "name text," +
             "foreign key (probId) references problem(id) on delete cascade," +
             "foreign key (knowId) references knowledge(id) on delete cascade)";
 

@@ -14,6 +14,7 @@ public class ProblemItem {
     private String summary;
     private String createTime;
     private List<LocalMedia>pictures;
+    private List<BaseItem>knowledges;
 
 
     public String getNumber() {
@@ -86,5 +87,13 @@ public class ProblemItem {
 
     public void setPictures(List<LocalMedia> pictures) {
         this.pictures = pictures;
+    }
+
+    public List<BaseItem> getKnowledges() {
+        return knowledges;
+    }
+
+    public void setKnowledges(List<BaseItem> knowledges) {
+        this.knowledges = knowledges;
     }
 }

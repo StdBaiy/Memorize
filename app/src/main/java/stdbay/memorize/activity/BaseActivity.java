@@ -130,7 +130,6 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                     knowledgeTreeFragment = KnowledgeTreeFragment.getInstance();
                     transaction.add(R.id.fragment_container, knowledgeTreeFragment);    // 将碎片添加进R.id.fragment的碎片管理器
                 } else {    // 如果存在 就 显示出来  因为点击事件一旦触发 就会将 所有碎片隐藏
-//                    if(knowledgeTreeFragment.isHidden())
                     transaction.show(knowledgeTreeFragment);
                 }
                 knowledge.setSelected(true);  // 设置 为 选中状态
@@ -140,7 +139,6 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                     myFragment3 = MyFragment.getInstance("发现");
                     transaction.add(R.id.fragment_container, myFragment3);
                 } else {
-//                    if(myFragment3.isHidden())
                     transaction.show(myFragment3);
                 }
                 statistics.setSelected(true);  // 设置 为 选中状态
@@ -150,15 +148,14 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                     myFragment4 = MyFragment.getInstance("我的");
                     transaction.add(R.id.fragment_container, myFragment4);
                 } else {
-//                    if(myFragment4.isHidden())
                     transaction.show(myFragment4);
                 }
                 more.setSelected(true);  // 设置 为 选中状态
                 break;
         }
         transaction.commit();
-        if(knowledgeTreeFragment!=null)
-            knowledgeTreeFragment.clearCookieBar();
+//        if(knowledgeTreeFragment!=null)
+//            knowledgeTreeFragment.clearCookieBar();
     }
 
 
@@ -190,14 +187,20 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(MessageEvent event){
-        if(event.getType()==MessageEvent.SELECT_KNOWLEDGE){
-            knowledge.callOnClick();
-            knowledgeTreeFragment.isSelectMode=true;
-        }
-        if(event.getType()==MessageEvent.KNOWLEDGE_RETURN){
-            knowledgeTreeFragment.isSelectMode=false;
-            observe.callOnClick();
-            bookFragment.updateKnowledgeItems();
+        switch(event.getType()){
+            case MessageEvent.SELECT_KNOWLEDGE:
+                knowledge.callOnClick();
+                knowledgeTreeFragment.isSelectMode=true;
+                break;
+            case MessageEvent.KNOWLEDGE_RETURN:
+                knowledgeTreeFragment.isSelectMode=false;
+                observe.callOnClick();
+                bookFragment.updateKnowledgeItems();
+                break;
+            case MessageEvent.FIND_IN_TREE:
+                knowledge.callOnClick();
+                knowledgeTreeFragment.isSelectMode=false;
+                break;
         }
     }
 

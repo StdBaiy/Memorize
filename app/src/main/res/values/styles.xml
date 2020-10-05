@@ -38,7 +38,7 @@
         <!-- Customize your theme here. -->
 <!--        <item name="android:windowBackground"></item>-->
         <item name="android:background">@drawable/splash</item>
-        <item name="android:windowBackground">@color/_333</item>
+        <item name="android:windowBackground">@color/picture_color_white</item>
         <item name="android:windowFullscreen">true</item>
         <item name="windowNoTitle">true</item>
     </style>

@@ -78,7 +78,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:textColor="@color/_ccc"
-                android:text="已经选中n项"
+                android:text="已经选中0项"
                 android:layout_weight="1"
                 tools:ignore="HardcodedText,NestedWeights" />
 

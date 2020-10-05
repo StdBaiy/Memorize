@@ -30,6 +30,8 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         super(data);
     }
 
+
+
     public void setIsMultiSelectMode(boolean isMultiSelectMode) {
         mIsMultiSelectMode = isMultiSelectMode;
     }
@@ -80,13 +82,8 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         }
     }
 
-    public void selectAll(){
-        if (!mIsMultiSelectMode) {
-            return;
-        }
-        for (int i=0;i < mSparseArray.size();++i) {
-            multiSelect(i);
-        }
+    public boolean isSelected(int position){
+        return mSparseArray.get(position);
     }
 
     /**

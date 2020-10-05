@@ -30,11 +30,11 @@ import stdbay.memorize.R;
 import stdbay.memorize.listener.OnItemLongClickListener;
 
 
-/**
- * @author：luck
- * @date：2016-7-27 23:02
- * @describe：GridImageAdapter
- */
+///**
+// * @author：luck
+// * @date：2016-7-27 23:02
+// * @describe：GridImageAdapter
+// */
 public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ViewHolder> {
     public static final String TAG = "PictureSelector";
     private static final int TYPE_CAMERA = 1;
@@ -52,7 +52,7 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
      */
     private onAddPicClickListener mOnAddPicClickListener;
 
-    public int getViewType() {
+    private int getViewType() {
         return viewType;
     }
 
@@ -65,21 +65,21 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
         void onAddPicClick();
     }
 
-    /**
-     * 删除
-     */
-    public void delete(int position) {
-        try {
-
-            if (position != RecyclerView.NO_POSITION && list.size() > position) {
-                list.remove(position);
-                notifyItemRemoved(position);
-                notifyItemRangeChanged(position, list.size());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    /**
+//     * 删除
+//     */
+//    public void delete(int position) {
+//        try {
+//
+//            if (position != RecyclerView.NO_POSITION && list.size() > position) {
+//                list.remove(position);
+//                notifyItemRemoved(position);
+//                notifyItemRangeChanged(position, list.size());
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public GridImageAdapter(Context context){
         this.mInflater = LayoutInflater.from(context);
@@ -101,11 +101,11 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
         return list == null ? new ArrayList<>() : list;
     }
 
-    public void remove(int position) {
-        if (list != null && position < list.size()) {
-            list.remove(position);
-        }
-    }
+//    public void remove(int position) {
+//        if (list != null && position < list.size()) {
+//            list.remove(position);
+//        }
+//    }
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -123,11 +123,11 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
 
     @Override
     public int getItemCount() {
-        if (list.size() < selectMax) {
-            return list.size() + 1;
-        } else {
+//        if (list.size() < selectMax) {
+//            return list.size() + 1;
+//        } else {
             return list.size();
-        }
+//        }
     }
 
     @Override
@@ -235,31 +235,16 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
                 new RequestOptions();
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.placeholder(R.color.f4);
-//                    RequestOptions.circleCropTransform();
-//                    requestOptions.centerCrop();
                 requestOptions.transforms( new RoundedCorners(20));
-
 //                    if(isScrollEnd) {
-                    Glide.with(viewHolder.itemView.getContext())
-                            .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
-                                    : path)
-                            .apply(requestOptions)
-                            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                            .into(viewHolder.mImg);
+                Glide.with(viewHolder.itemView.getContext())
+                        .load(PictureMimeType.isContent(path) && !media.isCut() && !media.isCompressed() ? Uri.parse(path)
+                                : path)
+                        .apply(requestOptions)
+                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        .into(viewHolder.mImg);
             }
 
-     } else {
-         //少于8张，显示继续添加的图标
-//                if(getViewType()==SELECT_PIC) {
-//                    viewHolder.mImg.setImageResource(R.drawable.ic_camera_color);
-//                    viewHolder.mImg.setVisibility(View.VISIBLE);
-//                    viewHolder.mImg.setOnClickListener(v -> mOnAddPicClickListener.onAddPicClick());
-//                    viewHolder.mIvDel.setVisibility(View.GONE);
-//                }else{
-//                    viewHolder.mImg.setVisibility(View.GONE);
-//                    viewHolder.mImg.setOnClickListener(null);
-//                    viewHolder.mIvDel.setVisibility(View.GONE);
-//                }
      }
         //itemView 的点击事件
                 if (mItemClickListener != null) {
@@ -285,27 +270,5 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
     }
 
     private OnItemLongClickListener mItemLongClickListener;
-
-    public void setItemLongClickListener(OnItemLongClickListener l) {
-        this.mItemLongClickListener = l;
-    }
-
-//    private Activity activity;
-//    public  void setActivity(Activity activity){
-//        this.activity=activity;
-//    }
-
-//    protected boolean isScrolling = false;
-//
-//    public void setScrolling(boolean scrolling) {
-//        isScrolling = scrolling;
-//    }
-
-    public interface onSrollListener{
-        public void onScrollEnd();
-    }
-
-    public static boolean isScrollEnd=true;
-
 
 }

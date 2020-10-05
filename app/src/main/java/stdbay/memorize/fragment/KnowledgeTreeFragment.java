@@ -18,7 +18,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,7 +29,6 @@ import com.xuexiang.xui.utils.SnackbarUtils;
 import com.xuexiang.xui.utils.WidgetUtils;
 import com.xuexiang.xui.widget.dialog.MiniLoadingDialog;
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog;
-import com.xuexiang.xui.widget.popupwindow.bar.CookieBar;
 import com.xuexiang.xui.widget.popupwindow.popup.XUISimplePopup;
 import com.xuexiang.xui.widget.spinner.materialspinner.MaterialSpinner;
 
@@ -44,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import stdbay.memorize.R;
+import stdbay.memorize.adapter.FlexboxLayoutAdapter;
 import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.DrawGeometryView;
 import stdbay.memorize.model.MemorizeDB;
@@ -54,8 +53,12 @@ public class KnowledgeTreeFragment extends Fragment {
 
     public boolean isSelectMode=false;
 
+    private MaterialDialog knowledgeDialog;
+    private FlexboxLayoutAdapter fAdapter;
+
+
     private XUISimplePopup popup;
-    private CookieBar cookieBar;
+//    private CookieBar cookieBar;
 
     private LinearLayout infoBanner;
     private TextView selectInfo;
@@ -73,7 +76,7 @@ public class KnowledgeTreeFragment extends Fragment {
     private static  final int ADD_KNOWLEDGE=0;
     private static  final int CHANGE_ANNOTATION=1;
 
-    private int subId;
+    private int subId=0;
     private TreeNode nowTreeNode=new TreeNode();
     //root是树根
     private TreeNode root;
@@ -94,6 +97,8 @@ public class KnowledgeTreeFragment extends Fragment {
     private RelativeLayout insertLayout;
 
     private MemorizeDB memorizeDB;
+
+    private Button findNode;
 
     @Override
     public void onDestroyView() {
@@ -122,6 +127,7 @@ public class KnowledgeTreeFragment extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void drawbutton(final List<TreeNode> node, float treeNodeY, final float treeNodeX, int treeLevel) {
+        selectInfo.setText("已选择"+MessageEvent.selectedknowledges.size()+"项");
         if(node.isEmpty())return;
 
 
@@ -160,15 +166,13 @@ public class KnowledgeTreeFragment extends Fragment {
             final BaseItem item=new BaseItem();
 
 
-            treeNodeView.setSelected(false);
-            treeNodeView.setBackgroundResource(R.drawable.green_corner);
 //
-            for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
-                if(nodeInstance.getId()==MessageEvent.selectedknowledges.get(j).getId()){
-                    treeNodeView.setSelected(true);
-                    treeNodeView.setBackgroundResource(R.drawable.red_corner);
-                }
-            }
+//            for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
+//                if(nodeInstance.getId()==MessageEvent.selectedknowledges.get(j).getId()){
+//                    treeNodeView.setSelected(true);
+//                    treeNodeView.setBackgroundResource(R.drawable.red_corner);
+//                }
+//            }
 
             item.setType(BaseItem.KNOWLEDGE_TYPE);
             item.setId(nodeInstance.getId());
@@ -177,27 +181,39 @@ public class KnowledgeTreeFragment extends Fragment {
                 item.setFatherId(nodeInstance.getFather().getId());
             }
 
-//            if(MessageEvent.selectedknowledges.contains(item)) {
-//                treeNodeView.setSelected(true);
-//                treeNodeView.setBackgroundResource(R.drawable.red_corner);
-//            }else{
-//                treeNodeView.setSelected(false);
-//                treeNodeView.setBackgroundResource(R.drawable.green_corner);
-//            }
+            boolean in=false;
+            for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
+                if(item.getId()==MessageEvent.selectedknowledges.get(j).getId()){
+                    in=true;
+                    break;
+                }
+            }
+            if(in) {
+                treeNodeView.setSelected(true);
+                treeNodeView.setBackgroundResource(R.drawable.red_corner);
+            }else {
+                treeNodeView.setSelected(false);
+                treeNodeView.setBackgroundResource(R.drawable.green_corner);
+            }
+
             final int W= (int) treeNodeX;
             final int H=(int) finalTreeNodeY;
+
             treeNodeView.setOnClickListener(view -> {
                 if (isSelectMode){
                     infoBanner.setVisibility(View.VISIBLE);
                     if (!view.isSelected()){
                         view.setSelected(true);
                         view.setBackgroundResource(R.drawable.red_corner);
-                        if(!MessageEvent.selectedknowledges.contains(item))
-                            MessageEvent.selectedknowledges.add(item);
+                        MessageEvent.selectedknowledges.add(item);
                     }else{
                         view.setSelected(false);
                         view.setBackgroundResource(R.drawable.green_corner);
-                        MessageEvent.selectedknowledges.remove(item);
+                        for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
+                            if(MessageEvent.selectedknowledges.get(j).getId()==item.getId()) {
+                                MessageEvent.selectedknowledges.remove(MessageEvent.selectedknowledges.get(j));
+                            }
+                        }
                     }
                     selectInfo.setText("已选择"+MessageEvent.selectedknowledges.size()+"项");
                 }else {
@@ -207,6 +223,18 @@ public class KnowledgeTreeFragment extends Fragment {
                 }
             });
 
+            //定位到目标处
+            if(MessageEvent.findKnowledge!=null&&
+                    MessageEvent.findKnowledge.getId()==nodeInstance.getId()){
+
+                treeNodeView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+                    hv.scrollTo(W-500,H-500);
+                    MessageEvent.findKnowledge=null;
+                });
+                treeNodeView.setBackgroundResource(R.drawable.gray_corner);
+                infoBanner.setVisibility(View.GONE);
+                showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
+            }
             treeNodeView.setOnLongClickListener(view -> {
                 popup.showDown(view);
                 nowTreeNode=nodeInstance;
@@ -342,7 +370,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                             .confirm().show();
                                     insertLayout.removeAllViews();
                                     showKnowledgeTree();
-                                    clearCookieBar();
+//                                    clearCookieBar();
                                 });
                             }
 
@@ -367,7 +395,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                     .confirm().show();
                             insertLayout.removeAllViews();
                             showKnowledgeTree();
-                            clearCookieBar();
+//                            clearCookieBar();
                         }
 
                         @Override
@@ -418,7 +446,7 @@ public class KnowledgeTreeFragment extends Fragment {
                                                             .confirm().show();
                                                     insertLayout.removeAllViews();
                                                     showKnowledgeTree();
-                                                    clearCookieBar();
+//                                                    clearCookieBar();
                                                 });
                                             }
 
@@ -442,43 +470,53 @@ public class KnowledgeTreeFragment extends Fragment {
 
     @SuppressLint("ResourceType")
     private void showCookieBar(String title, String content){
-        clearCookieBar();
-        cookieBar=CookieBar.builder(getActivity())
-                .setTitle(title)
-                .setMessage(content)
-                .setDuration(-1)
-                .setBackgroundColor(R.color.dark_green)
-                .setActionColor(android.R.color.white)
-                .setTitleColor(android.R.color.white)
-                .setAction("关闭", view -> {
-
-                })
-                .show();
+//        clearCookieBar();
+//        cookieBar=CookieBar.builder(getActivity())
+//                .setTitle(title)
+//                .setMessage(content)
+//                .setDuration(-1)
+//                .setBackgroundColor(R.color.dark_green)
+//                .setActionColor(android.R.color.white)
+//                .setTitleColor(android.R.color.white)
+//                .setAction("关闭", view -> {
+//
+//                })
+//                .show();
     }
 
-    public void clearCookieBar(){
-        if(cookieBar!=null)
-            cookieBar.dismiss();
-    }
+//    public void clearCookieBar(){
+//        if(cookieBar!=null)
+//            cookieBar.dismiss();
+//    }
 
-    private void initDropDownMenu(){
+    private void initDropDownMenu(int subId){
         final Map<String,Integer> subjects= memorizeDB.getSubjects();
         List<String>l=new ArrayList<>();
         for(Map.Entry<String,Integer>entry:subjects.entrySet()){
             l.add(entry.getKey());
         }
+        if(subId!=0)
+            this.subId = subId;
+        else
+            this.subId=subjects.get(l.get(0));
         if(!l.isEmpty()) {
             notice.setVisibility(View.GONE);
             hv.setVisibility(View.VISIBLE);
-            subId = subjects.get(l.get(0));
             mMaterialSpinner.setItems(l);
             mMaterialSpinner.setOnItemSelectedListener((spinner, position, id, item) -> {
-                subId = subjects.get(item.toString());
+                this.subId = subjects.get(item.toString());
                 insertLayout.removeAllViews();
                 showKnowledgeTree();
             });
-            mMaterialSpinner.setSelectedIndex(0);
             mMaterialSpinner.setEnabled(true);
+            int index=0;
+            for(Map.Entry<String,Integer>entry:subjects.entrySet()){
+                if(entry.getValue()==subId){
+                    mMaterialSpinner.setSelectedIndex(index);
+                    break;
+                }
+                index++;
+            }
         }else{
             mMaterialSpinner.setItems(new ArrayList<>());
             notice.setVisibility(View.VISIBLE);
@@ -493,14 +531,15 @@ public class KnowledgeTreeFragment extends Fragment {
         memorizeDB=MemorizeDB.getInstance(getActivity());
         hv = view.findViewById(R.id.hvscroll);
         insertLayout=view.findViewById(R.id.canvas);
+
+
+
         notice=view.findViewById(R.id.notice);
 
         infoBanner=view.findViewById(R.id.info_banner);
         selectInfo=view.findViewById(R.id.select_info);
         returnKnowledge=view.findViewById(R.id.return_knowledge);
-        returnKnowledge.setOnClickListener(view1 -> {
-            EventBus.getDefault().post(new MessageEvent(MessageEvent.KNOWLEDGE_RETURN));
-        });
+        returnKnowledge.setOnClickListener(view1 -> EventBus.getDefault().post(new MessageEvent(MessageEvent.KNOWLEDGE_RETURN)));
 
         animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
@@ -509,7 +548,7 @@ public class KnowledgeTreeFragment extends Fragment {
         animation.setFillAfter(false);
         animation.setDuration(500);
         initListPopup();
-        initDropDownMenu();
+        initDropDownMenu(MessageEvent.findKnowledge==null?0:memorizeDB.getSubId(MessageEvent.findKnowledge.getId()));
         if(hv.getVisibility()==View.VISIBLE)
             showKnowledgeTree();
     }
@@ -519,9 +558,17 @@ public class KnowledgeTreeFragment extends Fragment {
         if(event.getType()==MessageEvent.ITEM_CHANGED){
             //bookFragment的内容变动,这边相应需要更新
             insertLayout.removeAllViews();
-            initDropDownMenu();
+            initDropDownMenu(subId);
             if(hv.getVisibility()==View.VISIBLE)
                 showKnowledgeTree();
+        }
+        else if(event.getType()==MessageEvent.FIND_IN_TREE){
+            insertLayout.removeAllViews();
+            initDropDownMenu(memorizeDB.getSubId(MessageEvent.findKnowledge.getId()));
+            if(hv.getVisibility()==View.VISIBLE) {
+                showKnowledgeTree();
+//                hv.smoothScrollTo(findX-500,findY-500);
+            }
         }
     }
 
@@ -546,14 +593,14 @@ public class KnowledgeTreeFragment extends Fragment {
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if(hidden) {
-            Toast.makeText(getContext(), "暂停", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getContext(), "暂停", Toast.LENGTH_SHORT).show();
         }
         else {
             if(isSelectMode)
                 infoBanner.setVisibility(View.VISIBLE);
             else
                 infoBanner.setVisibility(View.GONE);
-            Toast.makeText(getContext(), "开启", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getContext(), "开启", Toast.LENGTH_SHORT).show();
         }
     }
 }

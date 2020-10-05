@@ -21,7 +21,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:background="@drawable/ic_chevron_left_black_24dp"
+                android:src="@drawable/ic_chevron_left_black_24dp"
+                android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/todo"/>
             <TextView
                 android:layout_width="60dp"
@@ -47,18 +48,21 @@
             android:textColor="#eee"
             android:textSize="20sp"/>
         <LinearLayout
+            android:background="?android:attr/selectableItemBackground"
             android:layout_alignParentBottom="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             android:layout_centerVertical="true"
-            android:layout_alignParentEnd="true">
+            android:id="@+id/menu"
+            android:layout_alignParentEnd="true"
+            tools:ignore="RtlSymmetry">
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/ic_menu_black_24dp"
-                android:id="@+id/menu"
                 android:contentDescription="@string/todo" />
         </LinearLayout>
     </RelativeLayout>

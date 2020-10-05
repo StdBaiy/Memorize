@@ -15,18 +15,12 @@ public class DeleteUtil {
      */
     public static void delete(LocalMedia media) {
         List<String>paths=new ArrayList<>();
-        if(media.isCompressed())
-            paths.add(media.getCompressPath());
-        if(media.isCut())
+        if(media.getCutPath()!=null)
             paths.add(media.getCutPath());
-//        if(media.getAndroidQToPath()!=null)
-//            paths.add(media.getAndroidQToPath());
 
         for(String delFile:paths) {
             File file = new File(delFile);
-            if (!file.exists()) {
-                //Toast.makeText(MyApplication.getContext(), "删除文件失败:" + delFile + "不存在！", //Toast.LENGTH_SHORT).show();
-            } else {
+            if (file.exists()){
                 if (file.isFile()) {
                     deleteSingleFile(delFile);
                 } else {

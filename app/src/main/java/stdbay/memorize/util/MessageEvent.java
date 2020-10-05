@@ -11,6 +11,9 @@ public class MessageEvent {
     public static final int ITEM_CHANGED=1;
     public static final int SELECT_KNOWLEDGE=2;
     public static final int KNOWLEDGE_RETURN=3;
+    public static final int FIND_IN_TREE=4;
+
+    public static BaseItem findKnowledge;
 
     public static List<BaseItem> selectedknowledges=new ArrayList<>();
 

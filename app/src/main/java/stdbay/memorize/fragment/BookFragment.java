@@ -14,12 +14,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,17 +67,15 @@ import stdbay.memorize.util.GlideEngine;
 import stdbay.memorize.util.MessageEvent;
 import stdbay.memorize.util.PictureStyle;
 
-//import com.xuexiang.xui.widget.progress.loading.ARCLoadingView;
-
 public class BookFragment extends Fragment{
     private GridImageAdapter gAdapter;
-    public MaterialDialog problemDialog;
-    private RecyclerView knowledgeRV;
-
+    private MaterialDialog problemDialog;
+    private FlexboxLayoutAdapter fAdapter;
+    private static List<LocalMedia> beforeMediaList;
 
     private GridImageAdapter.onAddPicClickListener initOnAddPicListener(GridImageAdapter gAdapter){
         return () -> PictureSelector.create(getActivity())
-                .openGallery(PictureMimeType.ofImage())// 全部.PictureMimeType.ofAll()、图片.ofImage()、视频.ofVideo()、音频.ofAudio()
+                .openGallery(PictureMimeType.ofAll())// 全部.PictureMimeType.ofAll()、图片.ofImage()、视频.ofVideo()、音频.ofAudio()
                 .imageEngine(GlideEngine.createGlideEngine())// 外部传入图片加载引擎，必传项
 //                    .theme(R.style.picture_default_style)// 主题样式设置 具体参考 values/styles   用法：R.style.picture.white.style v2.3.3后 建议使用setPictureStyle()动态方式
 //                    .isWeChatStyle(true)// 是否开启微信图片选择风格
@@ -90,16 +86,16 @@ public class BookFragment extends Fragment{
                 .setPictureCropStyle(PictureStyle.getmCropParameterStyle())// 动态自定义裁剪主题
 //                    .setPictureWindowAnimationStyle(mWindowAnimationStyle)// 自定义相册启动退出动画
 //                    .setRecyclerAnimationMode(animationMode)// 列表动画效果
-//                    .isWithVideoImage(true)// 图片和视频是否可以同选,只在ofAll模式下有效
+                .isWithVideoImage(true)// 图片和视频是否可以同选,只在ofAll模式下有效
 //                    .isMaxSelectEnabledMask(cbEnabledMask.isChecked())// 选择数到了最大阀值列表是否启用蒙层效果
                 //.isAutomaticTitleRecyclerTop(false)// 连续点击标题栏RecyclerView是否自动回到顶部,默认true
-                //.loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
+//                .loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
                 //.setOutputCameraPath()// 自定义相机输出目录，只针对Android Q以下，例如 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) +  File.separator + "Camera" + File.separator;
                 //.setButtonFeatures(CustomCameraView.BUTTON_STATE_BOTH)// 设置自定义相机按钮状态
                 .maxSelectNum(9)// 最大图片选择数量
-                .minSelectNum(1)// 最小选择数量
-                .maxVideoSelectNum(1) // 视频最大选择数量
-                //.minVideoSelectNum(1)// 视频最小选择数量
+                .minSelectNum(0)// 最小选择数量
+                .maxVideoSelectNum(9) // 视频最大选择数量
+                .minVideoSelectNum(0)// 视频最小选择数量
                 .closeAndroidQChangeVideoWH(true)// 关闭在AndroidQ下获取图片或视频宽高相反自动转换
                 .imageSpanCount(3)// 每行显示个数
                 .isReturnEmpty(false)// 未选择数据时点击按钮是否可以返回
@@ -117,18 +113,18 @@ public class BookFragment extends Fragment{
                 .selectionMode(PictureConfig.MULTIPLE)// 多选 or 单选
 //                    .isSingleDirectReturn(true)// 单选模式下是否直接返回，PictureConfig.SINGLE模式下有效
                 .isPreviewImage(true)// 是否可预览图片
-//                    .isPreviewVideo(cb_preview_video.isChecked())// 是否可预览视频
+                .isPreviewVideo(true)// 是否可预览视频
                 //.queryBooksSpecifiedFormatSuffix(PictureMimeType.ofJPEG())// 查询指定后缀格式资源
-//                    .isEnablePreviewAudio(cb_preview_audio.isChecked()) // 是否可播放音频
+//                    .isEnablePreviewAudio(true) // 是否可播放音频
                 .isCamera(true)// 是否显示拍照按钮
                 .isMultipleSkipCrop(true)// 多图裁剪时是否支持跳过，默认支持
                 .isMultipleRecyclerAnimation(true)// 多图裁剪底部列表显示动画效果
                 .isZoomAnim(true)// 图片列表点击 缩放效果 默认true
                 .imageFormat(PictureMimeType.JPEG_Q)// 拍照保存图片格式后缀,默认jpeg,Android Q使用PictureMimeType.PNG_Q
                 .isEnableCrop(true)// 是否裁剪
-                //.basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
-                .isCompress(true)// 是否压缩
-                .compressQuality(80)// 图片压缩后输出质量 0~ 100
+//                .basicUCropConfig()//对外提供所有UCropOptions参数配制，但如果PictureSelector原本支持设置的还是会使用原有的设置
+//                .isCompress(true)// 是否压缩
+//                .compressQuality(80)// 图片压缩后输出质量 0~ 100
 //                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
                 //.queryBooksMaxFileSize(10)// 只查多少M以内的图片、视频、音频  单位M
                 //.compressSavePath(getPath())//压缩图片保存地址
@@ -154,13 +150,13 @@ public class BookFragment extends Fragment{
                 //.recordVideoSecond(10)//录制视频秒数 默认60s
                 .isPreviewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中)
                 //.cropCompressQuality(90)// 注：已废弃 改用cutOutQuality()
-//                    .cutOutQuality(90)// 裁剪输出质量 默认100
-                .minimumCompressSize(0)// 小于多少kb的图片不压缩
+                .cutOutQuality(80)// 裁剪输出质量 默认100
+//                .minimumCompressSize(0)// 小于多少kb的图片不压缩
                 //.cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 //.cropImageWideHigh()// 裁剪宽高比，设置如果大于图片本身宽高则无效
                 .rotateEnabled(false) // 裁剪是否可旋转图片
                 //.scaleEnabled(false)// 裁剪是否可放大缩小图片
-                //.videoQuality()// 视频录制质量 0 or 1
+                .videoQuality(1)// 视频录制质量 0 or 1
                 //.forResult(PictureConfig.CHOOSE_REQUEST);//结果回调onActivityResult code
                 .forResult(new MyResultCallback(gAdapter));
     }
@@ -195,27 +191,32 @@ public class BookFragment extends Fragment{
                 mAdapterWeakReference.get().setList(result);
                 mAdapterWeakReference.get().notifyDataSetChanged();
             }
+
+            for(LocalMedia media:beforeMediaList){
+                boolean in=false;
+                for(int i=0;i<result.size();++i){
+                    if(media.getRealPath().equals(beforeMediaList.get(i).getRealPath())){
+                        in=true;
+                        break;
+                    }
+                }
+                if(!in)
+                    DeleteUtil.delete(media);
+            }
         }
 
         @Override
         public void onCancel() {
-
         }
     }
-
-
 
     private XUISimplePopup popup;
 
     private RecyclerView rv;
 
     private TextView prevName;
-
     private TextView title;
-
     private TextView notice;
-
-    private Button selectKnowledge;
 
     private  boolean isFromItem;
     private boolean isFromProblem;
@@ -236,9 +237,6 @@ public class BookFragment extends Fragment{
     private List<BaseItem> bookData= new ArrayList<>();
     private List<ProblemItem> problemItems=new ArrayList<>();
 
-//    public BookFragment() {
-//    }
-
     public static BookFragment getInstance(){
         Bundle bundle = new Bundle();
         BookFragment myFragment = new BookFragment();
@@ -254,7 +252,7 @@ public class BookFragment extends Fragment{
         View view = inflater.inflate(R.layout.book_fragment, container, false);
         Bundle bundle = getArguments();
         if(bundle != null){
-            bindViews(view);
+            initViews(view);
             queryBooks();
         }
         return view;
@@ -277,8 +275,8 @@ public class BookFragment extends Fragment{
                 int mediaType = PictureMimeType.getMimeType(mimeType);
                 if (mediaType == PictureConfig.TYPE_VIDEO) {// 预览视频
                     PictureSelector.create(getActivity())
-                            .themeStyle(R.style.picture_default_style)
-//                                            .setPictureStyle(mPictureParameterStyle)// 动态自定义相册主题
+//                            .themeStyle(R.style.picture_default_style)
+                            .setPictureStyle(PictureStyle.getmPictureParameterStyle())// 动态自定义相册主题
                             .externalPictureVideo(TextUtils.isEmpty(media.getAndroidQToPath()) ? media.getPath() : media.getAndroidQToPath());
                 } else {// 预览图片 可自定长按保存路径
 //                        PictureWindowAnimationStyle animationStyle = new PictureWindowAnimationStyle();
@@ -300,24 +298,20 @@ public class BookFragment extends Fragment{
     }
 
     @SuppressLint({"ClickableViewAccessibility", "InflateParams"})
-    private void bindViews(View view){
+    private void initViews(View view){
+        memorizeDB=MemorizeDB.getInstance(getActivity());
         initListPopup();
 //        gAdapter = initGAdapter();
         notice=view.findViewById(R.id.notice);
         prevName = view.findViewById(R.id.prev_name);
         LinearLayout back = view.findViewById(R.id.back);
         title = view.findViewById(R.id.title);
-        final ImageView menu = view.findViewById(R.id.menu);
+        final LinearLayout menu = view.findViewById(R.id.menu);
 
 
         gAdapter=initGAdapter();
 
         problemInflate= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
-
-//        selectKnowledge=problemInflate.findViewById(R.id.select_knowledge);
-//        selectKnowledge.setOnClickListener(view1 -> {
-//
-//        });
 
         RecyclerView recyclerView = problemInflate.findViewById(R.id.recycler_show);
         recyclerView.setAdapter(gAdapter);
@@ -337,22 +331,48 @@ public class BookFragment extends Fragment{
         LinearLayout l2=problemInflate.findViewById(R.id.linear2);
 
         l1.setOnClickListener(view1 -> {
-            EventBus.getDefault().post(new MessageEvent(MessageEvent.SELECT_KNOWLEDGE));
-            problemDialog.hide();
+            if(lock.isSelected()) {
+                MessageEvent.selectedknowledges = fAdapter.getMultiContent();
+                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
+                EventBus.getDefault().post(new MessageEvent(MessageEvent.SELECT_KNOWLEDGE));
+                problemDialog.dismiss();
+            }else{
+                SnackbarUtils.Custom(title,"解锁后才能修改",700)
+                        .confirm().show();
+            }
         });
 
         l2.setOnClickListener(view1 -> {
-            if (lock.isSelected())
+            if (lock.isSelected()) {
+                beforeMediaList=gAdapter.getData();
                 gAdapter.callOnAddPicClick();
-            else
+            }
+            else {
                 SnackbarUtils.Custom(title,"解锁后才能修改",700)
                         .confirm().show();
-
+            }
         });
 
-        knowledgeRV=problemInflate.findViewById(R.id.knowledge_items);
+        RecyclerView knowledgeRV = problemInflate.findViewById(R.id.knowledge_items);
         knowledgeRV.setLayoutManager(getFlexboxLayoutManager(getContext()));
         knowledgeRV.setItemAnimator(null);
+        knowledgeRV.setAdapter(fAdapter);
+
+        fAdapter = new FlexboxLayoutAdapter(new ArrayList<>());
+        fAdapter.setIsMultiSelectMode(true);
+        fAdapter.setCancelable(false);
+        fAdapter.setOnItemClickListener((itemView, item, position) -> {
+            if(lock.isSelected()) {
+                fAdapter.select(position);
+//            XToastUtils.toast("选中的内容：" + StringUtils.listToString(fAdapter.getMultiContent(), ","));
+            }else{
+                MessageEvent.findKnowledge=fAdapter.getData().get(position);
+                EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_TREE));
+                problemDialog.dismiss();
+//                Toast.makeText(getContext(), fAdapter.getData().get(position).getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        knowledgeRV.setAdapter(fAdapter);
 
         mSearchView.setVoiceSearch(false);
         mSearchView.setEllipsize(true);
@@ -392,9 +412,6 @@ public class BookFragment extends Fragment{
             popup.showDown(view16);
         });
 
-//        registerForContextMenu(rv);
-        memorizeDB=MemorizeDB.getInstance(getActivity());
-
         rv = view.findViewById(R.id.recycler_view);
         rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
@@ -416,28 +433,16 @@ public class BookFragment extends Fragment{
             itemPosition=position;
             isFromItem=true;
             isFromProblem=false;
-//                    menu.showContextMenu();
+
             initListPopup();
             popup.showDown(view13);
             return true;
         });
         rv.setAdapter(mAdapter);
 
-
-
-//        @SuppressLint("InflateParams") View v= LayoutInflater.from(getContext()).inflate(R.layout.problem_item,null,false) ;
         rvp=view.findViewById(R.id.problem_rv);
 
-        LinearLayoutManager manager = new LinearLayoutManager(getActivity());
-        manager.setInitialPrefetchItemCount(5);
-        rvp.setLayoutManager(manager);
-        rvp.setHasFixedSize(true);
-//        rvp.setNestedScrollingEnabled(false);
-        rvp.setItemViewCacheSize(200);
-//        rvp.setOnTouchListener(this);
-        RecyclerView.RecycledViewPool pool= new RecyclerView.RecycledViewPool();
-        pool.setMaxRecycledViews(0, 10);
-        rvp.setRecycledViewPool(pool);
+        rvp.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         pAdapter=new ProblemAdapter(R.layout.list_item,problemItems);
         pAdapter.isFirstOnly(false);
@@ -448,10 +453,10 @@ public class BookFragment extends Fragment{
 
         pAdapter.setPreLoadNumber(10);
         pAdapter.setOnItemClickListener((adapter, view17, position) -> {
+            if(problemDialog!=null && problemDialog.isShowing())
+                return;
             problemPosition=position;
-//            = problemItems.get(position);
             ProblemItem item= problemItems.get(position);
-            List<LocalMedia> beforeList = new ArrayList<>(item.getPictures());
 
             num.setEnabled(false);
             grd.setEnabled(false);
@@ -466,7 +471,12 @@ public class BookFragment extends Fragment{
             grd.setText(item.getGrade());
             tolGrd.setText(item.getTotalGrade());
             smy.setText(item.getSummary());
-//            recyclerView.setAdapter(gAdapter);
+            fAdapter.resetDataSource(item.getKnowledges());
+            for (int i=0;i<item.getKnowledges().size();++i){
+                if(!fAdapter.isSelected(i))
+                    fAdapter.select(i);
+            }
+            fAdapter.notifyDataSetChanged();
             //锁用于禁止更改内容
             lock.setVisibility(View.VISIBLE);
             lock.setSelected(false);
@@ -478,7 +488,7 @@ public class BookFragment extends Fragment{
                     tolGrd.setEnabled(false);
                     smy.setEnabled(false);
                     memorizeDB.changeProblem(item.getId(), num.getText().toString(), smy.getText().toString(),
-                            grd.getText().toString(), tolGrd.getText().toString(), gAdapter.getData(), null);
+                            grd.getText().toString(), tolGrd.getText().toString(), gAdapter.getData(),fAdapter.getMultiContent() ,null);
                     gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
 
                     //动态修改内容
@@ -486,15 +496,25 @@ public class BookFragment extends Fragment{
                     item.setSummary(smy.getText().toString());
                     item.setGrade(grd.getText().toString());
                     item.setTotalGrade(tolGrd.getText().toString());
-
-
-                    for(LocalMedia media:beforeList){
-                        if(!gAdapter.getData().contains(media)){
-                            Log.d("tag",media.getFileName());
-                            DeleteUtil.delete(media);
-                        }
+                    item.setKnowledges(fAdapter.getMultiContent());
+                    int selectedNum=fAdapter.getMultiContent().size();
+                    fAdapter.resetDataSource(fAdapter.getMultiContent());
+                    for(int i=0;i<selectedNum;++i){
+                        if(!fAdapter.isSelected(i))
+                            fAdapter.select(i);
                     }
-
+                    fAdapter.notifyDataSetChanged();
+//                    for(LocalMedia media: beforeList[0]){
+//                        boolean in=true;
+//                        for(int i=0;i<gAdapter.getData().size();++i){
+//                            if(media.getRealPath().equals(gAdapter.getData().get(i).getRealPath())) {
+//                                in = false;
+//                                break;
+//                            }
+//                        }
+//                        if(in)
+//                            DeleteUtil.delete(media);
+//                    }
 
                     item.setPictures(gAdapter.getData());
                 } else {
@@ -611,8 +631,14 @@ public class BookFragment extends Fragment{
         gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
         gAdapter.setList(new ArrayList<>());
         gAdapter.notifyDataSetChanged();
+
+        MessageEvent.selectedknowledges=new ArrayList<>();
+        fAdapter.resetDataSource(new ArrayList<>());
+        fAdapter.notifyDataSetChanged();
+
         //隐藏锁图标
         lock.setVisibility(View.GONE);
+        lock.setSelected(true);
 
         //用于判断本次添加是否作废
         final boolean[] isEffective = {true};
@@ -630,7 +656,8 @@ public class BookFragment extends Fragment{
                     String grade = grd.getText().toString();
                     String totalGrade = tolGrd.getText().toString();
                     String summary = smy.getText().toString();
-                    memorizeDB.addProblem(nowItem.getId(), number, summary, grade, totalGrade, gAdapter.getData(),new MemorizeDB.callBackListener() {
+                    List<BaseItem>list=fAdapter.getMultiContent();
+                    memorizeDB.addProblem(nowItem.getId(), number, summary, grade, totalGrade, gAdapter.getData(),list,new MemorizeDB.callBackListener() {
                         @Override
                         public void onFinished() {
                             SnackbarUtils.Custom(title,"题目添加成功",700)
@@ -790,12 +817,33 @@ public class BookFragment extends Fragment{
                                             id=bookData.get(itemPosition).getId();
                                             type=bookData.get(itemPosition).getType();
                                         }
+
+                                        List<ProblemItem> problemItemList = new ArrayList<>();
+                                        if(type==BaseItem.SUBJECT_TYPE){
+                                            List<BaseItem>probSets = memorizeDB.loadData(bookData.get(itemPosition));
+                                            for(int i=0;i<probSets.size();++i){
+                                                problemItemList.addAll(memorizeDB.getProblemItems(probSets.get(i).getId()));
+                                            }
+                                        }
+                                        else if(type == BaseItem.PROBLEM_SET_TYPE)
+                                            problemItemList= memorizeDB.getProblemItems(id);
+                                        int finalType = type;
+                                        List<ProblemItem> finalProblemItemList = problemItemList;
                                         memorizeDB.deleteItem(id,type, new MemorizeDB.callBackListener() {
                                             @Override
                                             public void onFinished() {
                                                 Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                                                     SnackbarUtils.Custom(title, "删除成功", 700)
                                                             .confirm().show();
+                                                    if(finalType == BaseItem.PROBLEM_SET_TYPE
+                                                    ||finalType==BaseItem.SUBJECT_TYPE){
+                                                        for(int i = 0; i< finalProblemItemList.size(); ++i){
+                                                            for(LocalMedia media: finalProblemItemList.get(i).getPictures()){
+                                                                DeleteUtil.delete(media);
+                                                            }
+                                                        }
+                                                    }
+
                                                     queryBooks();
                                                     EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                                 });
@@ -830,7 +878,7 @@ public class BookFragment extends Fragment{
         // 清空图片缓存，包括裁剪、压缩后的图片 注意:必须要在上传完成后调用 必须要获取权限
         if (PermissionChecker.checkSelfPermission(Objects.requireNonNull(getContext()), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             //PictureFileUtils.deleteCacheDirFile(this, PictureMimeType.ofImage());
-            PictureFileUtils.deleteAllCacheDirFile(getContext());
+            PictureFileUtils.deleteAllCacheDirFile(Objects.requireNonNull(getActivity()));
         } else {
             PermissionChecker.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     PictureConfig.APPLY_STORAGE_PERMISSIONS_CODE);
@@ -858,32 +906,23 @@ public class BookFragment extends Fragment{
         //justifyContent 属性定义了项目在主轴上的对齐方式:
         // 交叉轴的起点对齐
         flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
+
         return flexboxLayoutManager;
     }
     
     public void updateKnowledgeItems(){
         problemDialog.show();
-        List<BaseItem> list=MessageEvent.selectedknowledges;
-        FlexboxLayoutAdapter adapter;
-        adapter = new FlexboxLayoutAdapter(list);
-        adapter.setIsMultiSelectMode(true);
-        adapter.setCancelable(false);
-        adapter.multiSelect();
-        knowledgeRV.setAdapter(adapter);
-//        adapter.multiSelect(1, 2, 3);
+        List<BaseItem>list = MessageEvent.selectedknowledges;
+        fAdapter.resetDataSource(list);
+        //选中
         for (int i=0;i<list.size();++i){
-            adapter.select(i);
+            if(!fAdapter.isSelected(i))
+                fAdapter.select(i);
         }
-        adapter.setOnItemClickListener((itemView, item, position) -> {
-            if(lock.isSelected()) {
-                adapter.select(position);
-//            XToastUtils.toast("选中的内容：" + StringUtils.listToString(adapter.getMultiContent(), ","));
-            }else{
-                Toast.makeText(getContext(), adapter.getData().get(position).getName(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        fAdapter.notifyDataSetChanged();
         //刷新知识点树,让选中的清空
+        MessageEvent.selectedknowledges.clear();
         EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
     }
+
 }
