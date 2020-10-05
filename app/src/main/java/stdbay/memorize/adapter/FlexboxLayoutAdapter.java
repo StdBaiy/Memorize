@@ -55,11 +55,11 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         }
     }
 
-    /**
-     * 选择
-     *
-     * @param position
-     */
+//    /**
+//     * 选择
+//     *
+//     * @param position
+//     */
     public void select(int position) {
         if (mIsMultiSelectMode) {
             multiSelect(position);
@@ -68,11 +68,11 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         }
     }
 
-    /**
-     * 多选
-     *
-     * @param positions
-     */
+//    /**
+//     * 多选
+//     *
+//     * @param positions
+//     */
     public void multiSelect(int... positions) {
         if (!mIsMultiSelectMode) {
             return;
@@ -86,12 +86,12 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         return mSparseArray.get(position);
     }
 
-    /**
-     * 多选
-     *
-     * @param position
-     */
-    public void multiSelect(int position) {
+//    /**
+//     * 多选
+//     *
+//     * @param position
+//     */
+    private void multiSelect(int position) {
         if (!mIsMultiSelectMode) {
             return;
         }
@@ -99,32 +99,28 @@ public class FlexboxLayoutAdapter extends BaseRecyclerAdapter<BaseItem> {
         notifyItemChanged(position);
     }
 
-    /**
-     * 单选
-     *
-     * @param position
-     */
+//    /**
+//     * 单选
+//     *
+//     * @param position
+//     */
     public void singleSelect(int position) {
         singleSelect(position, mCancelable);
     }
 
-    /**
-     * 单选
-     *
-     * @param position
-     * @param cancelable
-     */
-    public boolean singleSelect(int position, boolean cancelable) {
+//    /**
+//     * 单选
+//     *  @param position
+//     * @param cancelable
+//     */
+    private void singleSelect(int position, boolean cancelable) {
         if (position == getSelectPosition()) {
             if (cancelable) {
                 setSelectPosition(-1);
-                return true;
             }
         } else {
             setSelectPosition(position);
-            return true;
         }
-        return false;
     }
 
 

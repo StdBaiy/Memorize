@@ -41,7 +41,6 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
     private static final int TYPE_PICTURE = 2;
     private LayoutInflater mInflater;
     private List<LocalMedia> list = new ArrayList<>();
-    private int selectMax = 8;
 
     public static final int SELECT_PIC = 1;
     public static final int VIEW_PIC = 2;
@@ -89,8 +88,7 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
         this.mOnAddPicClickListener = mOnAddPicClickListener;
     }
 
-    public void setSelectMax(int selectMax) {
-        this.selectMax = selectMax;
+    public void setSelectMax() {
     }
 
     public void setList(List<LocalMedia> list) {

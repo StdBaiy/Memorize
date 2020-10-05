@@ -1,6 +1,5 @@
 package stdbay.memorize.model;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -56,7 +55,54 @@ public class MemorizeDB {
         return treeDepth;
     }
 
-    @SuppressLint("Recycle")
+
+    public KnowledgeItem getKnowledge(int knowId){
+        KnowledgeItem rtn=new KnowledgeItem();
+        cursor=db.rawQuery("select*from knowledge where id=?",new String[]{String.valueOf(knowId)});
+        if(cursor.moveToFirst()){
+            rtn.setId(cursor.getInt(cursor.getColumnIndex("id")));
+            rtn.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
+            rtn.setName(cursor.getString(cursor.getColumnIndex("name")));
+            rtn.setAnnotation(cursor.getString(cursor.getColumnIndex("annotation")));
+            //添加图片
+            List<LocalMedia>pics=new ArrayList<>();
+            Cursor csr=db.rawQuery("select*from know_pic where knowId=?",new String[]{String.valueOf(rtn.getId())});
+            if(csr.moveToFirst()){
+                do{
+                    LocalMedia media = new LocalMedia();
+                    media.setPath(csr.getString(csr.getColumnIndex("path")));
+                    media.setCompressPath(csr.getString(csr.getColumnIndex("compressPath")));
+                    media.setAndroidQToPath(csr.getString(csr.getColumnIndex("androidQToPath")));
+                    media.setBucketId(csr.getInt(csr.getColumnIndex("id")));
+                    media.setChecked(csr.getInt(csr.getColumnIndex("isChecked"))==1);
+                    media.setCut(csr.getInt(csr.getColumnIndex("isCut"))==1);
+                    media.setCutPath(csr.getString(csr.getColumnIndex("cutPath")));
+                    media.setRealPath(csr.getString(csr.getColumnIndex("realPath")));
+                    media.setPosition(csr.getInt(csr.getColumnIndex("position")));
+                    media.setNum(csr.getInt(csr.getColumnIndex("num")));
+                    media.setMimeType(csr.getString(csr.getColumnIndex("mimeType")));
+                    media.setChooseModel(csr.getInt(csr.getColumnIndex("chooseModel")));
+                    media.setCompressed(csr.getInt(csr.getColumnIndex("compressed"))==1);
+                    media.setWidth(csr.getInt(csr.getColumnIndex("width")));
+                    media.setHeight(csr.getInt(csr.getColumnIndex("height")));
+                    media.setSize(csr.getInt(csr.getColumnIndex("size")));
+                    media.setFileName(csr.getString(csr.getColumnIndex("fileName")));
+                    media.setParentFolderName(csr.getString(csr.getColumnIndex("parentFolderName")));
+                    media.setOrientation(csr.getInt(csr.getColumnIndex("orientation")));
+                    media.loadLongImageStatus=csr.getInt(csr.getColumnIndex("loadLongImageStatus"));
+                    media.isLongImage=csr.getInt(csr.getColumnIndex("isLongImage"))==1;
+                    media.setMaxSelectEnabledMask(csr.getInt(csr.getColumnIndex("isMaxSelectEnabledMask"))==1);
+                    pics.add(media);
+                }while(csr.moveToNext());
+                csr.close();
+            }
+            rtn.setPictures(pics);
+        }
+        cursor.close();
+        return rtn;
+    }
+
+
     public List<ProblemItem>getProblemItems(int probSetId){
         List<ProblemItem>rtn=new ArrayList<>();
         cursor=db.rawQuery("select*from problem where probSetId=?",new String[]{String.valueOf(probSetId)});
@@ -104,6 +150,7 @@ public class MemorizeDB {
                         media.setMaxSelectEnabledMask(csr.getInt(csr.getColumnIndex("isMaxSelectEnabledMask"))==1);
                         pics.add(media);
                     }while(csr.moveToNext());
+                    csr.close();
                 }
 
                 //添加知识点
@@ -117,33 +164,36 @@ public class MemorizeDB {
                         item.setType(BaseItem.KNOWLEDGE_TYPE);
                         knowledges.add(item);
                     }while(csr.moveToNext());
+                    csr.close();
                 }
                 problemItem.setPictures(pics);
                 problemItem.setKnowledges(knowledges);
                 rtn.add(problemItem);
             }while(cursor.moveToNext());
         }
+        cursor.close();
         return  rtn;
     }
 
-    @SuppressLint("Recycle")
     public List<BaseItem>loadData(BaseItem nowItem){
         list.clear();
         if(nowItem==null){
             cursor=db.rawQuery("select*from subject where fatherId is null",null);
             queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+            cursor.close();
         }else if (nowItem.getType() == BaseItem.SUBJECT_TYPE) {
             cursor = db.rawQuery("select*from subject where fatherId=?", new String[]{String.valueOf(nowItem.getId())});
             queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+            cursor.close();
             cursor = db.rawQuery("select*from problem_set where fatherId is null and subId=?"
                     , new String[]{String.valueOf(nowItem.getId())});
             queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
+            cursor.close();
             //            case BaseItem.PROBLEM_SET_TYPE:
 //                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
 //                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
 //                break;
         }
-        cursor.close();
         return list;
     }
 
@@ -196,14 +246,26 @@ public class MemorizeDB {
         }
     }
 
-    public void addKnowledge(final int fatherId,  final int subId,final String name,final String annotation, final callBackListener listener){
+    public void addKnowledge(final int fatherId,  final int subId,final String name,final String annotation, List<LocalMedia>mediaList,final callBackListener listener){
         new Thread(() -> {
             try {
+                //通过这种方法,在插入主键之前就确定了主键值
+                cursor = db.rawQuery("select*from knowledge order by id desc", null);
+                int id = 1;
+                if (cursor.moveToFirst())
+                    id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+
+                cursor.close();
                 if (fatherId == NO_FATHER)
-                    db.execSQL("insert into knowledge (name,subId,annotation) values (?,?,?)", new String[]{name, String.valueOf(subId),annotation});
+                    db.execSQL("insert into knowledge (id,name,subId,annotation) values (?,?,?,?)",
+                            new String[]{String.valueOf(id),name, String.valueOf(subId),annotation});
                 else
-                    db.execSQL("insert into knowledge (name,fatherId,subId,annotation) values(?,?,?,?)",
-                            new String[]{name, String.valueOf(fatherId), String.valueOf(subId),annotation});
+                    db.execSQL("insert into knowledge (id,name,fatherId,subId,annotation) values(?,?,?,?,?)",
+                            new String[]{String.valueOf(id),name, String.valueOf(fatherId), String.valueOf(subId),annotation});
+
+                //为知识点添加图片
+                addPictures(id,BaseItem.KNOWLEDGE_TYPE,mediaList);
+
                 if (listener != null)
                     listener.onFinished();
             } catch (SQLException e) {
@@ -214,7 +276,6 @@ public class MemorizeDB {
         }).start();
     }
 
-    @SuppressLint("Recycle")
     public BaseItem findBackItem(BaseItem nowItem){
         if(nowItem==null)return null;
         switch (nowItem.getType()){
@@ -249,7 +310,6 @@ public class MemorizeDB {
     }
 
 
-    @SuppressLint("Recycle")
     private void queryFromCursorToList(int type){
         if(cursor.moveToFirst()) do {
             BaseItem item = new BaseItem();
@@ -264,14 +324,17 @@ public class MemorizeDB {
                 case BaseItem.SUBJECT_TYPE:
                     csr=db.rawQuery("select id from subject where fatherId=?",new String[]{String.valueOf(item.getId())});
                     csr.moveToFirst();
+                    csr.close();
                     map.put("子科目",csr.getCount());
                     csr=db.rawQuery("select id from problem_set where subId=?",new String[]{String.valueOf(item.getId())});
                     csr.moveToFirst();
+                    csr.close();
                     map.put("子习题集",csr.getCount());
                     break;
                 case BaseItem.PROBLEM_SET_TYPE:
                     csr=db.rawQuery("select id from problem where probSetId=?",new String[]{String.valueOf(item.getId())});
                     csr.moveToFirst();
+                    csr.close();
                     map.put("习题",csr.getCount());
                     break;
                 case BaseItem.PROBLEM_TYPE:
@@ -433,6 +496,27 @@ public class MemorizeDB {
         return rtn;
     }
 
+    private void addPictures(int id, int type, List<LocalMedia> mediaList){
+        String sql="";
+        if(type==BaseItem.KNOWLEDGE_TYPE)
+            sql="insert into know_pic (knowId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
+                    "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
+                    "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        else if(type==BaseItem.PROBLEM_TYPE)
+            sql="insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
+                    "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
+                    "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        //把每一个照片地址存下来
+        for(LocalMedia media:mediaList){
+            db.execSQL(sql,
+                    new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
+                            media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
+                            media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
+                            String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
+                            media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
+        }
+    }
+
     public void addProblem(int probSetId,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,List<BaseItem> knowledgeList,callBackListener listener){
         try {
             //通过这种方法,在插入主键之前就确定了主键值
@@ -449,18 +533,8 @@ public class MemorizeDB {
                     new String[]{String.valueOf(id), String.valueOf(probSetId), String.valueOf(subId),number,
                             summary, grade, totalGrade});
 
-            //把每一个照片地址存下来
-            for(LocalMedia media:mediaList){
-
-                db.execSQL("insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
-                                "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
-                                "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
-                        media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
-                        media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
-                        String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
-                        media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
-            }
+            //存图片
+            addPictures(id,BaseItem.PROBLEM_TYPE,mediaList);
 
             //存知识点
             for(BaseItem item:knowledgeList){
@@ -484,17 +558,7 @@ public class MemorizeDB {
             //先删掉已经有的图片
             db.execSQL("delete from prob_pic where probId=?",new String[]{String.valueOf(id)});
             //再添加更改后的
-            if(!mediaList.isEmpty())
-            for(LocalMedia media:mediaList){
-                db.execSQL("insert into prob_pic (probId,path,compressPath,cutPath,realPath,id,isChecked,androidQToPath," +
-                                "isCut,position,num,mimeType,chooseModel,compressed,width,height,size,fileName,parentFolderName,orientation," +
-                                "loadLongImageStatus,isLongImage,bucketId,isMaxSelectEnabledMask)values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        new String[]{String.valueOf(id), media.getPath(),media.getCompressPath(),media.getCutPath(),media.getRealPath(), String.valueOf(media.getId()),
-                                media.isChecked()?"1":"0",media.getAndroidQToPath(),media.isCut()?"1":"0", String.valueOf(media.getPosition()), String.valueOf(media.getNum()),
-                                media.getMimeType(), String.valueOf(media.getChooseModel()),media.isCompressed()?"1":"0", String.valueOf(media.getWidth()), String.valueOf(media.getHeight()),
-                                String.valueOf(media.getSize()),media.getFileName(),media.getParentFolderName(), String.valueOf(media.getOrientation()), String.valueOf(media.loadLongImageStatus),
-                                media.isLongImage?"1":"0", String.valueOf(media.getBucketId()),media.isMaxSelectEnabledMask()?"1":"0"});
-            }
+            addPictures(id,BaseItem.PROBLEM_TYPE,mediaList);
 
             //先删掉已有的知识点
             db.execSQL("delete from prob_know where probId=?",new String[]{String.valueOf(id)});
@@ -513,6 +577,7 @@ public class MemorizeDB {
         }
     }
 
+
     //通过知识点获取科目号
     public int getSubId(int knowId){
         cursor=db.rawQuery("select*from knowledge where id=?",new String[]{String.valueOf(knowId)});
@@ -523,4 +588,22 @@ public class MemorizeDB {
         return rtn;
     }
 
+    public void changeKnowledge(int knowId,String name,String annotation,List<LocalMedia>mediaList,callBackListener listener){
+        try {
+            db.execSQL("update knowledge set name=?,annotation=? where id=?",
+                    new String[]{name,annotation, String.valueOf(knowId)});
+
+            //先删掉已经有的图片
+            db.execSQL("delete from know_pic where knowId=?",new String[]{String.valueOf(knowId)});
+            //再添加更改后的
+            addPictures(knowId,BaseItem.KNOWLEDGE_TYPE,mediaList);
+
+            if (listener!=null)
+                listener.onFinished();
+        } catch (SQLException e) {
+            if (listener!=null)
+                listener.onError(e);
+            e.printStackTrace();
+        }
+    }
 }

@@ -201,6 +201,10 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                 knowledge.callOnClick();
                 knowledgeTreeFragment.isSelectMode=false;
                 break;
+            case MessageEvent.CANCEL_SELECT:
+                knowledgeTreeFragment.isSelectMode=false;
+                observe.callOnClick();
+                break;
         }
     }
 

@@ -75,6 +75,36 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             "foreign key(subId) references subject(id) on delete cascade," +
             "foreign key(fatherId)references knowledge(id) on delete cascade)";
 
+    private static final String CREATE_KNOW_PIC_TABLE="create table know_pic(" +//知识_图片表
+            "knowId integer," +
+            "path text," +//图片保存地址
+            "compressPath text," +
+            "cutPath text," +
+            "realPath text," +
+            "id integer," +
+            "originalPath text," +
+            "duration int," +
+            "isChecked integer," +
+            "androidQToPath text,"+
+            "isCut integer," +
+            "position integer," +
+            "num integer," +
+            "mimeType text," +
+            "chooseModel integer," +
+            "compressed integer," +
+            "width integer," +
+            "height integer," +
+            "size integer," +
+            "isOriginal integer," +
+            "fileName text," +
+            "parentFolderName text," +
+            "orientation integer," +
+            "loadLongImageStatus integer," +
+            "isLongImage integer," +
+            "bucketId integer," +
+            "isMaxSelectEnabledMask integer,"+
+            "foreign key(knowId)references knowledge(id)on delete cascade)";
+
     private  static final String CREATE_PROB_KNOW_TABLE="create table prob_know(" +//习题_知识表
             "probId integer," +
             "knowId integer," +
@@ -105,6 +135,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
             db.execSQL(CREATE_PROBLEM_TABLE);
             db.execSQL(CREATE_PROB_PIC_TABLE);
             db.execSQL(CREATE_KNOWLEDGE_TABLE);
+            db.execSQL(CREATE_KNOW_PIC_TABLE);
 //        db.execSQL(CREATE_KNOW_LEVEL_TABLE);
             db.execSQL(CREATE_PROB_KNOW_TABLE);
 //        } catch (SQLException e) {

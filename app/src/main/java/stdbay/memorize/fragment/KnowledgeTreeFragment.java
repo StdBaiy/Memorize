@@ -15,6 +15,7 @@ import android.view.animation.OvershootInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -22,7 +23,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.luck.picture.lib.decoration.GridSpacingItemDecoration;
+import com.luck.picture.lib.entity.LocalMedia;
+import com.luck.picture.lib.listener.OnResultCallbackListener;
+import com.luck.picture.lib.tools.ScreenUtils;
 import com.shizhefei.view.hvscrollview.HVScrollView;
 import com.xuexiang.xui.utils.DensityUtils;
 import com.xuexiang.xui.utils.SnackbarUtils;
@@ -36,6 +43,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,26 +51,27 @@ import java.util.Objects;
 
 import stdbay.memorize.R;
 import stdbay.memorize.adapter.FlexboxLayoutAdapter;
+import stdbay.memorize.adapter.FullyGridLayoutManager;
+import stdbay.memorize.adapter.GridImageAdapter;
 import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.DrawGeometryView;
+import stdbay.memorize.model.KnowledgeItem;
 import stdbay.memorize.model.MemorizeDB;
 import stdbay.memorize.model.TreeNode;
+import stdbay.memorize.util.DeleteUtil;
 import stdbay.memorize.util.MessageEvent;
+import stdbay.memorize.util.Util;
 
 public class KnowledgeTreeFragment extends Fragment {
 
+    private static List<LocalMedia> mResult=new ArrayList<>();
     public boolean isSelectMode=false;
-
-    private MaterialDialog knowledgeDialog;
-    private FlexboxLayoutAdapter fAdapter;
-
 
     private XUISimplePopup popup;
 //    private CookieBar cookieBar;
 
     private LinearLayout infoBanner;
     private TextView selectInfo;
-    private Button returnKnowledge;
 
     private TextView notice;
 
@@ -72,9 +81,6 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private MaterialSpinner mMaterialSpinner;
 
-    private static  final int RENAME=-1;
-    private static  final int ADD_KNOWLEDGE=0;
-    private static  final int CHANGE_ANNOTATION=1;
 
     private int subId=0;
     private TreeNode nowTreeNode=new TreeNode();
@@ -98,7 +104,13 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private MemorizeDB memorizeDB;
 
-    private Button findNode;
+    private RelativeLayout knowledgeInflate;
+    private MaterialDialog knowledgeDialog;
+    private FlexboxLayoutAdapter fAdapter;
+    private GridImageAdapter gAdapter;
+    private EditText annotation;
+    private ImageView lock;
+    private EditText name;
 
     @Override
     public void onDestroyView() {
@@ -164,16 +176,6 @@ public class KnowledgeTreeFragment extends Fragment {
             final TreeNode nodeInstance =node.get(i);
 
             final BaseItem item=new BaseItem();
-
-
-//
-//            for(int j=0;j<MessageEvent.selectedknowledges.size();++j){
-//                if(nodeInstance.getId()==MessageEvent.selectedknowledges.get(j).getId()){
-//                    treeNodeView.setSelected(true);
-//                    treeNodeView.setBackgroundResource(R.drawable.red_corner);
-//                }
-//            }
-
             item.setType(BaseItem.KNOWLEDGE_TYPE);
             item.setId(nodeInstance.getId());
             item.setName(nodeInstance.getName());
@@ -200,6 +202,9 @@ public class KnowledgeTreeFragment extends Fragment {
             final int H=(int) finalTreeNodeY;
 
             treeNodeView.setOnClickListener(view -> {
+                //id等于0说明是根节点
+                if(nodeInstance.getId()==0)
+                    return;
                 if (isSelectMode){
                     infoBanner.setVisibility(View.VISIBLE);
                     if (!view.isSelected()){
@@ -218,8 +223,57 @@ public class KnowledgeTreeFragment extends Fragment {
                     selectInfo.setText("已选择"+MessageEvent.selectedknowledges.size()+"项");
                 }else {
                     infoBanner.setVisibility(View.GONE);
-                    showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
-                    hv.smoothScrollTo(W - 500, H - 500);
+
+                    KnowledgeItem knowledgeItem = memorizeDB.getKnowledge(nodeInstance.getId());
+
+                    name.setEnabled(false);
+                    annotation.setEnabled(false);
+
+                    name.setText(knowledgeItem.getName());
+                    annotation.setText(knowledgeItem.getAnnotation());
+
+                    gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
+                    gAdapter.setList(knowledgeItem.getPictures());
+                    gAdapter.notifyDataSetChanged();
+
+
+                    //修改锁属性
+                    lock.setVisibility(View.VISIBLE);
+                    lock.setSelected(false);
+                    lock.setOnClickListener(view22 -> {
+                        if (view22.isSelected()) {
+                            view22.setSelected(false);
+                            name.setEnabled(false);
+                            annotation.setEnabled(false);
+                            gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
+                            memorizeDB.changeKnowledge(nodeInstance.getId(), name.getText().toString(), annotation.getText().toString(), gAdapter.getData(), new MemorizeDB.callBackListener() {
+                                @Override
+                                public void onFinished() {
+                                    SnackbarUtils.Custom(hv,"修改成功",700)
+                                            .confirm().show();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    SnackbarUtils.Custom(hv,"修改失败",700)
+                                            .danger().show();
+                                }
+                            });
+                        }else{
+                            view22.setSelected(true);
+                            name.setEnabled(true);
+                            annotation.setEnabled(true);
+                            gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
+                        }
+                        gAdapter.notifyDataSetChanged();
+                    });
+
+                    knowledgeDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+                            .backgroundColorRes(R.color.problem_blue)
+                            .positiveColorRes(R.color._ccc)
+                            .customView(knowledgeInflate, true)
+                            .build();
+                    knowledgeDialog.show();
                 }
             });
 
@@ -233,7 +287,7 @@ public class KnowledgeTreeFragment extends Fragment {
                 });
                 treeNodeView.setBackgroundResource(R.drawable.gray_corner);
                 infoBanner.setVisibility(View.GONE);
-                showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
+//                showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
             }
             treeNodeView.setOnLongClickListener(view -> {
                 popup.showDown(view);
@@ -315,21 +369,43 @@ public class KnowledgeTreeFragment extends Fragment {
 
 
 
-    private void showInput( final int type){
+    private void showInput(){
         String s;
-        if(type==ADD_KNOWLEDGE) {
+//        if(KnowledgeTreeFragment.ADD_KNOWLEDGE ==ADD_KNOWLEDGE) {
             s="新建知识点";
-            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
+
+            name.setEnabled(true);
+            annotation.setEnabled(true);
+
+            name.setText("");
+            annotation.setText("");
+
+            gAdapter.setViewType(GridImageAdapter.SELECT_PIC);
+            gAdapter.setList(new ArrayList<>());
+            gAdapter.notifyDataSetChanged();
+
+            MessageEvent.selectedknowledges=new ArrayList<>();
+            fAdapter.resetDataSource(new ArrayList<>());
+            fAdapter.notifyDataSetChanged();
+
+            //隐藏锁图标
+            lock.setVisibility(View.GONE);
+            lock.setSelected(true);
+
+            //用于判断本次添加是否作废
+            final boolean[] isEffective = {true};
+            knowledgeDialog = new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                     .title(s)
-                    .customView(R.layout.add_knowledge_dialog,true)
-                    .positiveText("确认")
+                    .titleColorRes(R.color._ccc)
+                    .backgroundColorRes(R.color.problem_blue)
+                    .positiveColorRes(R.color._ccc)
+                    .customView(knowledgeInflate,true)
+                    .positiveText("添加")
                     .onPositive((dialog, which) -> {
-                        assert (dialog).getCustomView() != null;
-                        String name=((EditText) ((dialog).getCustomView().
-                                findViewById(R.id.knowledge_name))).getText().toString();
-                        String annotation=((EditText)(dialog.getCustomView().
-                                findViewById(R.id.knowledge_annotation))).getText().toString();
-                        memorizeDB.addKnowledge(nowTreeNode.getId(), subId, name, annotation,new MemorizeDB.callBackListener() {
+                        isEffective[0] =false;
+                        String nm=name.getText().toString();
+                        String ann=annotation.getText().toString();
+                        memorizeDB.addKnowledge(nowTreeNode.getId(), subId, nm, ann,gAdapter.getData(),new MemorizeDB.callBackListener() {
                             @Override
                             public void onFinished() {
                                 Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
@@ -346,72 +422,24 @@ public class KnowledgeTreeFragment extends Fragment {
                                         .danger().show());
                             }
                         });
-                    })
-                    .negativeText("取消")
-                    .cancelable(true)
-                    .show();
-        }
-        else if(type==RENAME) {
-            s="改名";
-            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
-                    .title(s)
-                    .negativeText("取消")
-                    .positiveText("确认")
-                    .input("请输入新名称", nowTreeNode.getName(), false, (dialog, input) -> {
-                        String name=input.toString();
-                        BaseItem item=new BaseItem();
-                        item.setType(BaseItem.KNOWLEDGE_TYPE);
-                        item.setId(nowTreeNode.getId());
-                        memorizeDB.reName(item, name, new MemorizeDB.callBackListener() {
-                            @Override
-                            public void onFinished() {
-                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-                                    SnackbarUtils.Short(hv,"改名成功")
-                                            .confirm().show();
-                                    insertLayout.removeAllViews();
-                                    showKnowledgeTree();
-//                                    clearCookieBar();
-                                });
-                            }
-
-                            @Override
-                            public void onError(Exception e) {
-                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> SnackbarUtils.Short(hv,"改名失败,请检查是否有同名项")
-                                        .danger().show());
-                            }
-                        });
-                    }).show();
-        }
-        else if(type==CHANGE_ANNOTATION) {
-            s="修改注释";
-            new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
-                    .title(s)
-                    .negativeText("取消")
-                    .positiveText("确认")
-                    .input("请输入新注释", nowTreeNode.getAnnotation(), true, (dialog, input) -> memorizeDB.changeKnowledgeAnnotation(nowTreeNode.getId(), input.toString(), new MemorizeDB.callBackListener() {
-                        @Override
-                        public void onFinished() {
-                            SnackbarUtils.Short(hv,"修改注释成功")
-                                    .confirm().show();
-                            insertLayout.removeAllViews();
-                            showKnowledgeTree();
-//                            clearCookieBar();
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            SnackbarUtils.Short(hv,"修改注释失败")
-                                    .danger().show();
-                        }
-                    })).show();
-        }
+                    }).build();
+            knowledgeDialog.setOnDismissListener(dialogInterface -> {
+                //作废的话就删除缓存文件以减少存储
+                if(isEffective[0]){
+                    for(LocalMedia media:mResult){
+                        DeleteUtil.delete(media);
+                    }
+                }
+            });
+            knowledgeDialog.show();
+//        }
     }
 
     private void initListPopup() {
-        String[] tmp = new String[]{"新建知识点","改名","修改注释","删除"};
+        String[] tmp = new String[]{"新建知识点","删除"};
         popup = new XUISimplePopup(Objects.requireNonNull(getContext()), tmp)
                 .create(DensityUtils.dp2px(getContext(), 170), (adapter, item, position) -> {
-                    //id等于0说明是根节点,不能改名
+                    //id等于0说明是根节点,不能删除
                     if(!item.getTitle().toString().equals("新建知识点")
                             &&nowTreeNode.getId()==0){
                         SnackbarUtils.Short(hv, "不能对根节点操作")
@@ -420,13 +448,7 @@ public class KnowledgeTreeFragment extends Fragment {
                     }
                     switch(item.getTitle().toString()){
                         case "新建知识点":
-                            showInput(ADD_KNOWLEDGE);
-                            break;
-                        case "改名":
-                            showInput(RENAME);
-                            break;
-                        case "修改注释":
-                            showInput(CHANGE_ANNOTATION);
+                            showInput();
                             break;
                         case "删除":
                             new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
@@ -469,7 +491,7 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     @SuppressLint("ResourceType")
-    private void showCookieBar(String title, String content){
+//    private void showCookieBar(String title, String content){
 //        clearCookieBar();
 //        cookieBar=CookieBar.builder(getActivity())
 //                .setTitle(title)
@@ -482,7 +504,7 @@ public class KnowledgeTreeFragment extends Fragment {
 //
 //                })
 //                .show();
-    }
+//    }
 
 //    public void clearCookieBar(){
 //        if(cookieBar!=null)
@@ -524,6 +546,7 @@ public class KnowledgeTreeFragment extends Fragment {
         }
     }
 
+    @SuppressLint("InflateParams")
     private void initView(){
 
         loadingDialog = WidgetUtils.getMiniLoadingDialog(Objects.requireNonNull(getContext()));
@@ -532,13 +555,80 @@ public class KnowledgeTreeFragment extends Fragment {
         hv = view.findViewById(R.id.hvscroll);
         insertLayout=view.findViewById(R.id.canvas);
 
+        Button cancelSelect=view.findViewById(R.id.cancel_select);
+        cancelSelect.setOnClickListener(view1 -> {
+            MessageEvent.selectedknowledges.clear();
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.CANCEL_SELECT));
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
+        });
 
+        gAdapter=Util.initGAdapter(getActivity());
+        gAdapter.setmOnAddPicClickListener(Util.initOnAddPicListener(gAdapter,getActivity(),new MyResultCallback(gAdapter)));
+
+        knowledgeInflate= (RelativeLayout) LayoutInflater.from(getContext()).inflate(R.layout.knowledge_item,null,false);
+
+        RecyclerView recyclerView = knowledgeInflate.findViewById(R.id.recycler_show);
+        recyclerView.setAdapter(gAdapter);
+        FullyGridLayoutManager fManager = new FullyGridLayoutManager(getActivity(),
+                3, GridLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(fManager);
+        recyclerView.addItemDecoration(new GridSpacingItemDecoration(3,
+                ScreenUtils.dip2px(Objects.requireNonNull(getActivity()), 8), false));
+        name=knowledgeInflate.findViewById(R.id.name);
+        annotation= knowledgeInflate.findViewById(R.id.annotation);
+        lock= knowledgeInflate.findViewById(R.id.lock);
+
+        LinearLayout l1=knowledgeInflate.findViewById(R.id.linear1);
+        LinearLayout l2=knowledgeInflate.findViewById(R.id.linear2);
+
+//        l1.setOnClickListener(view1 -> {
+//            if(lock.isSelected()) {
+//
+////                MessageEvent.selectedknowledges = fAdapter.getMultiContent();
+////                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
+////                EventBus.getDefault().post(new MessageEvent(MessageEvent.SELECT_KNOWLEDGE));
+//            }else{
+//                SnackbarUtils.Custom(hv,"解锁后才能修改",700)
+//                        .confirm().show();
+//            }
+//        });
+
+        l2.setOnClickListener(view1 -> {
+            if (lock.isSelected()) {
+                gAdapter.callOnAddPicClick();
+            }
+            else {
+                SnackbarUtils.Custom(hv,"解锁后才能修改",700)
+                        .confirm().show();
+            }
+        });
+
+        RecyclerView knowledgeRV = knowledgeInflate.findViewById(R.id.knowledge_items);
+        knowledgeRV.setLayoutManager(Util.getFlexboxLayoutManager(getContext()));
+        knowledgeRV.setItemAnimator(null);
+        knowledgeRV.setAdapter(fAdapter);
+
+        fAdapter = new FlexboxLayoutAdapter(new ArrayList<>());
+        fAdapter.setIsMultiSelectMode(true);
+        fAdapter.setCancelable(false);
+        fAdapter.setOnItemClickListener((itemView, item, position) -> {
+            if(lock.isSelected()) {
+                fAdapter.select(position);
+//            XToastUtils.toast("选中的内容：" + StringUtils.listToString(fAdapter.getMultiContent(), ","));
+            }else{
+//                MessageEvent.findKnowledge=fAdapter.getData().get(position);
+//                EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_TREE));
+//                problemDialog.dismiss();
+//                Toast.makeText(getContext(), fAdapter.getData().get(position).getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        knowledgeRV.setAdapter(fAdapter);
 
         notice=view.findViewById(R.id.notice);
 
         infoBanner=view.findViewById(R.id.info_banner);
         selectInfo=view.findViewById(R.id.select_info);
-        returnKnowledge=view.findViewById(R.id.return_knowledge);
+        Button returnKnowledge = view.findViewById(R.id.return_knowledge);
         returnKnowledge.setOnClickListener(view1 -> EventBus.getDefault().post(new MessageEvent(MessageEvent.KNOWLEDGE_RETURN)));
 
         animation= new ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f,
@@ -601,6 +691,41 @@ public class KnowledgeTreeFragment extends Fragment {
             else
                 infoBanner.setVisibility(View.GONE);
 //            Toast.makeText(getContext(), "开启", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static class MyResultCallback implements OnResultCallbackListener<LocalMedia> {
+        private WeakReference<GridImageAdapter> mAdapterWeakReference;
+
+        MyResultCallback(GridImageAdapter adapter) {
+            super();
+            this.mAdapterWeakReference = new WeakReference<>(adapter);
+        }
+
+        @Override
+        public void onResult(List<LocalMedia> result) {
+//          TODO 可以通过PictureSelectorExternalUtils.getExifInterface();方法获取一些额外的资源信息，如旋转角度、经纬度等信息
+            mResult=result;
+            if (mAdapterWeakReference.get() != null) {
+                mAdapterWeakReference.get().setList(result);
+                mAdapterWeakReference.get().notifyDataSetChanged();
+            }
+
+//            for(LocalMedia media:beforeMediaList){
+//                boolean in=false;
+//                for(int i=0;i<result.size();++i){
+//                    if(media.getRealPath().equals(beforeMediaList.get(i).getRealPath())){
+//                        in=true;
+//                        break;
+//                    }
+//                }
+//                if(!in)
+//                    DeleteUtil.delete(media);
+//            }
+        }
+
+        @Override
+        public void onCancel() {
         }
     }
 }

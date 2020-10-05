@@ -12,6 +12,7 @@ public class MessageEvent {
     public static final int SELECT_KNOWLEDGE=2;
     public static final int KNOWLEDGE_RETURN=3;
     public static final int FIND_IN_TREE=4;
+    public static final int CANCEL_SELECT=5;
 
     public static BaseItem findKnowledge;
 

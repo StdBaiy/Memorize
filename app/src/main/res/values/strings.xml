@@ -13,4 +13,5 @@
     <string name="add_knowledge">新建知识点</string>
     <string name="select_knowledge">从知识点树中选择知识点</string>
     <string name="select_picture">从相簿或相机中添加照片</string>
+    <string name="related_problems">涉及到的题目</string>
 </resources>
