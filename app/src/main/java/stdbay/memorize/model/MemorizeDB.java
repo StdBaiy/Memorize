@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Queue;
 
 import stdbay.memorize.db.MemorizeOpenHelper;
+import stdbay.memorize.fragment.KnowledgeTreeFragment;
 
 public class MemorizeDB {
     private static TreeNode root;
@@ -96,7 +97,35 @@ public class MemorizeDB {
                 }while(csr.moveToNext());
                 csr.close();
             }
+
+            //添加相关题目
+            List<BaseItem>problems=new ArrayList<>();
+            csr=db.rawQuery("select distinct probId from prob_know where knowId=?",new String[]{String.valueOf(rtn.getId())});
+            if(csr.moveToFirst()){
+                do {
+                    BaseItem item=new BaseItem();
+                    item.setType(BaseItem.PROBLEM_TYPE);
+                    item.setId(csr.getInt(csr.getColumnIndex("probId")));
+                    String name="";
+                    Cursor c1=db.rawQuery("select * from problem where id=?",new String[]{String.valueOf(item.getId())});
+                    if(c1.moveToFirst()){
+                        Cursor c2=db.rawQuery("select * from problem_set where id=?",new String[]{String.valueOf(c1.getInt(c1.getColumnIndex("probSetId")))});
+                        if(c2.moveToFirst()){
+                            name+=c2.getString(c2.getColumnIndex("name"));
+                            c2.close();
+                        }
+                        name+="/第";
+                        name+=c1.getString(c1.getColumnIndex("number"));
+                        name+="题";
+                        c1.close();
+                    }
+                    item.setName(name);
+                    problems.add(item);
+                }while(csr.moveToNext());
+                csr.close();
+            }
             rtn.setPictures(pics);
+            rtn.setProblems(problems);
         }
         cursor.close();
         return rtn;
@@ -246,7 +275,7 @@ public class MemorizeDB {
         }
     }
 
-    public void addKnowledge(final int fatherId,  final int subId,final String name,final String annotation, List<LocalMedia>mediaList,final callBackListener listener){
+    public void addKnowledge(int type, final int fatherId,  final int subId,final String name,final String annotation, List<LocalMedia>mediaList,final callBackListener listener){
         new Thread(() -> {
             try {
                 //通过这种方法,在插入主键之前就确定了主键值
@@ -256,12 +285,22 @@ public class MemorizeDB {
                     id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
 
                 cursor.close();
-                if (fatherId == NO_FATHER)
+
+
+                if (fatherId == NO_FATHER) {
                     db.execSQL("insert into knowledge (id,name,subId,annotation) values (?,?,?,?)",
                             new String[]{String.valueOf(id),name, String.valueOf(subId),annotation});
-                else
+                }
+                else {
                     db.execSQL("insert into knowledge (id,name,fatherId,subId,annotation) values(?,?,?,?,?)",
-                            new String[]{String.valueOf(id),name, String.valueOf(fatherId), String.valueOf(subId),annotation});
+                            new String[]{String.valueOf(id), name, String.valueOf(fatherId), String.valueOf(subId), annotation});
+                }
+
+                if(type== KnowledgeTreeFragment.INSERT){
+                    db.execSQL("update knowledge set fatherId=? where fatherId=? and id!=?",new String[]{
+                            String.valueOf(id), String.valueOf(fatherId), String.valueOf(id)
+                    });
+                }
 
                 //为知识点添加图片
                 addPictures(id,BaseItem.KNOWLEDGE_TYPE,mediaList);
@@ -355,7 +394,18 @@ public class MemorizeDB {
                 sql+="problem_set";
                 break;
             case BaseItem.KNOWLEDGE_TYPE:
-                sql+="knowledge";
+                try{
+                    int fatherId=0;
+                    cursor=db.rawQuery("select*from knowledge where id=?",new String[]{String.valueOf(id)});
+                    if(cursor.moveToFirst()){
+                        fatherId=cursor.getInt(cursor.getColumnIndex("fatherId"));
+                        cursor.close();
+                    }
+                    db.execSQL("update knowledge set fatherId=? where fatherId=?",new String[]{String.valueOf(fatherId), String.valueOf(id)});
+                    sql+="knowledge";
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
             case BaseItem.PROBLEM_TYPE:
                 sql+="problem";
@@ -395,19 +445,6 @@ public class MemorizeDB {
                 listener.onError(e);
         }
 
-    }
-
-    public void changeKnowledgeAnnotation(int id,String annotation,callBackListener listener){
-        try {
-            db.execSQL("update knowledge set annotation=? where id=?",
-                    new String[]{annotation,String.valueOf(id)});
-            if(listener!=null)
-                listener.onFinished();
-        } catch (SQLException e) {
-            if(listener!=null)
-                listener.onError(e);
-            e.printStackTrace();
-        }
     }
 
 
@@ -605,5 +642,36 @@ public class MemorizeDB {
                 listener.onError(e);
             e.printStackTrace();
         }
+    }
+
+    public BaseItem getProblemSetByProblem(int probId){
+            cursor=db.rawQuery("select * from problem where id=?",new String[]{String.valueOf(probId)});
+            BaseItem probSet=new BaseItem();
+            if(cursor.moveToFirst()){
+                int probSetId=cursor.getInt(cursor.getColumnIndex("probSetId"));
+                Cursor csr=db.rawQuery("select * from problem_set where id=?",new String[]{String.valueOf(probSetId)});
+                if(csr.moveToFirst()){
+                    probSet.setId(probSetId);
+                    probSet.setFatherId(csr.getInt(csr.getColumnIndex("fatherId")));
+                    probSet.setType(BaseItem.PROBLEM_SET_TYPE);
+                    probSet.setName(csr.getString(csr.getColumnIndex("name")));
+
+                    csr.close();
+                    //查询子项
+//                    Map<String, Integer>map=new HashMap<>();
+//
+//                    csr=db.rawQuery("select id from problem where probSetId=?",new String[]{String.valueOf(probSet.getId())});
+//                    csr.moveToFirst();
+//                    csr.close();
+//                    map.put("习题",csr.getCount());
+//                    probSet.setChildrenData(map);
+                }
+            }
+            return probSet;
+    }
+
+    public boolean isExist(int subId){
+        cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(subId)});
+        return cursor.moveToFirst();
     }
 }

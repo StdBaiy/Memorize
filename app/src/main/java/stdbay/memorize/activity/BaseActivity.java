@@ -29,16 +29,14 @@ import stdbay.memorize.util.MessageEvent;
 
 public class BaseActivity extends FragmentActivity implements View.OnClickListener{
 
-    public final static String KEY_IS_DISPLAY = "key_is_display";
-    public final static String KEY_ENABLE_ALPHA_ANIM = "key_enable_alpha_anim";
-
     private LinearLayout observe;
     private LinearLayout knowledge;
     private LinearLayout statistics;
     private LinearLayout more;
-    public MyFragment  myFragment3, myFragment4;
-    public BookFragment bookFragment;
-    public KnowledgeTreeFragment knowledgeTreeFragment;
+    private MyFragment  myFragment3, myFragment4;
+    private BookFragment bookFragment;
+    private KnowledgeTreeFragment knowledgeTreeFragment;
+
 
 
     @Override
@@ -63,7 +61,6 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, bookFragment);
         transaction.commit();
-
     }
 
     private void bindView(){
@@ -174,12 +171,10 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     }
 
     public void checkPermission() {
-        boolean isGranted = true;
         if (this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED||
                 this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             this.requestPermissions(
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission
-                            .ACCESS_FINE_LOCATION,
+                    new String[]{
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     102);
@@ -197,6 +192,11 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                 observe.callOnClick();
                 bookFragment.updateKnowledgeItems();
                 break;
+            case MessageEvent.FIND_IN_PROBLEM:
+                knowledgeTreeFragment.isSelectMode=false;
+                observe.callOnClick();
+                bookFragment.findProblem(MessageEvent.findProblem);
+                break;
             case MessageEvent.FIND_IN_TREE:
                 knowledge.callOnClick();
                 knowledgeTreeFragment.isSelectMode=false;
@@ -204,6 +204,7 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
             case MessageEvent.CANCEL_SELECT:
                 knowledgeTreeFragment.isSelectMode=false;
                 observe.callOnClick();
+                bookFragment.problemDialog.show();
                 break;
         }
     }

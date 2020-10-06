@@ -58,7 +58,7 @@ import stdbay.memorize.util.Util;
 
 public class BookFragment extends Fragment{
     private GridImageAdapter gAdapter;
-    private MaterialDialog problemDialog;
+    public MaterialDialog problemDialog;
     private FlexboxLayoutAdapter fAdapter;
     private static List<LocalMedia> beforeMediaList;
     private static List<LocalMedia> mResult=new ArrayList<>();
@@ -91,18 +91,6 @@ public class BookFragment extends Fragment{
                 mAdapterWeakReference.get().setList(result);
                 mAdapterWeakReference.get().notifyDataSetChanged();
             }
-
-//            for(LocalMedia media:beforeMediaList){
-//                boolean in=false;
-//                for(int i=0;i<result.size();++i){
-//                    if(media.getRealPath().equals(beforeMediaList.get(i).getRealPath())){
-//                        in=true;
-//                        break;
-//                    }
-//                }
-//                if(!in)
-//                    DeleteUtil.delete(media);
-//            }
         }
 
         @Override
@@ -382,17 +370,6 @@ public class BookFragment extends Fragment{
                             fAdapter.select(i);
                     }
                     fAdapter.notifyDataSetChanged();
-//                    for(LocalMedia media: beforeList[0]){
-//                        boolean in=true;
-//                        for(int i=0;i<gAdapter.getData().size();++i){
-//                            if(media.getRealPath().equals(gAdapter.getData().get(i).getRealPath())) {
-//                                in = false;
-//                                break;
-//                            }
-//                        }
-//                        if(in)
-//                            DeleteUtil.delete(media);
-//                    }
 
                     item.setPictures(gAdapter.getData());
                 } else {
@@ -562,7 +539,7 @@ public class BookFragment extends Fragment{
     }
 
     private void showInput(final int type){
-        String s = "";
+        String s = "",preFill="";
         switch(type){
             case BaseItem.PROBLEM_TYPE:
                 showProblemItem();
@@ -575,13 +552,14 @@ public class BookFragment extends Fragment{
                 break;
             case RENAME:
                 s="改名";
+                preFill=mAdapter.getData().get(itemPosition).getName();
                 break;
         }
 
         new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
                 .title(s)
                 .inputType(InputType.TYPE_CLASS_TEXT)
-                .input("请输入名称", "", false,((dialog, input) -> {
+                .input("请输入名称", preFill , false,((dialog, input) -> {
                     String name=input.toString();
                     switch (type){
                         case BaseItem.SUBJECT_TYPE:
@@ -772,7 +750,8 @@ public class BookFragment extends Fragment{
     }
     
     public void updateKnowledgeItems(){
-        problemDialog.show();
+        if(problemDialog!=null)
+            problemDialog.show();
         List<BaseItem>list = MessageEvent.selectedknowledges;
         fAdapter.resetDataSource(list);
         //选中
@@ -784,6 +763,12 @@ public class BookFragment extends Fragment{
         //刷新知识点树,让选中的清空
         MessageEvent.selectedknowledges.clear();
         EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
+    }
+
+    public void findProblem(BaseItem problem){
+        nowItem = memorizeDB.getProblemSetByProblem(problem.getId());
+        prevItem=memorizeDB.findBackItem(nowItem);
+        queryBooks();
     }
 
 }

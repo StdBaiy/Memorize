@@ -33,7 +33,7 @@ public class KnowledgeItem {
         return fatherId;
     }
 
-    public void setFatherId(int fatherId) {
+    void setFatherId(int fatherId) {
         this.fatherId = fatherId;
     }
 
@@ -49,7 +49,7 @@ public class KnowledgeItem {
         return problems;
     }
 
-    public void setProblems(List<BaseItem> problems) {
+    void setProblems(List<BaseItem> problems) {
         this.problems = problems;
     }
 
@@ -57,7 +57,7 @@ public class KnowledgeItem {
         return pictures;
     }
 
-    public void setPictures(List<LocalMedia> pictures) {
+    void setPictures(List<LocalMedia> pictures) {
         this.pictures = pictures;
     }
 }

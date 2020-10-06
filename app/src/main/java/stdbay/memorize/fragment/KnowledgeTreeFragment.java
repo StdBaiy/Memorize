@@ -89,6 +89,8 @@ public class KnowledgeTreeFragment extends Fragment {
 
     private HVScrollView hv;
 
+    public static int INSERT=1;
+    private static int ADD=2;
 
 //    private ProgressDialog progressDialog;
 
@@ -232,11 +234,18 @@ public class KnowledgeTreeFragment extends Fragment {
                     name.setText(knowledgeItem.getName());
                     annotation.setText(knowledgeItem.getAnnotation());
 
+                    fAdapter.resetDataSource(knowledgeItem.getProblems());
+                    //默认选中所有
+                    for (int j=0;j<knowledgeItem.getProblems().size();++j){
+                        if(!fAdapter.isSelected(j))
+                            fAdapter.select(j);
+                    }
+                    fAdapter.notifyDataSetChanged();
+
                     gAdapter.setViewType(GridImageAdapter.VIEW_PIC);
                     gAdapter.setList(knowledgeItem.getPictures());
                     gAdapter.notifyDataSetChanged();
-
-
+                    
                     //修改锁属性
                     lock.setVisibility(View.VISIBLE);
                     lock.setSelected(false);
@@ -367,9 +376,7 @@ public class KnowledgeTreeFragment extends Fragment {
         });
     }
 
-
-
-    private void showInput(){
+    private void showInput(int type){
         String s;
 //        if(KnowledgeTreeFragment.ADD_KNOWLEDGE ==ADD_KNOWLEDGE) {
             s="新建知识点";
@@ -405,7 +412,7 @@ public class KnowledgeTreeFragment extends Fragment {
                         isEffective[0] =false;
                         String nm=name.getText().toString();
                         String ann=annotation.getText().toString();
-                        memorizeDB.addKnowledge(nowTreeNode.getId(), subId, nm, ann,gAdapter.getData(),new MemorizeDB.callBackListener() {
+                        memorizeDB.addKnowledge(type,nowTreeNode.getId(), subId, nm, ann,gAdapter.getData(),new MemorizeDB.callBackListener() {
                             @Override
                             public void onFinished() {
                                 Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
@@ -436,19 +443,23 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     private void initListPopup() {
-        String[] tmp = new String[]{"新建知识点","删除"};
+        String[] tmp = new String[]{"新建知识点","插入知识点","删除"};
         popup = new XUISimplePopup(Objects.requireNonNull(getContext()), tmp)
                 .create(DensityUtils.dp2px(getContext(), 170), (adapter, item, position) -> {
                     //id等于0说明是根节点,不能删除
-                    if(!item.getTitle().toString().equals("新建知识点")
-                            &&nowTreeNode.getId()==0){
+                    if(nowTreeNode.getId()==0&&(!item.getTitle().toString().equals("新建知识点")||
+                            !item.getTitle().toString().equals("插入知识点"))
+                            ){
                         SnackbarUtils.Short(hv, "不能对根节点操作")
                                 .warning().show();
                         return;
                     }
                     switch(item.getTitle().toString()){
                         case "新建知识点":
-                            showInput();
+                            showInput(ADD);
+                            break;
+                        case "插入知识点":
+                            showInput(INSERT);
                             break;
                         case "删除":
                             new MaterialDialog.Builder(Objects.requireNonNull(getContext()))
@@ -491,25 +502,6 @@ public class KnowledgeTreeFragment extends Fragment {
     }
 
     @SuppressLint("ResourceType")
-//    private void showCookieBar(String title, String content){
-//        clearCookieBar();
-//        cookieBar=CookieBar.builder(getActivity())
-//                .setTitle(title)
-//                .setMessage(content)
-//                .setDuration(-1)
-//                .setBackgroundColor(R.color.dark_green)
-//                .setActionColor(android.R.color.white)
-//                .setTitleColor(android.R.color.white)
-//                .setAction("关闭", view -> {
-//
-//                })
-//                .show();
-//    }
-
-//    public void clearCookieBar(){
-//        if(cookieBar!=null)
-//            cookieBar.dismiss();
-//    }
 
     private void initDropDownMenu(int subId){
         final Map<String,Integer> subjects= memorizeDB.getSubjects();
@@ -517,10 +509,11 @@ public class KnowledgeTreeFragment extends Fragment {
         for(Map.Entry<String,Integer>entry:subjects.entrySet()){
             l.add(entry.getKey());
         }
-        if(subId!=0)
+        if(subId!=0&&memorizeDB.isExist(subId))
             this.subId = subId;
         else
-            this.subId=subjects.get(l.get(0));
+            if(!subjects.isEmpty())
+                this.subId=subjects.get(l.get(0));
         if(!l.isEmpty()) {
             notice.setVisibility(View.GONE);
             hv.setVisibility(View.VISIBLE);
@@ -581,18 +574,6 @@ public class KnowledgeTreeFragment extends Fragment {
         LinearLayout l1=knowledgeInflate.findViewById(R.id.linear1);
         LinearLayout l2=knowledgeInflate.findViewById(R.id.linear2);
 
-//        l1.setOnClickListener(view1 -> {
-//            if(lock.isSelected()) {
-//
-////                MessageEvent.selectedknowledges = fAdapter.getMultiContent();
-////                EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
-////                EventBus.getDefault().post(new MessageEvent(MessageEvent.SELECT_KNOWLEDGE));
-//            }else{
-//                SnackbarUtils.Custom(hv,"解锁后才能修改",700)
-//                        .confirm().show();
-//            }
-//        });
-
         l2.setOnClickListener(view1 -> {
             if (lock.isSelected()) {
                 gAdapter.callOnAddPicClick();
@@ -612,15 +593,9 @@ public class KnowledgeTreeFragment extends Fragment {
         fAdapter.setIsMultiSelectMode(true);
         fAdapter.setCancelable(false);
         fAdapter.setOnItemClickListener((itemView, item, position) -> {
-            if(lock.isSelected()) {
-                fAdapter.select(position);
-//            XToastUtils.toast("选中的内容：" + StringUtils.listToString(fAdapter.getMultiContent(), ","));
-            }else{
-//                MessageEvent.findKnowledge=fAdapter.getData().get(position);
-//                EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_TREE));
-//                problemDialog.dismiss();
-//                Toast.makeText(getContext(), fAdapter.getData().get(position).getName(), Toast.LENGTH_SHORT).show();
-            }
+            MessageEvent.findProblem=fAdapter.getData().get(position);
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_PROBLEM));
+            knowledgeDialog.dismiss();
         });
         knowledgeRV.setAdapter(fAdapter);
 

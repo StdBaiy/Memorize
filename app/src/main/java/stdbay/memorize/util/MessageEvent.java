@@ -13,8 +13,10 @@ public class MessageEvent {
     public static final int KNOWLEDGE_RETURN=3;
     public static final int FIND_IN_TREE=4;
     public static final int CANCEL_SELECT=5;
+    public static final int FIND_IN_PROBLEM=6;
 
     public static BaseItem findKnowledge;
+    public static BaseItem findProblem;
 
     public static List<BaseItem> selectedknowledges=new ArrayList<>();
 
