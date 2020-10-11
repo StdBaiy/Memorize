@@ -14,4 +14,12 @@
     <string name="select_knowledge">从知识点树中选择知识点</string>
     <string name="select_picture">从相簿或相机中添加照片</string>
     <string name="related_problems">涉及到的题目</string>
+    <string name="startDate">开始日期</string>
+    <string name="endDate">截止日期</string>
+    <string name="divider">~</string>
+    <string name="useNotice">请选择要查询的科目\n并持续记录一段时间</string>
+    <string name="chooseAll">全选</string>
+    <string name="chooseNone">全不选</string>
+    <string name="chooseOther">反选</string>
+
 </resources>

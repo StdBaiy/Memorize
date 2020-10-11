@@ -68,11 +68,11 @@
         <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
             android:id="@+id/name"
             style="@style/EditText.Material"
-            android:layout_width="160dp"
+            android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:enabled="true"
-            android:textSize="25sp"
+            android:textSize="20sp"
             android:layout_below="@+id/lock"
             android:hint="名称"
             android:singleLine="true"
@@ -139,29 +139,18 @@
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
+        android:layout_below="@+id/linear1"
         android:layout_marginStart="30dp"
         android:layout_width="match_parent"
-        android:layout_below="@+id/linear1"
         android:id="@+id/knowledge_items"
         android:layout_centerHorizontal="true"
         android:layout_height="wrap_content"
         android:overScrollMode="never"/>
 
-
-<!--    <com.xuexiang.xui.widget.searchview.MaterialSearchView-->
-<!--        android:id="@+id/search_view"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_below="@+id/summary_show"-->
-<!--        app:msv_searchBackground="@drawable/gray_corner"-->
-<!--        app:msv_searchBackIcon="@drawable/ic_back"-->
-<!--        />-->
-
     <LinearLayout
         android:layout_centerHorizontal="true"
         android:padding="10dp"
         android:orientation="horizontal"
-        android:layout_marginTop="50dp"
         android:layout_marginStart="30dp"
         android:id="@+id/linear2"
         android:layout_width="match_parent"

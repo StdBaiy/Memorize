@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:background="@color/dark_green">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:background="@color/dark_green"
+            android:gravity="center_horizontal|bottom"
+            android:paddingBottom="10dp">
+            <com.xuexiang.xui.widget.button.roundbutton.RoundButton
+                android:id="@+id/start_date"
+                style="@style/RoundButton.Auto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/startDate"
+                android:textColor="@color/_333"
+                app:rb_backgroundColor="@color/light_green"
+                app:rb_borderWidth="0dp"
+                app:rb_radius="3dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="@string/divider"
+                android:textColor="@color/_ccc"
+                android:textSize="20sp" />
+
+            <com.xuexiang.xui.widget.button.roundbutton.RoundButton
+                android:id="@+id/end_date"
+                style="@style/RoundButton.Auto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/endDate"
+                android:textColor="@color/_333"
+                app:rb_backgroundColor="@color/light_green"
+                app:rb_borderWidth="0dp"
+                app:rb_radius="3dp" />
+
+        </LinearLayout>
+        <ImageView
+            android:id="@+id/search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_select"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
+            tools:ignore="ContentDescription" />
+    </RelativeLayout>
+
+    <com.xuexiang.xui.widget.spinner.DropDownMenu
+        app:ddm_menuBackgroundColor="@color/_ccc"
+        app:ddm_menuTextSelectedColor="@color/dark_green"
+        app:ddm_underlineHeight="0dp"
+        android:id="@+id/ddm_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+<!--    <com.github.mikephil.charting.charts.PieChart-->
+<!--        android:id="@+id/pie_chart"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"/>-->
+</LinearLayout>

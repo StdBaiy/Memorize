@@ -3,6 +3,7 @@ package stdbay.memorize.util;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.icu.text.DecimalFormat;
 import android.text.TextUtils;
 
 import androidx.core.content.ContextCompat;
@@ -19,6 +20,7 @@ import com.luck.picture.lib.listener.OnResultCallbackListener;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import stdbay.memorize.R;
 import stdbay.memorize.adapter.GridImageAdapter;
@@ -77,7 +79,7 @@ public class Util {
                 .isWithVideoImage(true)// 图片和视频是否可以同选,只在ofAll模式下有效
 //                    .isMaxSelectEnabledMask(cbEnabledMask.isChecked())// 选择数到了最大阀值列表是否启用蒙层效果
                 //.isAutomaticTitleRecyclerTop(false)// 连续点击标题栏RecyclerView是否自动回到顶部,默认true
-//                .loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
+                .loadCacheResourcesCallback(GlideCacheEngine.createCacheEngine())// 获取图片资源缓存，主要是解决华为10部分机型在拷贝文件过多时会出现卡的问题，这里可以判断只在会出现一直转圈问题机型上使用
                 //.setOutputCameraPath()// 自定义相机输出目录，只针对Android Q以下，例如 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) +  File.separator + "Camera" + File.separator;
                 //.setButtonFeatures(CustomCameraView.BUTTON_STATE_BOTH)// 设置自定义相机按钮状态
                 .maxSelectNum(9)// 最大图片选择数量
@@ -162,5 +164,17 @@ public class Util {
         flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
 
         return flexboxLayoutManager;
+    }
+
+    //用于随机生成小数
+    public static double getRandom(final double min, final double max){
+        //保留两位小数
+        DecimalFormat df = new DecimalFormat("#.0");
+        if (min == max)
+            return min;
+        else if(min>max)
+            return 0;
+        else
+            return  Double.parseDouble(df.format(min + ((max - min) * new Random().nextDouble())));
     }
 }

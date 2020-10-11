@@ -22,7 +22,7 @@
         <item name="android:layout_height">?attr/ms_item_height_size</item>
         <item name="android:textSize">?attr/xui_config_size_spinner_text</item>
         <item name="ms_dropdown_height">wrap_content</item>
-        <item name="ms_text_color" tools:ignore="PrivateResource">#000</item>
+        <item name="ms_text_color" tools:ignore="PrivateResource">#222</item>
         <item name="ms_background_selector">@drawable/drop_down_bg</item>
         <item name="ms_dropdown_bg">@drawable/ms_drop_down_bg_radius</item>
     </style>

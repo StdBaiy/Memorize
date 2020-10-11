@@ -167,9 +167,9 @@ public class KnowledgeTreeFragment extends Fragment {
             Button treeNodeView=new Button(getActivity());
             treeNodeView.setTextColor(Color.WHITE);
             treeNodeView.setEllipsize(TextUtils.TruncateAt.END);
-            treeNodeView.setSingleLine(true);
+            treeNodeView.setSingleLine(false);
             treeNodeView.setPadding(10,5,10,5);
-            treeNodeView.setTextSize(10 - (int) Math.sqrt(node.get(i).getName().length() - 1));//调整字体
+            treeNodeView.setTextSize(11 - (int) Math.sqrt(node.get(i).getName().length() - 1));//调整字体
             treeNodeView.setText(node.get(i).getName());
 //            定义及设置出场动画
             treeNodeView.startAnimation(animation);
@@ -290,10 +290,7 @@ public class KnowledgeTreeFragment extends Fragment {
             if(MessageEvent.findKnowledge!=null&&
                     MessageEvent.findKnowledge.getId()==nodeInstance.getId()){
 
-                treeNodeView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-                    hv.scrollTo(W-500,H-500);
-                    MessageEvent.findKnowledge=null;
-                });
+                treeNodeView.getViewTreeObserver().addOnGlobalLayoutListener(() -> hv.scrollTo(W-500,H-500));
                 treeNodeView.setBackgroundResource(R.drawable.gray_corner);
                 infoBanner.setVisibility(View.GONE);
 //                showCookieBar(nodeInstance.getName(), nodeInstance.getAnnotation());
@@ -361,7 +358,7 @@ public class KnowledgeTreeFragment extends Fragment {
                     RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width,height);
                     insertLayout.setLayoutParams(layoutParams);
 //                        zoom.setLayoutParams(layoutParams);
-                    drawbutton(Root,(height-TreeNode.treeNodeH)/2, TreeNode.treeNodeW/2, 0);
+                    drawbutton(Root, (height - TreeNode.treeNodeH) >> 1, TreeNode.treeNodeW >> 1, 0);
                 });
             }
             @Override
@@ -447,9 +444,8 @@ public class KnowledgeTreeFragment extends Fragment {
         popup = new XUISimplePopup(Objects.requireNonNull(getContext()), tmp)
                 .create(DensityUtils.dp2px(getContext(), 170), (adapter, item, position) -> {
                     //id等于0说明是根节点,不能删除
-                    if(nowTreeNode.getId()==0&&(!item.getTitle().toString().equals("新建知识点")||
-                            !item.getTitle().toString().equals("插入知识点"))
-                            ){
+                    if(nowTreeNode.getId()==0&&!item.getTitle().toString().equals("新建知识点")&&
+                            !item.getTitle().toString().equals("插入知识点")){
                         SnackbarUtils.Short(hv, "不能对根节点操作")
                                 .warning().show();
                         return;
@@ -479,17 +475,13 @@ public class KnowledgeTreeFragment extends Fragment {
                                                             .confirm().show();
                                                     insertLayout.removeAllViews();
                                                     showKnowledgeTree();
-//                                                    clearCookieBar();
                                                 });
                                             }
 
                                             @Override
                                             public void onError(Exception e) {
-                                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-//                                Toast.makeText(getActivity(),"删除失败",Toast.LENGTH_SHORT).show();
-                                                    SnackbarUtils.Short(hv, "删除失败")
-                                                            .danger().show();
-                                                });
+                                                Objects.requireNonNull(getActivity()).runOnUiThread(() -> SnackbarUtils.Short(hv, "删除失败")
+                                                        .danger().show());
                                                 Log.d("sql", Objects.requireNonNull(e.getMessage()));
                                             }
                                         });
@@ -522,6 +514,7 @@ public class KnowledgeTreeFragment extends Fragment {
                 this.subId = subjects.get(item.toString());
                 insertLayout.removeAllViews();
                 showKnowledgeTree();
+                MessageEvent.findKnowledge=null;
             });
             mMaterialSpinner.setEnabled(true);
             int index=0;
@@ -571,7 +564,6 @@ public class KnowledgeTreeFragment extends Fragment {
         annotation= knowledgeInflate.findViewById(R.id.annotation);
         lock= knowledgeInflate.findViewById(R.id.lock);
 
-        LinearLayout l1=knowledgeInflate.findViewById(R.id.linear1);
         LinearLayout l2=knowledgeInflate.findViewById(R.id.linear2);
 
         l2.setOnClickListener(view1 -> {
@@ -584,11 +576,6 @@ public class KnowledgeTreeFragment extends Fragment {
             }
         });
 
-        RecyclerView knowledgeRV = knowledgeInflate.findViewById(R.id.knowledge_items);
-        knowledgeRV.setLayoutManager(Util.getFlexboxLayoutManager(getContext()));
-        knowledgeRV.setItemAnimator(null);
-        knowledgeRV.setAdapter(fAdapter);
-
         fAdapter = new FlexboxLayoutAdapter(new ArrayList<>());
         fAdapter.setIsMultiSelectMode(true);
         fAdapter.setCancelable(false);
@@ -597,6 +584,10 @@ public class KnowledgeTreeFragment extends Fragment {
             EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_PROBLEM));
             knowledgeDialog.dismiss();
         });
+
+        RecyclerView knowledgeRV = knowledgeInflate.findViewById(R.id.knowledge_items);
+        knowledgeRV.setLayoutManager(Util.getFlexboxLayoutManager(getContext()));
+        knowledgeRV.setItemAnimator(null);
         knowledgeRV.setAdapter(fAdapter);
 
         notice=view.findViewById(R.id.notice);

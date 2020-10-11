@@ -22,7 +22,6 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_chevron_left_black_24dp"
-                android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/todo"/>
             <TextView
                 android:layout_width="60dp"
@@ -48,7 +47,6 @@
             android:textColor="#eee"
             android:textSize="20sp"/>
         <LinearLayout
-            android:background="?android:attr/selectableItemBackground"
             android:layout_alignParentBottom="true"
             android:gravity="center"
             android:layout_width="50dp"

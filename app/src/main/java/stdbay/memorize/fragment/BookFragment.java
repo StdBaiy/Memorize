@@ -60,7 +60,6 @@ public class BookFragment extends Fragment{
     private GridImageAdapter gAdapter;
     public MaterialDialog problemDialog;
     private FlexboxLayoutAdapter fAdapter;
-    private static List<LocalMedia> beforeMediaList;
     private static List<LocalMedia> mResult=new ArrayList<>();
     private int problemPosition;
     private View problemInflate;
@@ -70,6 +69,10 @@ public class BookFragment extends Fragment{
     private EditText tolGrd;
     private ImageView  lock;
     private MaterialSearchView mSearchView;
+
+    private int subjectStartPosition=0;
+    private int problemStartPosition=0;
+
 
 
     /**
@@ -101,6 +104,7 @@ public class BookFragment extends Fragment{
     private XUISimplePopup popup;
 
     private RecyclerView rv;
+    private LinearLayoutManager rvManager;
 
     private TextView prevName;
     private TextView title;
@@ -147,6 +151,7 @@ public class BookFragment extends Fragment{
     }
 
     private RecyclerView rvp;
+    private LinearLayoutManager rvpManager;
     private ProblemAdapter pAdapter;
 
     @SuppressLint({"ClickableViewAccessibility", "InflateParams"})
@@ -197,7 +202,6 @@ public class BookFragment extends Fragment{
 
         l2.setOnClickListener(view1 -> {
             if (lock.isSelected()) {
-                beforeMediaList=gAdapter.getData();
                 gAdapter.callOnAddPicClick();
             }
             else {
@@ -261,12 +265,17 @@ public class BookFragment extends Fragment{
         menu.setOnClickListener(view16 -> {
             isFromItem=false;
             isFromProblem=false;
+
+            subjectStartPosition = rvManager.findFirstCompletelyVisibleItemPosition();
+            problemStartPosition = rvpManager.findFirstCompletelyVisibleItemPosition();
+
             initListPopup();
             popup.showDown(view16);
         });
 
         rv = view.findViewById(R.id.recycler_view);
-        rv.setLayoutManager(new LinearLayoutManager(getActivity()));
+        rvManager=new LinearLayoutManager(getActivity());
+        rv.setLayoutManager(rvManager);
 
         mAdapter=new BaseItemAdapter(R.layout.list_item,bookData);
         mAdapter.isFirstOnly(false);
@@ -295,7 +304,8 @@ public class BookFragment extends Fragment{
 
         rvp=view.findViewById(R.id.problem_rv);
 
-        rvp.setLayoutManager(new LinearLayoutManager(getActivity()));
+        rvpManager=new LinearLayoutManager(getActivity());
+        rvp.setLayoutManager(rvpManager);
 
         pAdapter=new ProblemAdapter(R.layout.list_item,problemItems);
         pAdapter.isFirstOnly(false);
@@ -523,6 +533,7 @@ public class BookFragment extends Fragment{
                             SnackbarUtils.Custom(title, "题目添加成功", 700)
                                     .confirm().show();
                             queryBooks();
+                            rvp.scrollToPosition(problemStartPosition);
                         }
                     });
                 }).build();
@@ -571,6 +582,7 @@ public class BookFragment extends Fragment{
                                         SnackbarUtils.Custom(title,"添加成功",700)
                                                 .confirm().show();
                                         queryBooks();
+                                        rv.scrollToPosition(subjectStartPosition);
                                         //用eventbus通知知识点树进行相应更改
                                         EventBus.getDefault().post(new MessageEvent(MessageEvent.ITEM_CHANGED));
                                     });
@@ -769,6 +781,14 @@ public class BookFragment extends Fragment{
         nowItem = memorizeDB.getProblemSetByProblem(problem.getId());
         prevItem=memorizeDB.findBackItem(nowItem);
         queryBooks();
-    }
 
+        //定位到目标题目处
+        int i=0;
+        for(ProblemItem item:problemItems){
+            if(item.getId()==problem.getId())
+                break;
+            i++;
+        }
+        rvp.smoothScrollToPosition(i);
+    }
 }

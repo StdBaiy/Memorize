@@ -25,6 +25,7 @@ import stdbay.memorize.R;
 import stdbay.memorize.fragment.BookFragment;
 import stdbay.memorize.fragment.KnowledgeTreeFragment;
 import stdbay.memorize.fragment.MyFragment;
+import stdbay.memorize.fragment.StatisticsFragment;
 import stdbay.memorize.util.MessageEvent;
 
 public class BaseActivity extends FragmentActivity implements View.OnClickListener{
@@ -33,9 +34,10 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
     private LinearLayout knowledge;
     private LinearLayout statistics;
     private LinearLayout more;
-    private MyFragment  myFragment3, myFragment4;
+    private MyFragment  myFragment4;
     private BookFragment bookFragment;
     private KnowledgeTreeFragment knowledgeTreeFragment;
+    private StatisticsFragment statisticsFragment;
 
 
 
@@ -90,8 +92,8 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
         if(knowledgeTreeFragment != null){
             transaction.hide(knowledgeTreeFragment);
         }
-        if(myFragment3 != null){
-            transaction.hide(myFragment3);
+        if(statisticsFragment != null){
+            transaction.hide(statisticsFragment);
         }
         if(myFragment4 != null){
             transaction.hide(myFragment4);
@@ -132,11 +134,11 @@ public class BaseActivity extends FragmentActivity implements View.OnClickListen
                 knowledge.setSelected(true);  // 设置 为 选中状态
                 break;
             case R.id.statistics:
-                if(myFragment3 == null){
-                    myFragment3 = MyFragment.getInstance("发现");
-                    transaction.add(R.id.fragment_container, myFragment3);
+                if(statisticsFragment == null){
+                    statisticsFragment = StatisticsFragment.getInstance();
+                    transaction.add(R.id.fragment_container, statisticsFragment);
                 } else {
-                    transaction.show(myFragment3);
+                    transaction.show(statisticsFragment);
                 }
                 statistics.setSelected(true);  // 设置 为 选中状态
                 break;

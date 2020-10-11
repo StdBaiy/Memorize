@@ -187,13 +187,15 @@ public class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.View
             }
             int chooseModel = media.getChooseModel();
             String path;
-            if (media.isCut() && !media.isCompressed()) {
-                // 裁剪过
+            if (media.getCompressPath()==null&&media.getCutPath()!=null ) {
+                // 裁剪过但没压缩过
                 path = media.getCutPath();
-            } else if (media.isCompressed() || (media.isCut() && media.isCompressed())) {
+            } else if (media.getCompressPath()!=null) {
                 // 压缩过,或者裁剪同时压缩过,以最终压缩过图片为准
                 path = media.getCompressPath();
-            } else {
+            } else if(media.getAndroidQToPath()!=null){
+                path=media.getAndroidQToPath();
+            } else{
                 // 原图
                 path = media.getPath();
             }

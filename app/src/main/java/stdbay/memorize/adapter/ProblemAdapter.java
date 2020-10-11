@@ -22,7 +22,7 @@ public class ProblemAdapter extends BaseQuickAdapter<ProblemItem, BaseViewHolder
     @SuppressLint("ResourceType")
     @Override
     protected void convert(BaseViewHolder helper, ProblemItem item) {
-        helper.setText(R.id.name, "题目"+item.getId())
+        helper.setText(R.id.name, "第"+item.getNumber()+"题")
                 .setText(R.id.description, "描述"+item.getCreateTime())
                 .setBackgroundRes(R.id.list_item, R.drawable.gray_corner);
     }

@@ -187,9 +187,14 @@ public class MemorizeDB {
                 csr=db.rawQuery("select*from prob_know where probId=?",new String[]{String.valueOf(id)});
                 if(csr.moveToFirst()){
                     do{
+                        int knowId=csr.getInt(csr.getColumnIndex("knowId"));
                         BaseItem item=new BaseItem();
-                        item.setId(csr.getInt(csr.getColumnIndex("knowId")));
-                        item.setName(csr.getString(csr.getColumnIndex("name")));
+                        item.setId(knowId);
+
+                        Cursor c1=db.rawQuery("select*from knowledge where id=?",new String[]{String.valueOf(knowId)});
+                        if(c1.moveToFirst())
+                            item.setName(c1.getString(c1.getColumnIndex("name")));
+                        c1.close();
                         item.setType(BaseItem.KNOWLEDGE_TYPE);
                         knowledges.add(item);
                     }while(csr.moveToNext());
@@ -211,17 +216,14 @@ public class MemorizeDB {
             queryFromCursorToList(BaseItem.SUBJECT_TYPE);
             cursor.close();
         }else if (nowItem.getType() == BaseItem.SUBJECT_TYPE) {
-            cursor = db.rawQuery("select*from subject where fatherId=?", new String[]{String.valueOf(nowItem.getId())});
-            queryFromCursorToList(BaseItem.SUBJECT_TYPE);
-            cursor.close();
             cursor = db.rawQuery("select*from problem_set where fatherId is null and subId=?"
                     , new String[]{String.valueOf(nowItem.getId())});
             queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
             cursor.close();
-            //            case BaseItem.PROBLEM_SET_TYPE:
-//                cursor=db.rawQuery("select*from problem_set where fatherId=?",new String[]{String.valueOf(nowItem.getId())});
-//                queryFromCursorToList(BaseItem.PROBLEM_SET_TYPE);
-//                break;
+
+            cursor = db.rawQuery("select*from subject where fatherId=?", new String[]{String.valueOf(nowItem.getId())});
+            queryFromCursorToList(BaseItem.SUBJECT_TYPE);
+            cursor.close();
         }
         return list;
     }
@@ -297,9 +299,12 @@ public class MemorizeDB {
                 }
 
                 if(type== KnowledgeTreeFragment.INSERT){
-                    db.execSQL("update knowledge set fatherId=? where fatherId=? and id!=?",new String[]{
-                            String.valueOf(id), String.valueOf(fatherId), String.valueOf(id)
-                    });
+                    if(fatherId!=NO_FATHER)
+                        db.execSQL("update knowledge set fatherId=? where fatherId=? and id!=? and subId=?",new String[]{
+                                String.valueOf(id), String.valueOf(fatherId), String.valueOf(id), String.valueOf(subId)});
+                    else
+                        db.execSQL("update knowledge set fatherId=? where fatherId is null and id!=? and subId=?",new String[]{
+                                String.valueOf(id),String.valueOf(id), String.valueOf(subId)});
                 }
 
                 //为知识点添加图片
@@ -401,7 +406,10 @@ public class MemorizeDB {
                         fatherId=cursor.getInt(cursor.getColumnIndex("fatherId"));
                         cursor.close();
                     }
-                    db.execSQL("update knowledge set fatherId=? where fatherId=?",new String[]{String.valueOf(fatherId), String.valueOf(id)});
+                    if(fatherId!=NO_FATHER)
+                        db.execSQL("update knowledge set fatherId=? where fatherId=?",new String[]{String.valueOf(fatherId), String.valueOf(id)});
+                    else
+                        db.execSQL("update knowledge set fatherId=null where fatherId=?",new String[]{String.valueOf(id)});
                     sql+="knowledge";
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -467,8 +475,6 @@ public class MemorizeDB {
                 int length;
                 int tmpLength = 1;
 
-
-
                 MemorizeDB.treeDepth=0;
                 while (!queue.isEmpty()) {
                     length = tmpLength;
@@ -522,8 +528,9 @@ public class MemorizeDB {
     public Map<String,Integer> getSubjects(){
         Map<String,Integer>rtn=new HashMap<>();
         //这里仅查询科目表中的叶子结点
-        cursor=db.rawQuery("select * from subject s1 where not exists " +
-                "(select * from subject s2 where s2.fatherId in (select id from subject where id=s1.id))",null);
+//        cursor=db.rawQuery("select * from subject s1 where not exists " +
+//                "(select * from subject s2 where s2.fatherId in (select id from subject where id=s1.id))",null);
+        cursor=db.rawQuery("select*from subject",null);
         if(cursor.moveToFirst()){
             do{
                 rtn.put(cursor.getString(cursor.getColumnIndex("name")),
@@ -561,6 +568,21 @@ public class MemorizeDB {
             int id = 1;
             if (cursor.moveToFirst())
                 id = cursor.getInt(cursor.getColumnIndex("id")) + 1;
+
+            if (grade.equals(""))
+                grade="0";
+            if(totalGrade.equals(""))
+                totalGrade="0";
+            //如果没有选择题目编号,就自动添加
+            if(number.equals("")) {
+                cursor = db.rawQuery("select*from problem where probSetId=? order by number desc", new String[]{String.valueOf(probSetId)});
+                if(cursor.moveToFirst())
+                    number= String.valueOf(cursor.getInt(cursor.getColumnIndex("number"))+1);
+                else
+                    //如果表中还没有数据
+                    number="1";
+            }
+
             int subId = 0;
             cursor = db.rawQuery("select*from problem_set where id=?", new String[]{String.valueOf(probSetId)});
             if (cursor.moveToFirst())
@@ -589,6 +611,25 @@ public class MemorizeDB {
 
     public void changeProblem(int id,String number,String summary,String grade,String totalGrade,List<LocalMedia> mediaList,List<BaseItem> knowledgeList,callBackListener listener){
         try {
+
+            int probSetId=0;
+            cursor=db.rawQuery("select*from problem where id=?",new String[]{String.valueOf(id)});
+            if(cursor.moveToFirst())
+                probSetId=cursor.getInt(cursor.getColumnIndex("probSetId"));
+            if (grade.equals(""))
+                grade="0";
+            if(totalGrade.equals(""))
+                totalGrade="0";
+            //如果没有选择题目编号,就自动添加
+            if(number.equals("")) {
+                cursor = db.rawQuery("select*from problem where probSetId=? order by number desc", new String[]{String.valueOf(probSetId)});
+                if(cursor.moveToFirst())
+                    number= String.valueOf(cursor.getInt(cursor.getColumnIndex("number"))+1);
+                else
+                    //如果表中还没有数据
+                    number="1";
+            }
+
             db.execSQL("update problem set number=?,summary=?,grade=?,totalGrade=? where id=?",
                     new String[]{number,summary, grade, totalGrade, String.valueOf(id)});
 
@@ -657,14 +698,6 @@ public class MemorizeDB {
                     probSet.setName(csr.getString(csr.getColumnIndex("name")));
 
                     csr.close();
-                    //查询子项
-//                    Map<String, Integer>map=new HashMap<>();
-//
-//                    csr=db.rawQuery("select id from problem where probSetId=?",new String[]{String.valueOf(probSet.getId())});
-//                    csr.moveToFirst();
-//                    csr.close();
-//                    map.put("习题",csr.getCount());
-//                    probSet.setChildrenData(map);
                 }
             }
             return probSet;
@@ -673,5 +706,76 @@ public class MemorizeDB {
     public boolean isExist(int subId){
         cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(subId)});
         return cursor.moveToFirst();
+    }
+
+    public List<BaseItem>getSubjectList(){
+        List<BaseItem>rtn=new ArrayList<>();
+        try{
+            cursor=db.rawQuery("select*from subject",null);
+            if(cursor.moveToFirst()){
+                do{
+                    BaseItem item=new BaseItem();
+                    item.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                    item.setName(cursor.getString(cursor.getColumnIndex("name")));
+                    item.setType(BaseItem.SUBJECT_TYPE);
+                    item.setFatherId(cursor.getInt(cursor.getColumnIndex("fatherId")));
+                    rtn.add(item);
+                }while(cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rtn;
+    }
+
+    //查询科目的得分情况
+    public Map<Integer, KnowledgeIssue> queryBySelection(List<Integer>selecedSubIds, int selecType, int orderType, String startDate, String endDate){
+        //map的第一个参数是knowId,第二个是得分情况
+        Map<Integer,KnowledgeIssue>map=new HashMap<>();
+        int totalOccurences=0;
+            try {
+                //对所有指定科目循环
+                for(int subId:selecedSubIds){
+                    cursor=db.rawQuery("select*from problem where subId=?",new String[]{String.valueOf(subId)});
+                    if(cursor.moveToFirst()){
+                        do{
+                            float grd=cursor.getFloat(cursor.getColumnIndex("grade"));
+                            float tolGrd=cursor.getFloat(cursor.getColumnIndex("totalGrade"));
+                            //查询每个习题对应的知识点情况
+                            Cursor csr=db.rawQuery("select*from prob_know where probId=?",
+                                    new String[]{String.valueOf(cursor.getInt(cursor.getColumnIndex("id")))});
+                            if(csr.moveToFirst()){//如果该题包含有知识点
+                                do{
+                                    int knowId=csr.getInt(csr.getColumnIndex("knowId"));
+                                    if(map.containsKey(knowId)){//如果该知识点已经在map里,就更新得分情况,否则新建一个得分并添加到map
+                                        KnowledgeIssue issue= map.get(knowId);
+                                        if(issue!=null) {
+                                            issue.grade+=grd;
+                                            issue.totalGrade+=tolGrd;
+                                        }
+                                    }else {
+                                        Cursor c1=db.rawQuery("select*from knowledge where id=?",new String[]{String.valueOf(knowId)});
+                                        if(c1.moveToFirst()){
+                                            KnowledgeIssue issue = new KnowledgeIssue(c1.getString(c1.getColumnIndex("name")),grd,tolGrd);
+                                            map.put(knowId,issue);
+                                            c1.close();
+                                        }
+                                    }
+                                    //每出现一次,查看次数+1
+                                    map.get(knowId).occurrence++;
+                                    totalOccurences++;
+                                }while(csr.moveToNext());
+                                csr.close();
+                            }
+                        }while (cursor.moveToNext());
+                        cursor.close();
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        KnowledgeIssue.totalOccurences=totalOccurences;
+        return map;
     }
 }
