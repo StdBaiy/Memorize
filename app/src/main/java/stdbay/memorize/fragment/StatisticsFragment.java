@@ -3,6 +3,8 @@ package stdbay.memorize.fragment;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.graphics.Color;
+import android.icu.text.DecimalFormat;
+import android.icu.text.NumberFormat;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,7 +14,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,7 +34,6 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
@@ -45,9 +45,10 @@ import com.xuexiang.xui.widget.button.roundbutton.RoundButton;
 import com.xuexiang.xui.widget.spinner.DropDownMenu;
 import com.xuexiang.xutil.resource.ResUtils;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +60,20 @@ import stdbay.memorize.adapter.ListDropDownAdapter;
 import stdbay.memorize.model.BaseItem;
 import stdbay.memorize.model.KnowledgeIssue;
 import stdbay.memorize.model.MemorizeDB;
-import stdbay.memorize.util.DayAxisValueFormatter;
-import stdbay.memorize.util.MoneyValueFormatter;
+import stdbay.memorize.util.AccuracyFormatter;
+import stdbay.memorize.util.MessageEvent;
+import stdbay.memorize.util.PieChartFormatter;
+import stdbay.memorize.util.SubjectFormatter;
 import stdbay.memorize.util.Util;
 import stdbay.memorize.util.XYMarkerView;
 
 public class StatisticsFragment extends Fragment implements OnChartValueSelectedListener{
     private Map<Integer, KnowledgeIssue> knowledgeMap;
-    private List<Integer>selectedSubjectId=new ArrayList<>();
+    private final List<Integer>selectedSubjectId=new ArrayList<>();
+
+    private ListDropDownAdapter viewAdapter;
+    private ListDropDownAdapter sortAdapter;
+    private ListDropDownAdapter showAdapter;
 
     private MemorizeDB memorizeDB;
 
@@ -74,18 +81,20 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
 
     private String[] viewType;
     private String[] sortType;
+    private String[] showType;
+
+    private String startDate;
+    private String endDate;
 
 
     private View view;
     private DropDownMenu mDropDownMenu;
-    private List<View> mPopupViews = new ArrayList<>();
-    private String[] mHeaders = {"科目","查看方式", "排序"};
+    private final List<View> mPopupViews = new ArrayList<>();
+    private final String[] mHeaders = {"科目","查询方式","展示形式","排序"};
     private TextView notice;
 
     BarChart barChart;
     private PieChart pieChart;
-    private static final int PIE_CHART=0;
-    private static final int BAR_CHART=1;
 
     @SuppressLint({"DefaultLocale", "InflateParams"})
     private void initView(){
@@ -151,8 +160,10 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
             Calendar calendar = Calendar.getInstance();
             new DatePickerDialog(Objects.requireNonNull(getContext())
                     , DatePickerDialog.THEME_DEVICE_DEFAULT_LIGHT
-                    , (view, year, monthOfYear, dayOfMonth) -> ((TextView)view1)
-                    .setText(String.format("%d-%2d-%2d", year, (monthOfYear + 1), dayOfMonth))
+                    , (view, year, monthOfYear, dayOfMonth) -> {
+                        ((TextView) view1).setText(String.format("%d-%02d-%02d", year, (monthOfYear + 1), dayOfMonth));
+                        this.startDate= (String) ((TextView)view1).getText();
+                    }
                     // 设置初始日期
                     , calendar.get(Calendar.YEAR)
                     , calendar.get(Calendar.MONTH)
@@ -165,8 +176,10 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
             Calendar calendar = Calendar.getInstance();
             new DatePickerDialog(Objects.requireNonNull(getContext())
                     , DatePickerDialog.THEME_DEVICE_DEFAULT_LIGHT
-                    , (view, year, monthOfYear, dayOfMonth) -> ((TextView)view1)
-                    .setText(String.format("%d-%2d-%2d", year, (monthOfYear + 1), dayOfMonth))
+                    , (view, year, monthOfYear, dayOfMonth) -> {
+                        ((TextView)view1).setText(String.format("%d-%02d-%02d", year, (monthOfYear + 1), dayOfMonth));
+                        this.endDate= (String) ((TextView)view1).getText();
+                    }
                     // 设置初始日期
                     , calendar.get(Calendar.YEAR)
                     , calendar.get(Calendar.MONTH)
@@ -179,51 +192,67 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
         Calendar c = Calendar.getInstance();
         c.setTime(new Date());
         endDate.setText(formatter.format(c.getTime()));
+        this.endDate= (String) endDate.getText();
+
         c.add(Calendar.MONTH,-1);
         startDate.setText(formatter.format(c.getTime()));
-
-        ListDropDownAdapter viewAdapter;
-        ListDropDownAdapter sortAdapter;
+        this.startDate= (String) startDate.getText();
 
         viewType = ResUtils.getStringArray(R.array.view_type);
         sortType = ResUtils.getStringArray(R.array.sort_type);
+        showType = ResUtils.getStringArray(R.array.show_type);
 
         final ListView viewBody = new ListView(getContext());
         viewAdapter = new ListDropDownAdapter(getContext(), viewType);
         viewBody.setDividerHeight(0);
         viewBody.setAdapter(viewAdapter);
+        viewAdapter.setSelectPosition(0);
 
-        //init age menu
-        final ListView sortBody = new ListView(getContext());
-        sortBody.setDividerHeight(0);
+        final ListView showBody=new ListView(getContext());
+        showAdapter = new ListDropDownAdapter(getContext(), showType);
+        showBody.setDividerHeight(0);
+        showBody.setAdapter(showAdapter);
+        showAdapter.setSelectPosition(0);
+
+        final ListView sortBody=new ListView(getContext());
         sortAdapter = new ListDropDownAdapter(getContext(), sortType);
+        sortBody.setDividerHeight(0);
         sortBody.setAdapter(sortAdapter);
+        sortAdapter.setSelectPosition(0);
 
-
+        //init menu
         mPopupViews.add(subjectInflate);
         mPopupViews.add(viewBody);
+        mPopupViews.add(showBody);
         mPopupViews.add(sortBody);
 
         //init context view
-
-
         LinearLayout chartInflate = (LinearLayout) LayoutInflater.from(getContext()).inflate(R.layout.statistics_chart, null, false);
         
         pieChart=chartInflate.findViewById(R.id.pie_chart);
         barChart=chartInflate.findViewById(R.id.bar_chart);
         notice= chartInflate.findViewById(R.id.notice);
 
+        knowledgeMap=memorizeDB.queryBySelection(selectedSubjectId, this.startDate,this.endDate);
+        List<BaseItem>items=new ArrayList<>();
+        for (Map.Entry<Integer,KnowledgeIssue> entry : knowledgeMap.entrySet()){
+            BaseItem item=new BaseItem();
+            item.setType(BaseItem.KNOWLEDGE_TYPE);
+            item.setId(entry.getKey());
+            item.setName(entry.getValue().name);
+            items.add(item);
+        }
 
         initPieChartStyle(pieChart);
         initPieChartLabel(pieChart);
 
         initBarChartLabel(barChart);
-        initBarChartLabel(barChart);
-        setBarChartData(12, 50,barChart);
+        initBarChartStyle(barChart,items);
+//        setBarChartData(barChart,knowledgeMap);
         barChart.setOnChartValueSelectedListener(this);
 
-        knowledgeMap=memorizeDB.queryBySelection(selectedSubjectId,0,0,"","");
-        setPieChartData(pieChart,knowledgeMap);
+        List<Map.Entry<Integer, KnowledgeIssue>> ls = new ArrayList<>(knowledgeMap.entrySet());
+        setPieChartData(pieChart,ls);
         pieChart.setOnChartValueSelectedListener(this);
 
         //add item click event
@@ -233,9 +262,15 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
             mDropDownMenu.closeMenu();
         });
 
-        sortBody.setOnItemClickListener((parent, view, position, id) -> {
-            sortAdapter.setSelectPosition(position);
-            mDropDownMenu.setTabMenuText(sortType[position]);
+        showBody.setOnItemClickListener((parent, view, position, id) -> {
+            showAdapter.setSelectPosition(position);
+            mDropDownMenu.setTabMenuText(showType[position]);
+            mDropDownMenu.closeMenu();
+        });
+
+        sortBody.setOnItemClickListener((adapterView, view, i, l) -> {
+            sortAdapter.setSelectPosition(i);
+            mDropDownMenu.setTabMenuText(sortType[i]);
             mDropDownMenu.closeMenu();
         });
 
@@ -244,26 +279,68 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
         viewAdapter.setSelectPosition(0);
         mDropDownMenu.setTabMenuText(viewType[0]);
 
-        sortAdapter.setSelectPosition(0);
-        mDropDownMenu.setTabMenuText(sortType[0]);
-
+        //查询按钮
         ImageView search=view.findViewById(R.id.search);
         search.setOnClickListener(view1 -> {
+            selectedSubjectId.clear();
+            for(BaseItem item:fAdapter.getMultiContent()){
+                selectedSubjectId.add(item.getId());
+            }
 
-            if(viewAdapter.getSelectPosition()==PIE_CHART){
+            knowledgeMap=memorizeDB.queryBySelection(selectedSubjectId, this.startDate,this.endDate);
+
+            if(knowledgeMap.isEmpty()){
+                notice.setVisibility(View.VISIBLE);
+                pieChart.setVisibility(View.GONE);
+                barChart.setVisibility(View.GONE);
+                return;
+            }else{
+                notice.setVisibility(View.GONE);
+            }
+            //借助list实现hashMap排序//
+            //注意 ArrayList<>() 括号里要传入map.entrySet()
+            List<Map.Entry<Integer, KnowledgeIssue>> list = new ArrayList<>(knowledgeMap.entrySet());
+            if(sortAdapter.getSelectPosition()!=-1&&sortAdapter.getSelectPosition()!=0) {
+                if(viewAdapter.getSelectPosition()==0)//按出现次数排序
+                    list.sort((o1, o2) -> {
+                        //按照出现次数值，从大到小排序
+                        if (sortAdapter.getSelectPosition() == 2)
+                            return o1.getValue().occurrence - o2.getValue().occurrence;
+                        else
+                            return o2.getValue().occurrence - o1.getValue().occurrence;
+                    });
+                else if(viewAdapter.getSelectPosition()==1)//按错误率排序
+                    list.sort((o1, o2) -> {
+                        //按照得分率，从大到小排序
+                        //*1000是为了保存精度
+                        int rate1 = (int) (o1.getValue().grade / o1.getValue().totalGrade * 1000);
+                        int rate2 = (int) (o2.getValue().grade / o2.getValue().totalGrade * 1000);
+                        if (sortAdapter.getSelectPosition() == 2)
+                            return rate1 - rate2;
+                        else
+                            return rate2 - rate1;
+
+                    });
+            }
+
+            //判断显示方式是饼图还是柱状图
+            if(showAdapter.getSelectPosition()==0){//饼图
                 pieChart.setVisibility(View.VISIBLE);
                 barChart.setVisibility(View.GONE);
-                selectedSubjectId.clear();
-                for(BaseItem item:fAdapter.getMultiContent()){
-                    selectedSubjectId.add(item.getId());
-                }
-                knowledgeMap=memorizeDB.queryBySelection(selectedSubjectId,0,0,"","");
-                setPieChartData(pieChart,knowledgeMap);
-
-            }else if(viewAdapter.getSelectPosition()==BAR_CHART){
+                setPieChartData(pieChart,list);
+            }else if(showAdapter.getSelectPosition()==1){//柱状图
                 pieChart.setVisibility(View.GONE);
                 barChart.setVisibility(View.VISIBLE);
-                setBarChartData(12, 50,barChart);
+                items.clear();
+                for (Map.Entry<Integer,KnowledgeIssue> entry : list){
+                    BaseItem item=new BaseItem();
+                    item.setType(BaseItem.KNOWLEDGE_TYPE);
+                    item.setId(entry.getKey());
+                    item.setName(entry.getValue().name);
+                    items.add(item);
+                }
+                initBarChartStyle(barChart,items);
+                setBarChartData(barChart,list);
             }
         });
     }
@@ -290,7 +367,7 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
     private void initPieChartStyle(PieChart pieChart) {
         //使用百分比显示
         pieChart.setUsePercentValues(true);
-        pieChart.setExtraOffsets(25, 0, 25, 5);
+        pieChart.setExtraOffsets(0, 0, 10, 0);
         //设置拖拽的阻尼，0为立即停止
         pieChart.setDragDecelerationFrictionCoef(0.9f);
 
@@ -331,7 +408,7 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
     private void initPieChartLabel(PieChart pieChart) {
         Legend l = pieChart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
         l.setOrientation(Legend.LegendOrientation.VERTICAL);
         l.setDrawInside(false);
         l.setXEntrySpace(7f);
@@ -344,39 +421,39 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
 
 
 
-    protected void setPieChartData(PieChart pieChart, Map<Integer, KnowledgeIssue>map) {
-        if(map.isEmpty()){
-            notice.setVisibility(View.VISIBLE);
-            pieChart.setVisibility(View.GONE);
-            return;
-        }else{
-            notice.setVisibility(View.GONE);
-            pieChart.setVisibility(View.VISIBLE);
-        }
+    protected void setPieChartData(PieChart pieChart, List<Map.Entry<Integer, KnowledgeIssue>> list) {
 
         List<PieEntry> entries = new ArrayList<>();
-
-        //借助list实现hashMap排序//
-        //注意 ArrayList<>() 括号里要传入map.entrySet()
-        List<Map.Entry<Integer, KnowledgeIssue>> list = new ArrayList<>(map.entrySet());
-        Collections.sort(list, (o1, o2) -> {
-            //按照得分值，从大到小排序
-            return o2.getValue().occurrence - o1.getValue().occurrence;
-        });
-
         //注意这里遍历的是list，也就是我们将map.Entry放进了list，排序后的集合
         int rest = KnowledgeIssue.totalOccurences;
         int num=0;
-        for (Map.Entry<Integer,KnowledgeIssue> entry : list){
-            entries.add(new PieEntry(entry.getValue().occurrence,entry.getValue().name));
-            rest-=entry.getValue().occurrence;
-            if(num++>=15)break;
+        String label="";
+        if(viewAdapter.getSelectPosition()==0){//按出现次数查询
+            pieChart.setUsePercentValues(false);
+            for (Map.Entry<Integer,KnowledgeIssue> entry : list){
+                PieEntry p=new PieEntry(entry.getValue().occurrence,entry.getValue().name+"  "+entry.getValue().occurrence+"次");
+                p.setX(entry.getKey());
+                entries.add(p);
+                rest-=entry.getValue().occurrence;
+                if(num++>=20)break;
+            }
+            if(rest>0)
+                entries.add(new PieEntry(rest,"其他"));
+            label="在题目中出现的次数";
+
+        }else if(viewAdapter.getSelectPosition()==1){//按正确率查询
+            pieChart.setUsePercentValues(false);
+            NumberFormat formatter = new DecimalFormat("0.00");
+            for (Map.Entry<Integer,KnowledgeIssue> entry : list){
+                float rate=entry.getValue().grade/entry.getValue().totalGrade;
+                PieEntry p=new PieEntry(rate,entry.getValue().name+"  "+formatter.format(rate));
+                p.setX(entry.getKey());
+                entries.add(p);
+            }
+            label="得分百分率";
         }
 
-        if(rest>0)
-            entries.add(new PieEntry(rest,"其他"));
-
-        PieDataSet dataSet = new PieDataSet(entries, "cool");
+        PieDataSet dataSet = new PieDataSet(entries, label);
         dataSet.setDrawIcons(false);
         dataSet.setSliceSpace(0);
         dataSet.setIconsOffset(new MPPointF(0, 40));
@@ -396,7 +473,7 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
         dataSet.setColors(colors);
 
         PieData data = new PieData(dataSet);
-        data.setValueFormatter(new PercentFormatter(pieChart));
+        data.setValueFormatter(new PieChartFormatter(pieChart,viewAdapter));
         data.setValueTextSize(11f);
         data.setValueTextColor(Color.WHITE);
         pieChart.setData(data);
@@ -404,52 +481,52 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
         // undo all highlights
         pieChart.highlightValues(null);
         pieChart.invalidate();
-        pieChart.animateY(1000, Easing.EaseInOutQuad);
+        pieChart.animateY(1200, Easing.EaseInOutQuad);
     }
 
 
     /**
      * 初始化图表的样式
      */
-    protected void initBarChartStyle(BarChart barChart) {
+    protected void initBarChartStyle(BarChart barChart,List<BaseItem>items) {
         //关闭描述
         barChart.getDescription().setEnabled(false);
         barChart.setDrawBarShadow(false);
-
         //开启在柱状图顶端显示值
         barChart.setDrawValueAboveBar(true);
         //设置显示值时，最大的柱数量
-        barChart.setMaxVisibleValueCount(60);
+        barChart.setMaxVisibleValueCount(30);
 
         //设置不能同时在x轴和y轴上缩放
         barChart.setPinchZoom(false);
         //设置不画背景网格
         barChart.setDrawGridBackground(false);
-
-        initXYAxisStyle(barChart);
+        initXYAxisStyle(barChart,items);
     }
 
     /**
      * 初始化图表X、Y轴的样式
      */
-    private void initXYAxisStyle(BarChart barChart) {
+    private void initXYAxisStyle(BarChart barChart,List<BaseItem>items) {
         //设置X轴样式
-        ValueFormatter xAxisFormatter = new DayAxisValueFormatter(barChart);
+
+        ValueFormatter xAxisFormatter = new SubjectFormatter(items);
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
-        //间隔一天显示
+
+        //间隔显示
         xAxis.setGranularity(1f);
         xAxis.setLabelCount(7);
         xAxis.setValueFormatter(xAxisFormatter);
 
         //设置Y轴的左侧样式
-        ValueFormatter yAxisFormatter = new MoneyValueFormatter("$");
+        ValueFormatter yAxisFormatter = new AccuracyFormatter(viewAdapter);
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setLabelCount(8, false);
         leftAxis.setValueFormatter(yAxisFormatter);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        leftAxis.setSpaceTop(15f);
+        leftAxis.setSpaceTop(10f);
         leftAxis.setAxisMinimum(0f); // this replaces setStartAtZero(true)
 
         //设置Y轴的右侧样式
@@ -461,9 +538,9 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
         rightAxis.setAxisMinimum(0f); // this replaces setStartAtZero(true)
 
         //设置图表的数值指示器
-        XYMarkerView mv = new XYMarkerView(getContext(), xAxisFormatter, yAxisFormatter);
-        mv.setChartView(pieChart);
-        pieChart.setMarker(mv);
+        XYMarkerView mv = new XYMarkerView(getContext(), yAxisFormatter,viewAdapter);
+        mv.setChartView(barChart);
+        barChart.setMarker(mv);
     }
 
     /**
@@ -486,74 +563,77 @@ public class StatisticsFragment extends Fragment implements OnChartValueSelected
      * 设置图表数据
      */
     @SuppressLint("UseCompatLoadingForDrawables")
-    protected void setBarChartData(int count, float range,BarChart barChart) {
-        float start = 1f;
+    protected void setBarChartData(BarChart barChart,List<Map.Entry<Integer, KnowledgeIssue>> list) {
+
+        int startColor1 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_light);
+        int startColor2 = ContextCompat.getColor(getContext(), android.R.color.holo_blue_light);
+        int startColor3 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_light);
+        int startColor4 = ContextCompat.getColor(getContext(), android.R.color.holo_green_light);
+        int startColor5 = ContextCompat.getColor(getContext(), android.R.color.holo_red_light);
+        int endColor1 = ContextCompat.getColor(getContext(), android.R.color.holo_blue_dark);
+        int endColor2 = ContextCompat.getColor(getContext(), android.R.color.holo_purple);
+        int endColor3 = ContextCompat.getColor(getContext(), android.R.color.holo_green_dark);
+        int endColor4 = ContextCompat.getColor(getContext(), android.R.color.holo_red_dark);
+        int endColor5 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_dark);
+        //设置渐变色
+        List<GradientColor> gradientColors = new ArrayList<>();
+        gradientColors.add(new GradientColor(startColor1, endColor1));
+        gradientColors.add(new GradientColor(startColor2, endColor2));
+        gradientColors.add(new GradientColor(startColor3, endColor3));
+        gradientColors.add(new GradientColor(startColor4, endColor4));
+        gradientColors.add(new GradientColor(startColor5, endColor5));
+
+
+        //注意这里遍历的是list，也就是我们将map.Entry放进了list，排序后的集合
         List<BarEntry> values = new ArrayList<>();
-        //设置数据源
-        for (int i = (int) start; i < start + count; i++) {
-            float val = (float) (Math.random() * (range + 1));
-            if (Math.random() * 100 < 25) {
-                //设置图表，标星
-                values.add(new BarEntry(i, val, getResources().getDrawable(R.drawable.ic_star_green)));
-            } else {
-                values.add(new BarEntry(i, val));
+        List<IBarDataSet> dataSets = new ArrayList<>();
+        int i=0;
+        BarDataSet set1 = null;
+        if(viewAdapter.getSelectPosition()==0){//按出现次数查询
+
+            for (Map.Entry<Integer,KnowledgeIssue> entry : list){
+                BarEntry b=new BarEntry(++i, (int)(entry.getValue().occurrence));
+                b.setData(entry.getValue().name);
+                values.add(b);
             }
-        }
-
-        BarDataSet set1;
-
-        if (barChart.getData() != null && barChart.getData().getDataSetCount() > 0) {
-            set1 = (BarDataSet) barChart.getData().getDataSetByIndex(0);
-            set1.setValues(values);
-            barChart.getData().notifyDataChanged();
-            barChart.notifyDataSetChanged();
-
-        } else {
-            set1 = new BarDataSet(values, "The year 2019");
-
-            //设置是否画出图标
+            set1 = new BarDataSet(values, "出现次数  "+startDate+"~"+endDate);
             set1.setDrawIcons(false);
-
-            int startColor1 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_light);
-            int startColor2 = ContextCompat.getColor(getContext(), android.R.color.holo_blue_light);
-            int startColor3 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_light);
-            int startColor4 = ContextCompat.getColor(getContext(), android.R.color.holo_green_light);
-            int startColor5 = ContextCompat.getColor(getContext(), android.R.color.holo_red_light);
-            int endColor1 = ContextCompat.getColor(getContext(), android.R.color.holo_blue_dark);
-            int endColor2 = ContextCompat.getColor(getContext(), android.R.color.holo_purple);
-            int endColor3 = ContextCompat.getColor(getContext(), android.R.color.holo_green_dark);
-            int endColor4 = ContextCompat.getColor(getContext(), android.R.color.holo_red_dark);
-            int endColor5 = ContextCompat.getColor(getContext(), android.R.color.holo_orange_dark);
-
-            List<GradientColor> gradientColors = new ArrayList<>();
-            gradientColors.add(new GradientColor(startColor1, endColor1));
-            gradientColors.add(new GradientColor(startColor2, endColor2));
-            gradientColors.add(new GradientColor(startColor3, endColor3));
-            gradientColors.add(new GradientColor(startColor4, endColor4));
-            gradientColors.add(new GradientColor(startColor5, endColor5));
-
-            //设置渐变色
             set1.setGradientColors(gradientColors);
 
-            //这里只设置了一组数据
-            List<IBarDataSet> dataSets = new ArrayList<>();
-            dataSets.add(set1);
+        }else if(viewAdapter.getSelectPosition()==1){//按正确率查询
 
-            BarData data = new BarData(dataSets);
-            data.setValueTextSize(10f);
-            data.setBarWidth(0.9f);
-
-            barChart.setData(data);
+            for (Map.Entry<Integer,KnowledgeIssue> entry : list){
+                float rate=entry.getValue().grade/entry.getValue().totalGrade;
+                BarEntry b=new BarEntry(++i,rate);
+                b.setData(entry.getValue().name);
+                values.add(b);
+            }
+            set1 = new BarDataSet(values, "得分百分比  "+startDate+"~"+endDate);
+            set1.setDrawIcons(false);
+            set1.setGradientColors(gradientColors);
         }
-        barChart.animateY(1000);
+        dataSets.add(set1);
+
+        BarData data = new BarData(dataSets);
+        data.setValueTextSize(10f);
+        data.setBarWidth(0.95f);
+        barChart.setData(data);
+        barChart.animateY(1200);
     }
 
     @Override
     public void onValueSelected(Entry e, Highlight h) {
-        if(pieChart.getVisibility()==View.VISIBLE)
-            Toast.makeText(getContext(), ((PieEntry)e).getLabel() ,Toast.LENGTH_SHORT).show();
-        else
-            Toast.makeText(getContext(), String.valueOf(e.getY()),Toast.LENGTH_SHORT).show();
+        if(pieChart.getVisibility()==View.VISIBLE) {//如果当前显示的是饼图
+//            Toast.makeText(getContext(), ((PieEntry) e).getLabel(), Toast.LENGTH_SHORT).show();
+            if(((PieEntry) e).getLabel().equals("其他"))return;
+            BaseItem item=new BaseItem();
+            item.setId((int)e.getX());
+            MessageEvent.findKnowledge=item;
+            EventBus.getDefault().post(new MessageEvent(MessageEvent.FIND_IN_TREE));
+        }
+        else {
+
+        }
     }
 
 

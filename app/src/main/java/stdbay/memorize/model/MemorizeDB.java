@@ -228,8 +228,6 @@ public class MemorizeDB {
         return list;
     }
 
-
-
     public void addItem(final BaseItem father, final String name, int type, final callBackListener listener){
         switch(type){
             case BaseItem.SUBJECT_TYPE:
@@ -729,14 +727,15 @@ public class MemorizeDB {
     }
 
     //查询科目的得分情况
-    public Map<Integer, KnowledgeIssue> queryBySelection(List<Integer>selecedSubIds, int selecType, int orderType, String startDate, String endDate){
+    public Map<Integer, KnowledgeIssue> queryBySelection(List<Integer> selecedSubIds, String startDate, String endDate){
         //map的第一个参数是knowId,第二个是得分情况
         Map<Integer,KnowledgeIssue>map=new HashMap<>();
         int totalOccurences=0;
             try {
                 //对所有指定科目循环
                 for(int subId:selecedSubIds){
-                    cursor=db.rawQuery("select*from problem where subId=?",new String[]{String.valueOf(subId)});
+                    cursor=db.rawQuery("select*from problem where subId=? and  createTime between ? and ?",
+                            new String[]{String.valueOf(subId),startDate,endDate});
                     if(cursor.moveToFirst()){
                         do{
                             float grd=cursor.getFloat(cursor.getColumnIndex("grade"));
@@ -777,5 +776,20 @@ public class MemorizeDB {
             }
         KnowledgeIssue.totalOccurences=totalOccurences;
         return map;
+    }
+
+    public List<BaseItem>getSubjectsByIds(List<Integer> list){
+        List<BaseItem>rtn=new ArrayList<>();
+        for(int i:list){
+            BaseItem item=new BaseItem();
+            cursor=db.rawQuery("select*from subject where id=?",new String[]{String.valueOf(i)});
+            if(cursor.moveToFirst()) {
+                item.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                item.setName(cursor.getString(cursor.getColumnIndex("name")));
+                item.setType(BaseItem.SUBJECT_TYPE);
+                rtn.add(item);
+            }
+        }
+        return rtn;
     }
 }

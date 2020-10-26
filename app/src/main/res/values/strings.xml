@@ -17,7 +17,7 @@
     <string name="startDate">开始日期</string>
     <string name="endDate">截止日期</string>
     <string name="divider">~</string>
-    <string name="useNotice">请选择要查询的科目\n并持续记录一段时间</string>
+    <string name="useNotice">没有查到任何记录\n请更改筛选条件\n或者持续记录一段时间</string>
     <string name="chooseAll">全选</string>
     <string name="chooseNone">全不选</string>
     <string name="chooseOther">反选</string>

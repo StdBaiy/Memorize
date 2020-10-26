@@ -149,6 +149,7 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
 
             db.execSQL("insert into problem_set (name,id,subId,createTime) values('8套卷',1,2,(select date('now')))");
             db.execSQL("insert into problem_set (name,id,subId,createTime) values('600题',2,2,(select date('now')))");
+            db.execSQL("insert into problem_set (name,id,subId,createTime) values('600题',3,3,(select date('now')))");
 
             db.execSQL("insert into knowledge (id,name,subId,annotation)values(1,'函数的概念和特征',5,'')");
             db.execSQL("insert into knowledge (id,name,subId,annotation)values(2,'函数的图像',5,'')");
@@ -197,6 +198,19 @@ public class MemorizeOpenHelper extends SQLiteOpenHelper {
                         new String[]{String.valueOf(i+21), String.valueOf(((int)(Math.random()*20))%20+1)});
                 db.execSQL("insert into prob_know (probId,knowId) values(?,?)",
                         new String[]{String.valueOf(i+21), String.valueOf(((int)(Math.random()*20))%20+1)});
+            }
+
+            for (int i=0;i<10;++i){
+                db.execSQL("insert into problem (probSetId,subId,number,createTime,grade,totalGrade) values(3,3,?,(select date('now')),?,?)",
+                        new String[]{String.valueOf(i+1), String.valueOf(Util.getRandom(0,5)),"5"});
+                db.execSQL("insert into prob_know (probId,knowId) values(?,?)",
+                        new String[]{String.valueOf(i+31), String.valueOf(((int)(Math.random()*20))%20+1)});
+                db.execSQL("insert into prob_know (probId,knowId) values(?,?)",
+                        new String[]{String.valueOf(i+31), String.valueOf(((int)(Math.random()*20))%20+1)});
+                db.execSQL("insert into prob_know (probId,knowId) values(?,?)",
+                        new String[]{String.valueOf(i+31), String.valueOf(((int)(Math.random()*20))%20+1)});
+                db.execSQL("insert into prob_know (probId,knowId) values(?,?)",
+                        new String[]{String.valueOf(i+31), String.valueOf(((int)(Math.random()*20))%20+1)});
             }
 //            for(int i=0;i<18;++i){
 //                db.execSQL("insert into problem (probSetId,subId,number,createTime,grade,totalGrade) values(2,2,?,(select date('now')),?,?)",

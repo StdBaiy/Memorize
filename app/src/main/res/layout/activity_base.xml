@@ -94,6 +94,7 @@
                     android:layout_marginBottom="3dp"/>
             </LinearLayout>
             <LinearLayout
+                android:visibility="gone"
                 android:orientation="vertical"
                 android:id="@+id/more"
                 android:layout_width="0dp"

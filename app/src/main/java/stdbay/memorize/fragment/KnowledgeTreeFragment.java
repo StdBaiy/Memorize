@@ -623,7 +623,6 @@ public class KnowledgeTreeFragment extends Fragment {
             initDropDownMenu(memorizeDB.getSubId(MessageEvent.findKnowledge.getId()));
             if(hv.getVisibility()==View.VISIBLE) {
                 showKnowledgeTree();
-//                hv.smoothScrollTo(findX-500,findY-500);
             }
         }
     }
